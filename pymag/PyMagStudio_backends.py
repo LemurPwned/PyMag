@@ -143,6 +143,14 @@ class Ui_MainWindow(
         self.table_results.setHorizontalHeaderLabels(ResultsColumns)
 
         #define dock area structure
+        """
+        Maybe loop instead of declation
+
+        for all of the below
+
+        d1 - d10 
+
+        """
         self.d1 = Dock("Control panel", size=(300, 50))
         self.d2 = Dock("PIMM-FMR", size=(300, 300))
         self.d7 = Dock("SD-FMR", size=(300, 300))
@@ -455,6 +463,9 @@ class Ui_MainWindow(
                                      sep='\t')
 
     def appendPptx(self, mode=0, reportName="test.docx"):
+        """
+        To powinien byc oddzielny modul 
+        """
         from pptx import Presentation
         from pptx.util import Inches
         prs = Presentation()
@@ -494,6 +505,11 @@ class Ui_MainWindow(
                 table.cell(0, i).text = df.columns[i]
                 for j in range(1, rows):
                     table.cell(j, i).text = str(df.iloc[j - 1, i])
+
+            """
+            To nie moze tak byc import w srodku!
+            chyba ze dodany na stale w requirements
+            """
 
             from pptx.util import Pt
 
@@ -541,6 +557,10 @@ class Ui_MainWindow(
             num, num +
             int(plotter.simulationsMenegement.table_experiments.rowCount())
         ]
+
+        """
+        Loop ponizej zamiast iteracji
+        """
         plotter.replot_results()
         exporter = pg.exporters.ImageExporter(self.ResPlot.plotsRes.sceneObj)
         exporter.export('Res' + '.png')
@@ -566,15 +586,22 @@ class Ui_MainWindow(
             import os
             curr_dir = os.path.dirname(os.path.realpath(__file__))
             fileName = curr_dir + "/" + reportName
+            # powinno być! Bo te ściezki nie zadziałają na Windows!
+            # filename = os.path.join(curr_dir, report_name)
             print(fileName)
 
         if fileName:
+            """
+            Podwójne importy! tez powinno byc na wierzchu
+            """
+
+
             from datetime import datetime
 
             from docx import Document
             from docx.shared import Pt
             now = datetime.now()
-            import pyqtgraph.exporters
+            import pyqtgraph.exporters # to juz bylo gdzies indziej importowane
             from docx.enum.text import WD_ALIGN_PARAGRAPH
 
             dt_string = now.strftime("%d.%m.%Y %H:%M:%S")
@@ -627,6 +654,11 @@ class Ui_MainWindow(
 
             add_doc_table(self.widget_layer_params.table_layer_params)
             picture_width_mm = 140
+
+            """
+            Petla ponizej
+            """
+
             document.add_paragraph('Simulation of resistance',
                                    style='List Number')
             document.add_picture('Mag.png', width=36000 * picture_width_mm)
@@ -653,6 +685,14 @@ class Ui_MainWindow(
                 os.path.basename(fileName).replace(".dat", ""))
 
     def plotExperimentalData(self, df, fileName):
+        """
+        Petla poniej i tylko jeden try catch
+
+        Nie moze byc try catch: pass! 
+        musi łapać konkrenty błąd!
+
+        """
+
         try:
             self.MagPlot.Mx.plot(df['H'],
                                  df['Mx'],
@@ -804,6 +844,9 @@ class Ui_MainWindow(
 
     def replot_all(self, xp, plot_realtime=0, save=0):
         try:
+            """
+            Tutaj poniej trzeba jakoś okomentować 
+            """
             mode = xp["mode"]
             H = xp["MR"][:, 0]
             Mx = xp["MR"][:, 1]
@@ -914,6 +957,13 @@ def calc_trajectoryRK45(SpinDevice,
                         I_amp=0,
                         LLGtime=4e-9,
                         LLGsteps=2000):
+
+    """
+    Ta funkcja musi być obiektowo zrobiona w oddzielnej klasie
+
+
+    Za duzo jest ifów -- łatwo o błąd i crash
+    """
 
     DynamicR = []
     PIMM_ = []
@@ -1051,6 +1101,11 @@ def calc_trajectoryRK45(SpinDevice,
 
 class LayerStructure():
     def __init__(self, sim_num):
+
+        """
+        Poniej koniecznie w pętle zamienic
+        """
+
         self.Ms = np.array(
             plotter.simulationsMenegement.simulations_list["layer_params"]
             [sim_num]["Ms"].values,
@@ -1246,6 +1301,14 @@ def initVectorGen(SpinDevice, Stimulus):
 
 
 def Simulate():
+    """
+    Ta funckcja jest za duza, trzeba ją robić
+
+    global nie jest dobrym pomyłsem
+
+    zamiast if, klasy dziedzicace ktore przyjmuja rozne zachowanie
+    w zaleznosci od backendu
+    """
     while 1 == 1:
         global stop
         if stop == 0:

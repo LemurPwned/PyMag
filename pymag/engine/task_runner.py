@@ -75,6 +75,7 @@ def compose_vsd_spectrogram(data: dict, task_def: dict):
 #     # ax.set_ylabel("Max f [Hz]")
 #     # fig.savefig("PIM.png")
 
+
 def compose_max_PIM(data: dict, task_def: dict):
     """
     Creates PIM dispersion relation
@@ -86,14 +87,18 @@ def compose_max_PIM(data: dict, task_def: dict):
     freqs = data['frequencies']
     for r in data['pim']:
         fields.append(r[task_def['parameters']['mode']])
-        z_free.append(r['free_mz_amplitude']) # vektor amplitud dla H = x
+        z_free.append(r['free_mz_amplitude'])  # vektor amplitud dla H = x
         z_bottom.append(r['free_mz_amplitude'])
         res.append(r['res'])
         mag1.append(r['mags'][:3])
         mag2.append(r['mags'][3:6])
 
-    fields, z_free, z_bottom, res, mag1, mag2 = zip(*sorted(zip(fields, z_free, z_bottom, res, mag1, mag2)))
-    return np.asarray(fields), np.asarray(freqs), np.asarray(z_free), np.asarray(z_bottom), np.asarray(res), np.asarray(mag1), np.asarray(mag2)
+    fields, z_free, z_bottom, res, mag1, mag2 = zip(
+        *sorted(zip(fields, z_free, z_bottom, res, mag1, mag2)))
+    return np.asarray(fields), np.asarray(freqs), np.asarray(
+        z_free), np.asarray(z_bottom), np.asarray(res), np.asarray(
+            mag1), np.asarray(mag2)
+
 
 def run_task(task_file: str, task_fn: Callable):
     """
@@ -117,6 +122,7 @@ def run_task_json(json_data, task_fn: Callable):
         raise ValueError(f"Invalid task: {result}")
 
     return task_fn(result['result'], task)
+
 
 if __name__ == "__main__":
     run_task("./vsd_task.json", compose_vsd_spectrogram)
