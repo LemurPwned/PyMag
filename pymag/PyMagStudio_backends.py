@@ -20,7 +20,7 @@ import time
 import numpy as np
 import pyqtgraph.exporters
 from natsort import natsorted
-from pyqtgraph.dockarea import *
+from pyqtgraph.dockarea import Dock, DockArea
 
 from pymag.engine import task_runner
 from pymag.gui.core import *
@@ -705,9 +705,7 @@ class Ui_MainWindow(
                                  pen=None,
                                  symbolBrush=(0, 0, 255, 90),
                                  symbolPen=(0, 0, 255, 50))
-        except:
-            pass
-        try:
+
             plotter.measurementsMenegement.simulations_list["settings"].append(
                 ["X", "Exp", fileName])
             plotter.measurementsMenegement.simulations_list["results"].append({
