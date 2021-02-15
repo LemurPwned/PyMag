@@ -1,16 +1,14 @@
-from PyQt5.QtWidgets import QLabel, QFrame, QComboBox
-from PyQt5 import QtWidgets
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
-from PyQt5.QtCore import pyqtSlot
-import pyqtgraph.console
-import PyMagStudio_backends
-
-from backend_utils import *
-from PyQt5.QtWidgets import (QCheckBox)
 import os
 
 import pandas as pd
+import pymag.PyMagStudio_backends
+import pyqtgraph as pg
+import pyqtgraph.console
+from pymag.engine.utils import *
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QCheckBox, QComboBox, QFrame, QLabel
+from pyqtgraph.Qt import QtCore, QtGui
 
 ResultsColumns = ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz']
 
@@ -18,7 +16,6 @@ import pyqtgraph.opengl as gl
 
 
 class TrajectoryPlot():
-
     def __init__(self):
         self.w = gl.GLViewWidget()
         self.init_GL_settings()
@@ -26,34 +23,51 @@ class TrajectoryPlot():
 
     def init_GL_settings(self):
         self.w.opts['distance'] = 3
-        plt = gl.GLLinePlotItem(pos=np.array([[0,0,0],[1,0,0]]), color=pg.glColor([255,0,0]), width=(2), antialias=True)
+        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [1, 0, 0]]),
+                                color=pg.glColor([255, 0, 0]),
+                                width=(2),
+                                antialias=True)
         self.w.addItem(plt)
-        plt = gl.GLLinePlotItem(pos=np.array([[0,0,0],[0,1,0]]), color=pg.glColor([0,255,0]), width=(2), antialias=True)
+        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [0, 1, 0]]),
+                                color=pg.glColor([0, 255, 0]),
+                                width=(2),
+                                antialias=True)
         self.w.addItem(plt)
-        plt = gl.GLLinePlotItem(pos=np.array([[0,0,0],[0,0,1]]), color=pg.glColor([0,0,255]), width=(2), antialias=True)
+        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [0, 0, 1]]),
+                                color=pg.glColor([0, 0, 255]),
+                                width=(2),
+                                antialias=True)
         self.w.addItem(plt)
         md = gl.MeshData.sphere(rows=20, cols=20)
-        m1 = gl.GLMeshItem(meshdata=md, smooth=True, color=(0.7, 0.7, 0.7, 0.7), shader='balloon') #, glOptions='additive'
+        m1 = gl.GLMeshItem(meshdata=md,
+                           smooth=True,
+                           color=(0.7, 0.7, 0.7, 0.7),
+                           shader='balloon')  #, glOptions='additive'
         m1.translate(0, 0, 0)
         m1.scale(1, 1, 1)
         self.w.addItem(m1)
 
-
-
-    def pltTraj(self,traj, colory):
+    def pltTraj(self, traj, colory):
 
         # pts = traj
         # color = [100,200,250]
         # print(traj)
-        plt = gl.GLLinePlotItem(pos=np.array(traj), color=pg.glColor(colory), width=(0 + 1) / 10., antialias=True)
+        plt = gl.GLLinePlotItem(pos=np.array(traj),
+                                color=pg.glColor(colory),
+                                width=(0 + 1) / 10.,
+                                antialias=True)
         self.w.addItem(plt)
 
-    def pltPoint(self,x,y,z):
+    def pltPoint(self, x, y, z):
 
         md = gl.MeshData.sphere(rows=10, cols=10)
-        m1 = gl.GLMeshItem(meshdata=md, smooth=True, color=(1, 0, 0, 0.5), shader='balloon', glOptions='additive')
-        m1.translate(x,y,z)
-        m1.scale(0.05,0.05,0.05)
+        m1 = gl.GLMeshItem(meshdata=md,
+                           smooth=True,
+                           color=(1, 0, 0, 0.5),
+                           shader='balloon',
+                           glOptions='additive')
+        m1.translate(x, y, z)
+        m1.scale(0.05, 0.05, 0.05)
         self.w.addItem(m1)
 
     def clear(self):
@@ -66,11 +80,12 @@ class TrajectoryPlot():
 
 
 class paramsAndStimulus():
-    def __init__(self,parent):
+    def __init__(self, parent):
         layerParameters = parent.layerParameters
         StimulusParameters = parent.StimulusParameters
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
-        self.table_stimulus_params = pg.TableWidget(editable=True, sortable=False)
+        self.table_stimulus_params = pg.TableWidget(editable=True,
+                                                    sortable=False)
         self.GenerateStimulus = QtWidgets.QPushButton()
         self.AddButton = QtWidgets.QPushButton()
         self.RemoveButton = QtWidgets.QPushButton()
@@ -90,9 +105,11 @@ class paramsAndStimulus():
         self.AddSimulationButton.setText("Add to \nsimulation list")
         self.AddSimulationButton.clicked.connect(parent.addToSimulationList)
         self.table_layer_params.setData(layerParameters.to_numpy())
-        self.table_layer_params.setHorizontalHeaderLabels(layerParameters.columns)
+        self.table_layer_params.setHorizontalHeaderLabels(
+            layerParameters.columns)
         self.table_stimulus_params.setData(StimulusParameters.to_numpy())
-        self.table_stimulus_params.setHorizontalHeaderLabels(StimulusParameters.columns)
+        self.table_stimulus_params.setHorizontalHeaderLabels(
+            StimulusParameters.columns)
         self.ctrlWidget = QtGui.QWidget()
         self.ctrLayout = QtGui.QVBoxLayout()
         self.ctrlWidget.setLayout(self.ctrLayout)
@@ -108,10 +125,14 @@ class paramsAndStimulus():
         self.ctrLayout.addLayout(self.btn_layout)
 
     def addLayer(self):
-        self.table_layer_params.addRow([1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01, 0.01, 100, 120, 1])
+        self.table_layer_params.addRow([
+            1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
+            0.01, 100, 120, 1
+        ])
 
     def removeLayer(self):
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
+
 
 class Res_plot():
     def __init__(self):
@@ -150,6 +171,7 @@ class Res_plot():
         elif mode == "theta":
             self.Rz.setLabel('bottom', "Theta angle", units="deg")
 
+
 class Line_shape():
     def __init__(self):
         self.plotsLS = pg.GraphicsLayoutWidget()
@@ -157,7 +179,9 @@ class Line_shape():
         self.legenda = 0
         self.LS = self.plotsLS.addPlot()
         self.LS.setLabel('bottom', "Field", units=H_unit)
-        self.LS.setLabel('left', "SD voltage with artificial offset", units='V')
+        self.LS.setLabel('left',
+                         "SD voltage with artificial offset",
+                         units='V')
         self.LS.enableAutoRange('x', True)
         self.LS.showGrid(x=True, y=True, alpha=0.6)
         ###RAPORT
@@ -171,28 +195,44 @@ class Line_shape():
         self.clearPlot()
         offset = 0
         number_of_freqs = spectrogramData.shape[1]
-        a= 4
+        a = 4
         b = 24
         for ff in range(a, b):
-            curr_LS = self.spectrogramData[:, ff]-np.min(self.spectrogramData[:, ff])
-            self.LS.plot(self.H, curr_LS + offset, pen={'color': (0,int(((ff-a) / (b-a)) * 255), 255 - int(((ff-a) / (b-a)) * 255), 255), 'width': 2})
-            offset = offset + (np.max(curr_LS) - np.min(curr_LS))*1.05
+            curr_LS = self.spectrogramData[:, ff] - np.min(
+                self.spectrogramData[:, ff])
+            self.LS.plot(self.H,
+                         curr_LS + offset,
+                         pen={
+                             'color': (0, int(
+                                 ((ff - a) / (b - a)) * 255), 255 - int(
+                                     ((ff - a) / (b - a)) * 255), 255),
+                             'width':
+                             2
+                         })
+            offset = offset + (np.max(curr_LS) - np.min(curr_LS)) * 1.05
 
     def update_experimental(self, spectrogramData, deltaf, H):
         df = pd.read_csv("4651_Pymag/8/SD.dat", sep="\t")
         self.spectrogramData = np.array(df.values, dtype=np.float32)
         self.H = np.array(df["H"].values)
-        self.deltaf  = 2e9
+        self.deltaf = 2e9
         self.clearPlot()
         offset = 0
         number_of_freqs = spectrogramData.shape[1]
         a = 0
         b = 24
         for ff in range(a, b):
-            curr_LS = self.spectrogramData[:, ff] - np.min(self.spectrogramData[:, ff])
-            self.LS.plot(self.H, curr_LS + offset, pen={
-                'color': (0, int(((ff - a) / (b - a)) * 255), 255 - int(((ff - a) / (b - a)) * 255), 255),
-                'width': 2})
+            curr_LS = self.spectrogramData[:, ff] - np.min(
+                self.spectrogramData[:, ff])
+            self.LS.plot(self.H,
+                         curr_LS + offset,
+                         pen={
+                             'color': (0, int(
+                                 ((ff - a) / (b - a)) * 255), 255 - int(
+                                     ((ff - a) / (b - a)) * 255), 255),
+                             'width':
+                             2
+                         })
             offset = offset + (np.max(curr_LS) - np.min(curr_LS)) * 1.05
 
     def setMode(self, mode):
@@ -245,6 +285,7 @@ class Mag_plot():
         elif mode == "theta":
             self.Mz.setLabel('bottom', "Theta angle", units="deg")
 
+
 class plotDynamics():
     def __init__(self):
         self.plotsDynamics_view = pg.GraphicsLayoutWidget()
@@ -264,22 +305,23 @@ class plotDynamics():
         self.hist_SD = pg.HistogramLUTItem()
         self.hist_SD.setImageItem(self.imageSpectrum)
         self.hist_SD.vb.disableAutoRange()
-        colors = [
-            (22, 0, 70),
-            (47, 0, 135),
-            (98, 0, 164),
-            (146, 0, 166),
-            (186, 47, 138),
-            (216, 91, 105),
-            (238, 137, 73),
-            (246, 189, 39),
-            (228, 250, 211)]
+        colors = [(22, 0, 70), (47, 0, 135), (98, 0, 164), (146, 0, 166),
+                  (186, 47, 138), (216, 91, 105), (238, 137, 73),
+                  (246, 189, 39), (228, 250, 211)]
         cmap = pg.ColorMap(pos=np.linspace(0.0, 1.0, 9), color=colors)
         self.imageViewSpectrum.setColorMap(cmap)
         self.hist_SD.gradient.setColorMap(cm=cmap)
-        self.inf1_SD = pg.InfiniteLine(movable=True, angle=0, label='x={value:0.2f}', pos=[0, 1e9], bounds = [0, 100e9],
-                                       labelOpts={'position': 5e9, 'color': (200, 200, 100),
-                                                  'fill': (200, 200, 200, 50), 'movable': True})
+        self.inf1_SD = pg.InfiniteLine(movable=True,
+                                       angle=0,
+                                       label='x={value:0.2f}',
+                                       pos=[0, 1e9],
+                                       bounds=[0, 100e9],
+                                       labelOpts={
+                                           'position': 5e9,
+                                           'color': (200, 200, 100),
+                                           'fill': (200, 200, 200, 50),
+                                           'movable': True
+                                       })
         self.inf1_SD.sigPositionChanged.connect(self.update_roi_loc)
         self.plotsSpectrum.addItem(self.inf1_SD)
         self.plotsDynamics_view.addItem(self.hist_SD)
@@ -290,20 +332,24 @@ class plotDynamics():
         self.imageSpectrum.clear()
         self.imageSpectrum.resetTransform()
         self.imageSpectrum.translate(Xmin, 0)
-        self.imageSpectrum.scale( (Xmax-Xmin)/Xsteps , dy )
+        self.imageSpectrum.scale((Xmax - Xmin) / Xsteps, dy)
 
-    def update(self,spectrogramData,deltaf,H,rm_bkg = 0):
+    def update(self, spectrogramData, deltaf, H, rm_bkg=0):
         if rm_bkg == 1:
             self.spectrogramData = spectrogramData
-            self.spectrogramData2 = spectrogramData*0
+            self.spectrogramData2 = spectrogramData * 0
             for ff in range(0, spectrogramData.shape[1]):
-                self.spectrogramData2[:, ff] = spectrogramData[:, ff]-np.median(spectrogramData[:, ff])
-                self.imageSpectrum.setImage(self.spectrogramData2,autoLevels=False)  # , autoHistogramRange=False,levels=[3, 6])
+                self.spectrogramData2[:,
+                                      ff] = spectrogramData[:, ff] - np.median(
+                                          spectrogramData[:, ff])
+                self.imageSpectrum.setImage(
+                    self.spectrogramData2, autoLevels=False
+                )  # , autoHistogramRange=False,levels=[3, 6])
             del self.spectrogramData2
         else:
             self.spectrogramData = spectrogramData
-            self.imageSpectrum.setImage(self.spectrogramData,autoLevels=False)
-        self.deltaf= deltaf
+            self.imageSpectrum.setImage(self.spectrogramData, autoLevels=False)
+        self.deltaf = deltaf
         self.H = H
         # self.setMode(mode)
         self.update_roi_loc()
@@ -319,13 +365,17 @@ class plotDynamics():
     def update_roi_loc(self):
         try:
             self.plotLineShape.clear()
-            self.plotLineShape.plot(self.H ,self.spectrogramData[:, int(self.inf1_SD.value() / self.deltaf)], pen=(255, 255, 255))
+            self.plotLineShape.plot(
+                self.H,
+                self.spectrogramData[:,
+                                     int(self.inf1_SD.value() / self.deltaf)],
+                pen=(255, 255, 255))
         except:
             pass
 
     def clearPlot(self):
         self.imageSpectrum.clear()
-        self.plotsSpectrum.clear() ########
+        self.plotsSpectrum.clear()  ########
         try:
             self.plotsSpectrum.addItem(self.inf1_SD)
             self.plotsSpectrum.addItem(self.imageSpectrum)
@@ -338,37 +388,51 @@ class plotDynamics():
             pass
 
 
-
 class addMenuBar():
-
-    def __init__(self,parent):
+    def __init__(self, parent):
         self.menubar = QtWidgets.QMenuBar()
         self.File_menu = self.menubar.addMenu("File")
 
-        self.File_menu.addAction("Save layer params").triggered.connect(parent.saveParams)
-        self.File_menu.addAction("Load layer params").triggered.connect(parent.loadParams)
-        self.File_menu.addAction("Load multiple layer params").triggered.connect(parent.loadMultipleLayerParams)
+        self.File_menu.addAction("Save layer params").triggered.connect(
+            parent.saveParams)
+        self.File_menu.addAction("Load layer params").triggered.connect(
+            parent.loadParams)
+        self.File_menu.addAction(
+            "Load multiple layer params").triggered.connect(
+                parent.loadMultipleLayerParams)
         self.File_menu.addSeparator()
-        self.File_menu.addAction("Open results from csv").triggered.connect(parent.loadResults)
-        self.File_menu.addAction("Save results as csv").triggered.connect(parent.saveResults)
+        self.File_menu.addAction("Open results from csv").triggered.connect(
+            parent.loadResults)
+        self.File_menu.addAction("Save results as csv").triggered.connect(
+            parent.saveResults)
 
-        self.File_menu.addAction("Save simulation report as docx").triggered.connect(parent.saveReport)
-        self.File_menu.addAction("Append results to pptx").triggered.connect(parent.appendPptx)
-        self.File_menu.addAction("Save all to binary file").triggered.connect(parent.saveBinary)
-        self.File_menu.addAction("Load all from binary file").triggered.connect(parent.loadBinary)
+        self.File_menu.addAction(
+            "Save simulation report as docx").triggered.connect(
+                parent.saveReport)
+        self.File_menu.addAction("Append results to pptx").triggered.connect(
+            parent.appendPptx)
+        self.File_menu.addAction("Save all to binary file").triggered.connect(
+            parent.saveBinary)
+        self.File_menu.addAction(
+            "Load all from binary file").triggered.connect(parent.loadBinary)
         self.File_menu.addSeparator()
-        self.exitButton = self.File_menu.addAction("Exit").triggered.connect(parent.endProgram)
+        self.exitButton = self.File_menu.addAction("Exit").triggered.connect(
+            parent.endProgram)
 
         self.SettingsMenu = self.menubar.addMenu("Settings")
-        self.SettingsMenu.addAction("Change Settings").triggered.connect(parent.newSettings)
+        self.SettingsMenu.addAction("Change Settings").triggered.connect(
+            parent.newSettings)
         self.SettingsMenu.addSeparator()
         self.WindowMenu = self.menubar.addMenu("Window")
-        self.WindowMenu.addAction("Switch full/normal screen").triggered.connect(parent.fullScreenMode)
-        self.WindowMenu.addAction("Save dock state").triggered.connect(parent.saveDockState)
-        self.WindowMenu.addAction("Load dock state").triggered.connect(parent.loadDockState)
+        self.WindowMenu.addAction(
+            "Switch full/normal screen").triggered.connect(
+                parent.fullScreenMode)
+        self.WindowMenu.addAction("Save dock state").triggered.connect(
+            parent.saveDockState)
+        self.WindowMenu.addAction("Load dock state").triggered.connect(
+            parent.loadDockState)
         self.HelpMenu = self.menubar.addMenu("Help")
         self.HelpMenu.addAction("About").triggered.connect(parent.newAbout)
-
 
         self.Simulation_Name_Label = QLabel("Simulation\nName:")
         self.Simulation_Name = QtWidgets.QLineEdit()
@@ -403,14 +467,11 @@ class addMenuBar():
         self.ctrLayout.addWidget(self.menubar)
         self.ctrLayout.addWidget(self.progress)
 
-
         self.btn_layout = QtGui.QHBoxLayout()
-
 
         self.btn_layout.addWidget(self.startButton)
         self.btn_layout.addWidget(self.Simulation_Name_Label)
         self.btn_layout.addWidget(self.Simulation_Name)
-
 
         self.btn_layout.addWidget(self.stopButton)
         # self.btn_layout.addWidget(self.clearPlotButton)
@@ -422,14 +483,13 @@ class addMenuBar():
         self.ctrLayout.addLayout(self.btn_layout)
 
 
-
-
-
-
-
-
 class LabeledDoubleSpinBox():
-    def __init__(self,label = "Label", minimum=0, maximum=1, value=0, mode = 'Double'):
+    def __init__(self,
+                 label="Label",
+                 minimum=0,
+                 maximum=1,
+                 value=0,
+                 mode='Double'):
         self.Label = QLabel(label)
         if mode == 'Double':
             self.Value = QtWidgets.QDoubleSpinBox()
@@ -485,6 +545,7 @@ class Settings(QtGui.QDialog):
 
         self.close()
 
+
 class About(QtGui.QDialog):
     def __init__(self, parent):
         super(About, self).__init__()
@@ -495,5 +556,3 @@ class About(QtGui.QDialog):
         self.AboutLabel = QtWidgets.QLabel(PyMagVersion + "\n" + PyMagDate)
         self.layout.addWidget(self.AboutLabel)
         self.close()
-
-

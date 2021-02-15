@@ -1,24 +1,30 @@
 #todo dodać backend ze zdalnego pulpitu
-import cmtj
+import datetime
 import queue as Queue
 from threading import Thread
-from PyQt5.QtWidgets import (QWidget, QFileDialog)
-import datetime
+
+import cmtj
+from PyQt5.QtWidgets import QFileDialog, QWidget
+
 try:
     from scipy.fft import fft
 except ImportError:
     from scipy import fft
+
 import multiprocessing
-from GUI import *
-from pyqtgraph.dockarea import *
-import pyqtgraph.exporters
-import numpy as np
-import time
-import pickle
 import os.path
-from natsort import natsorted
+import pickle
 import sys
-import task_runner
+import time
+
+import numpy as np
+import pyqtgraph.exporters
+from natsort import natsorted
+from pyqtgraph.dockarea import *
+
+from pymag.engine import task_runner
+from pymag.gui.core import *
+
 stop = 1
 
 
@@ -563,12 +569,13 @@ class Ui_MainWindow(
             print(fileName)
 
         if fileName:
+            from datetime import datetime
+
             from docx import Document
             from docx.shared import Pt
-            from datetime import datetime
             now = datetime.now()
-            from docx.enum.text import WD_ALIGN_PARAGRAPH
             import pyqtgraph.exporters
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
 
             dt_string = now.strftime("%d.%m.%Y %H:%M:%S")
 
