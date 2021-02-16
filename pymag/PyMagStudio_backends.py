@@ -1,24 +1,19 @@
 #todo dodać backend ze zdalnego pulpitu
 import datetime
+from pymag.engine.solver import SimulationRunner
 import queue as Queue
 from threading import Thread
 
 import cmtj
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
-try:
-    from scipy.fft import fft
-except ImportError:
-    from scipy import fft
-
-import multiprocessing
+    
 import os.path
 import pickle
 import sys
 import time
 
 import numpy as np
-import pyqtgraph.exporters
 from natsort import natsorted
 from pyqtgraph.dockarea import Dock, DockArea
 
@@ -505,7 +500,6 @@ class Ui_MainWindow(
                 table.cell(0, i).text = df.columns[i]
                 for j in range(1, rows):
                     table.cell(j, i).text = str(df.iloc[j - 1, i])
-
             """
             To nie moze tak byc import w srodku!
             chyba ze dodany na stale w requirements
@@ -557,7 +551,6 @@ class Ui_MainWindow(
             num, num +
             int(plotter.simulationsMenegement.table_experiments.rowCount())
         ]
-
         """
         Loop ponizej zamiast iteracji
         """
@@ -595,13 +588,12 @@ class Ui_MainWindow(
             Podwójne importy! tez powinno byc na wierzchu
             """
 
-
             from datetime import datetime
 
             from docx import Document
             from docx.shared import Pt
             now = datetime.now()
-            import pyqtgraph.exporters # to juz bylo gdzies indziej importowane
+            import pyqtgraph.exporters  # to juz bylo gdzies indziej importowane
             from docx.enum.text import WD_ALIGN_PARAGRAPH
 
             dt_string = now.strftime("%d.%m.%Y %H:%M:%S")
@@ -654,7 +646,6 @@ class Ui_MainWindow(
 
             add_doc_table(self.widget_layer_params.table_layer_params)
             picture_width_mm = 140
-
             """
             Petla ponizej
             """
@@ -950,217 +941,25 @@ class Ui_MainWindow(
             pass
 
 
-def calc_trajectoryRK45(SpinDevice,
-                        m_init,
-                        Hext,
-                        f=6.5e9,
-                        I_amp=0,
-                        LLGtime=4e-9,
-                        LLGsteps=2000):
-
-    """
-    Ta funkcja musi być obiektowo zrobiona w oddzielnej klasie
-
-
-    Za duzo jest ifów -- łatwo o błąd i crash
-    """
-
-    DynamicR = []
-    PIMM_ = []
-    m_traj = np.empty((0, 3), float)
-    M_full = np.empty((0, SpinDevice.number_of_layers, 3), float)
-
-    t = np.linspace(0, LLGtime, LLGsteps)
-    I = I_amp / 8 * np.sin(
-        2 * np.pi * f *
-        t)  #+ 2*np.pi*plotter.IACphi/360  +   2*np.pi*Ry0[0]/360)
-    Isdd = I_amp / 8 * np.sin(2 * np.pi * f * t)
-    m = np.array(m_init)
-
-    Idir = np.array([1, 0, 0])
-    CKu = SpinDevice.Ku
-    CMs = SpinDevice.Ms
-    Ckdir = (np.array(SpinDevice.kdir)).tolist()
-    if SpinDevice.number_of_layers == 1:
-        Ckdir = [cmtj.CVector(*Ckdir[0])]
-    elif SpinDevice.number_of_layers == 2:
-        Ckdir = [cmtj.CVector(*Ckdir[0]), cmtj.CVector(*Ckdir[1])]
-    elif SpinDevice.number_of_layers == 3:
-        Ckdir = [
-            cmtj.CVector(*Ckdir[0]),
-            cmtj.CVector(*Ckdir[1]),
-            cmtj.CVector(*Ckdir[2])
-        ]
-    CJu = SpinDevice.Ju
-    Cth = SpinDevice.th
-    Calpha = SpinDevice.alpha
-    Cdt = LLGtime / LLGsteps
-    CHext = cmtj.CVector(*Hext)
-    CNdemag = [
-        cmtj.CVector(SpinDevice.Ndemag2[0, 0], SpinDevice.Ndemag2[0, 1],
-                     SpinDevice.Ndemag2[0, 2]),
-        cmtj.CVector(SpinDevice.Ndemag2[1, 0], SpinDevice.Ndemag2[1, 1],
-                     SpinDevice.Ndemag2[1, 2]),
-        cmtj.CVector(SpinDevice.Ndemag2[2, 0], SpinDevice.Ndemag2[2, 1],
-                     SpinDevice.Ndemag2[2, 2])
-    ]
-    if SpinDevice.number_of_layers == 1:
-        Cm_all = [cmtj.CVector(m[0, 0], m[0, 1], m[0, 2])]
-    elif SpinDevice.number_of_layers == 2:
-        Cm_all = [
-            cmtj.CVector(m[0, 0], m[0, 1], m[0, 2]),
-            cmtj.CVector(m[1, 0], m[1, 1], m[1, 2])
-        ]
-    elif SpinDevice.number_of_layers == 3:
-        Cm_all = [
-            cmtj.CVector(m[0, 0], m[0, 1], m[0, 2]),
-            cmtj.CVector(m[1, 0], m[1, 1], m[1, 2]),
-            cmtj.CVector(m[2, 0], m[2, 1], m[2, 2])
-        ]
-    CIdir = cmtj.CVector(1, 0, 0)
-    m_null = cmtj.CVector(1, 0, 0)
-    CHOe_pulse = cmtj.CVector(0, 0, 10000)
-    CHOe_null = cmtj.CVector(0, 0, 0)
-
-    for i in range(0, len(t)):
-
-        CHOe = CHOe_null
-        if I_amp == 0 and i == 0:
-            CHOe = CHOe_pulse
-        elif I_amp == 0 and i != 0:
-            CHOe = CHOe_null
-        else:
-            CHOe = cmtj.CVector(0, 5 * I[i], 0)
-
-        for layer in range(0, SpinDevice.number_of_layers):
-            if layer == 0:
-                if SpinDevice.number_of_layers == 1:
-                    Cm_bottom = m_null  # m_bottom = np.array([0, 0, 0])
-                else:
-                    Cm_bottom = Cm_all[layer + 1]  #m_bottom = m[layer + 1]
-                Cm_top = m_null  #m_top = np.array([0, 0, 0])
-            else:
-                if layer == SpinDevice.number_of_layers - 1:
-                    if SpinDevice.number_of_layers == 1:
-                        Cm_top = m_null  #m_top = np.array([0, 0, 0]) poprawiłem z Cm_bottom
-                    else:
-                        Cm_top = Cm_all[layer - 1]  #m_top = m[layer - 1]
-                    Cm_bottom = m_null  #m_bottom = np.array([0, 0, 0])
-                else:
-                    Cm_bottom = Cm_all[layer + 1]  #m_bottom = m[layer + 1]
-                    Cm_top = Cm_all[layer - 1]  #m_top = m[layer - 1]
-
-            Cm = Cm_all[layer]
-            Cm_all[layer] = cmtj.RK45(Cm, Cm_top, Cm_bottom, CHext, layer, Cdt,
-                                      CHOe, CMs, CKu, CJu, Ckdir, Cth, Calpha,
-                                      CNdemag)
-
-        if SpinDevice.number_of_layers == 1:
-            DynamicR.append(1)
-            PIMM_.append(Cm_all[0].z)
-        elif SpinDevice.number_of_layers == 2:
-            DynamicR.append(
-                cmtj.SpinDiode2Layers(CIdir, Cm_all[0], Cm_all[1], 100, 0.1))
-            PIMM_.append(Cm_all[0].z + Cm_all[1].z)
-        elif SpinDevice.number_of_layers == 3:
-            DynamicR.append(
-                cmtj.SpinDiode2Layers(CIdir, Cm_all[0], Cm_all[1], 100, 0.1))
-            PIMM_.append(Cm_all[0].z + Cm_all[1].z + Cm_all[2].z)
-
-    if I_amp == 0:
-        SD_voltage_after_bias = 0
-    else:
-        SD_voltage = -np.multiply(Isdd, DynamicR)
-        SD_voltage = butter_lowpass_filter(SD_voltage,
-                                           cutoff=10e6,
-                                           fs=1 / Cdt,
-                                           order=3)
-        SD_voltage_after_bias = np.mean(
-            SD_voltage
-        )  # butter_bandpass_filter(SD_voltage, 0.001, 1e3, 1/dt, order=4)
-    if SpinDevice.number_of_layers == 1:
-        m = np.array([np.array([Cm_all[0].x, Cm_all[0].y, Cm_all[0].z])])
-    elif SpinDevice.number_of_layers == 2:
-        m = np.array([
-            np.array([Cm_all[0].x, Cm_all[0].y, Cm_all[0].z]),
-            np.array([Cm_all[1].x, Cm_all[1].y, Cm_all[1].z])
-        ])
-    elif SpinDevice.number_of_layers == 3:
-        m = np.array([
-            np.array([Cm_all[0].x, Cm_all[0].y, Cm_all[0].z]),
-            np.array([Cm_all[1].x, Cm_all[1].y, Cm_all[1].z]),
-            np.array([Cm_all[2].x, Cm_all[2].y, Cm_all[2].z])
-        ])
-
-    m_avg = (np.matmul(
-        m.T, (np.array(SpinDevice.th) * np.array(SpinDevice.Ms)))) / sum(
-            np.array(SpinDevice.th) * np.array(SpinDevice.Ms))
-    return np.array(m), m_avg, np.array(
-        DynamicR), Cdt, SD_voltage_after_bias, m_traj, M_full, PIMM_
-
-
 class LayerStructure():
     def __init__(self, sim_num):
-
-        """
-        Poniej koniecznie w pętle zamienic
-        """
-
-        self.Ms = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["Ms"].values,
-            dtype=np.float32)
-        self.Ku = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["Ku"].values,
-            dtype=np.float32)
-        self.Ju = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["J"].values,
-            dtype=np.float32)
-        self.th = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["th"].values,
-            dtype=np.float32)
-        self.alpha = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["alpha"].values,
-            dtype=np.float32)
-        self.AMR = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["AMR"].values,
-            dtype=np.float32)
-        self.SMR = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["SMR"].values,
-            dtype=np.float32)
-        self.AHE = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["AHE"].values,
-            dtype=np.float32)
-        self.Rx0 = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["Rx0"].values,
-            dtype=np.float32)
-        self.Ry0 = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["Ry0"].values,
-            dtype=np.float32)
-        self.kdir = self.get_kdir(
+        for val in [
+                "Ms", "Ku", "J", "th", "alpha", "AMR", "SMR", "Rx0", "Ry0",
+                "w", "l"
+        ]:
+            setattr(
+                self, val,
+                np.asarray(
+                    plotter.simulationsMenegement.
+                    simulations_list["layer_params"][sim_num][val].values,
+                    dtype=np.float32))
+        self.Kdir = self.get_kdir(
             plotter.simulationsMenegement.simulations_list["layer_params"]
             [sim_num]["Kdir"].values)
         self.Ndemag2 = self.get_Ndemag(
             plotter.simulationsMenegement.simulations_list["layer_params"]
             [sim_num]["N"].values)
         self.number_of_layers = len(self.Ms)
-        self.w = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["w"].values,
-            dtype=np.float32)
-        self.l = np.array(
-            plotter.simulationsMenegement.simulations_list["layer_params"]
-            [sim_num]["l"].values,
-            dtype=np.float32)
 
     def get_kdir(self, value):
         listOfParams = []
@@ -1261,54 +1060,8 @@ class SimulationResults():
         self.Spectrogram_VSD = np.empty((0, len(Stimulus.freqs)), float)
 
 
-class postProcessing():
-    def CalcRes(self, Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
-        R_P = Rx0[0]
-        R_AP = Ry0[0]
-
-        SxAll = []
-        SyAll = []
-        w_l = w[0] / l[0]
-        # print(l,w, l_w)
-        # input()
-        for i in range(0, number_of_layers):
-            SxAll.append(1 / (Rx0[i] + Rx0[i] * AMR[i] * m[i, 0]**2 +
-                              Rx0[i] * SMR[i] * m[i, 1]**2))
-            SyAll.append(1 / (Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (w_l) *
-                              (AMR[i] + SMR[i]) * m[i, 0] * m[i, 1]))
-
-        # for i in range(0,number_of_layers):
-        #     SxAll.append(1/(   Rx0[i] + Rx0[i] * AMR[i] * m[i, 0] ** 2 + Rx0[i] * SMR[i] * m[i, 1] ** 2)       )
-        #     SyAll.append(1/(   Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (AMR[i] + SMR[i]) * m[i, 0] * m[i, 1])     )
-
-        Rx = 1 / sum(SxAll)
-        Ry = 1 / sum(SyAll)
-
-        if number_of_layers > 1:
-            Rz = R_P + (R_AP -
-                        R_P) / 2 * (1 - cos_between_arrays(m[0, :], m[1, :]))
-        else:
-            Rz = 0
-
-        return Rx, Ry, Rz
-
-
-def initVectorGen(SpinDevice, Stimulus):
-    m_init = []
-    for n in range(0, SpinDevice.number_of_layers):
-        m_init.append(normalize(Stimulus.H_sweep[0, :]))
-    return m_init
-
-
 def Simulate():
-    """
-    Ta funckcja jest za duza, trzeba ją robić
-
-    global nie jest dobrym pomyłsem
-
-    zamiast if, klasy dziedzicace ktore przyjmuja rozne zachowanie
-    w zaleznosci od backendu
-    """
+    runner = SimulationRunner()
     while 1 == 1:
         global stop
         if stop == 0:
@@ -1319,316 +1072,16 @@ def Simulate():
             print("Simulation started with backend", backend)
 
             for sim_num in list_todo:
-                SpinDevice = LayerStructure(sim_num)
-                Stimulus = SimulationStimulus(sim_num)
-                Simulation_Name = plotter.simulationsMenegement.simulations_list[
+                spin_device = LayerStructure(sim_num)
+                stimulus = SimulationStimulus(sim_num)
+                sim_name = plotter.simulationsMenegement.simulations_list[
                     "settings"][sim_num][1]
                 SimulationTimeStamp = datetime.datetime.now()
-                SimResults = SimulationResults(Stimulus=Stimulus,
-                                               SpinDevice=SpinDevice)
+                sim_results = SimulationResults(Stimulus=stimulus,
+                                                SpinDevice=spin_device)
 
-                if backend == "C++":
-                    for init in range(2):
-                        m, _, _, _, _, _, _, _ = calc_trajectoryRK45(
-                            SpinDevice=SpinDevice,
-                            m_init=initVectorGen(SpinDevice, Stimulus),
-                            Hext=Stimulus.H_sweep[0, :],
-                            f=0,
-                            I_amp=0,
-                            LLGtime=Stimulus.LLGtime,
-                            LLGsteps=Stimulus.LLGsteps)
-                    for H_it in range(0, Stimulus.H_sweep.shape[0]):
-                        USE_MULTIPROCESSING = plotter.ctrLayout.MultiprocessingCheckBox.isChecked(
-                        )
-
-                        if (USE_MULTIPROCESSING == True):
-                            pool = multiprocessing.Pool()
-                            results = []
-                            MagnStat = (pool.apply_async(
-                                calc_trajectoryRK45,
-                                args=(SpinDevice, m, Stimulus.H_sweep[H_it, :],
-                                      0, 0, Stimulus.LLGtime,
-                                      Stimulus.LLGsteps)))
-                            for f in Stimulus.freqs:
-                                results.append(
-                                    pool.apply_async(
-                                        calc_trajectoryRK45,
-                                        args=(SpinDevice, m,
-                                              Stimulus.H_sweep[H_it, :], f,
-                                              20000, Stimulus.LLGtime,
-                                              Stimulus.LLGsteps)))
-                            SD_f = list(zip(*[r.get() for r in results]))[4]
-                            pool.close()
-                            pool.join()
-                            m = MagnStat.get()[0]
-                            m_avg = MagnStat.get()[1]
-                            DynamicR = MagnStat.get()[2]
-                            mtraj = MagnStat.get()[5]
-                            PIMM_ = MagnStat.get()[7]
-
-                        if (USE_MULTIPROCESSING == False):
-                            m, m_avg, DynamicR, _, _, mtraj, m_Full, _ = calc_trajectoryRK45(
-                                SpinDevice=SpinDevice,
-                                m_init=m,
-                                Hext=Stimulus.H_sweep[H_it, :],
-                                f=0,
-                                I_amp=0,
-                                LLGtime=Stimulus.LLGtime,
-                                LLGsteps=Stimulus.LLGsteps)
-                            SD_f = []
-                            for f in Stimulus.freqs:
-                                _, _, _, _, SD_voltage_after_bias, _, m_Full, PIMM_ = calc_trajectoryRK45(
-                                    SpinDevice=SpinDevice,
-                                    m_init=m,
-                                    Hext=Stimulus.H_sweep[H_it, :],
-                                    f=f,
-                                    I_amp=20000,
-                                    LLGtime=Stimulus.LLGtime,
-                                    LLGsteps=Stimulus.LLGsteps)
-                                SD_f.append(SD_voltage_after_bias)
-
-                        SimResults.Spectrogram_VSD = np.concatenate(
-                            (SimResults.Spectrogram_VSD, [SD_f]), axis=0)
-                        yf = abs(fft(PIMM_))
-                        SimResults.Spectrogram_data = np.concatenate(
-                            (SimResults.Spectrogram_data,
-                             np.array([yf[0:(len(yf) // 2)]])),
-                            axis=0)
-                        SimResults.Mlayers = np.concatenate(
-                            (SimResults.Mlayers, np.array([m])), axis=0)
-                        SimResults.M_avg = np.concatenate(
-                            (SimResults.M_avg, np.array([m_avg])), axis=0)
-                        SimResults.H.append(
-                            ((Stimulus.H_sweep[H_it][0])**2 +
-                             (Stimulus.H_sweep[H_it][1])**2 +
-                             (Stimulus.H_sweep[H_it][2])**2)**0.5)
-                        SimResults.Hmag_out.append(Stimulus.Hmag[H_it])
-
-                        PostProcessing = postProcessing()
-                        Rx, Ry, Rz = PostProcessing.CalcRes(
-                            SpinDevice.Rx0, SpinDevice.Ry0, SpinDevice.AMR,
-                            SpinDevice.AHE, SpinDevice.SMR, m,
-                            SpinDevice.number_of_layers, SpinDevice.l,
-                            SpinDevice.w)
-                        SimResults.Rx.append(Rx)
-                        SimResults.Ry.append(Ry)
-                        SimResults.Rz.append(Rz)
-
-                        data = np.array([
-                            SimResults.Hmag_out[:], SimResults.M_avg[:, 0],
-                            SimResults.M_avg[:, 1], SimResults.M_avg[:, 2],
-                            SimResults.Rx[:], SimResults.Ry[:],
-                            SimResults.Rz[:]
-                        ]).T
-                        progres = 100 * (H_it +
-                                         1) / (Stimulus.H_sweep.shape[0])
-
-                        if stop == 1:
-                            break
-
-                        plotter.simulationsMenegement.simulations_list[
-                            "results"].pop(sim_num)
-                        plotter.simulationsMenegement.simulations_list[
-                            "settings"].pop(sim_num)
-                        plotter.simulationsMenegement.simulations_list[
-                            "results"].insert(
-                                sim_num, {
-                                    "MR": data,
-                                    "SD_freqs": Stimulus.freqs,
-                                    "SD": SimResults.Spectrogram_VSD,
-                                    "PIMM_freqs": Stimulus.PIMM_delta_f,
-                                    "PIMM": SimResults.Spectrogram_data,
-                                    "traj": mtraj,
-                                    "mode": Stimulus.mode
-                                })
-                        plotter.simulationsMenegement.simulations_list[
-                            "settings"].insert(
-                                sim_num,
-                                ["X", Simulation_Name, "In process..."])
-                        curve.put((progres, {
-                            "MR": data,
-                            "SD_freqs": Stimulus.freqs,
-                            "SD": SimResults.Spectrogram_VSD,
-                            "PIMM_freqs": Stimulus.PIMM_delta_f,
-                            "PIMM": SimResults.Spectrogram_data,
-                            "traj": mtraj,
-                            "mode": Stimulus.mode
-                        }))
-
-                elif backend == "Docker":
-
-                    SpinDevice = LayerStructure(sim_num)
-                    Stimulus = SimulationStimulus(sim_num)
-                    Simulation_Name = plotter.simulationsMenegement.simulations_list[
-                        "settings"][sim_num][1]
-                    SimulationTimeStamp = datetime.datetime.now()
-                    SimResults = SimulationResults(Stimulus=Stimulus,
-                                                   SpinDevice=SpinDevice)
-
-                    url = "http://localhost:8080/queue"
-
-                    headers = {'Content-Type': 'application/json'}
-
-                    payloadNew = {
-                        "task":
-                        "vsd",
-                        "Rp":
-                        100,
-                        "Rap":
-                        105,
-                        "parameters": {
-                            "threads": 4,
-                            "phase": 0,
-                            "fmax": Stimulus.fmax.tolist(),
-                            "fmin": Stimulus.fmin.tolist(),
-                            "fsteps": Stimulus.fsteps.tolist(),
-                            "Vmin": Stimulus.Hmin.tolist(),
-                            "Vmax": Stimulus.Hmax.tolist(),
-                            "mode": "mag",
-                            "Hmag": 0,
-                            "steps": Stimulus.STEPS.tolist(),
-                            "HOe": 397.88,
-                            "HOePulseAmplitude": 800,
-                            "pulseStart": 0e-9,
-                            "pulseStop": 0.1e-9,
-                            "HOedir": [0, 1, 0],
-                            "theta": Stimulus.ThetaMin.tolist(),
-                            "phi": Stimulus.PhiMin.tolist(),
-                            "time": Stimulus.LLGtime.tolist(),
-                            "tStep": Stimulus.LLGtime / Stimulus.LLGsteps,
-                            "tWrite": Stimulus.LLGtime / Stimulus.LLGsteps,
-                            "tStart": 3e-9,
-                            "power": 10e-6
-                        },
-                        "drivers": [{
-                            "object": "anisotropy",
-                            "layer": "bottom",
-                            "subtype": "constant",
-                            "constantValue": SpinDevice.Ku[0].tolist(),
-                        }, {
-                            "object": "anisotropy",
-                            "layer": "free",
-                            "subtype": "constant",
-                            "constantValue": SpinDevice.Ku[1].tolist(),
-                        }, {
-                            "object": "IEC",
-                            "layer": "bottom",
-                            "subtype": "constant",
-                            "constantValue": SpinDevice.Ju[0].tolist(),
-                        }, {
-                            "object": "IEC",
-                            "layer": "free",
-                            "subtype": "constant",
-                            "constantValue": SpinDevice.Ju[1].tolist(),
-                        }],
-                        "layers": [{
-                            "id":
-                            "bottom",
-                            "mag": [0, 0, 1],
-                            "anis":
-                            SpinDevice.kdir[0].tolist(),
-                            "Ms":
-                            SpinDevice.Ms[0].tolist() * 795774.71,
-                            "thickness":
-                            SpinDevice.th[0].tolist(),
-                            "cellSurface":
-                            1e-7,
-                            "demagTensor": [[0, 0, 0], [0, 0, 0], [0, 0, 1]],
-                            "dipoleTensor": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                            "temperature":
-                            0,
-                            "includeSTT":
-                            False,
-                            "damping":
-                            SpinDevice.alpha[0].tolist(),
-                            "currentDensity":
-                            0,
-                            "SlonczewskiSpacerLayerParameter":
-                            1,
-                            "beta":
-                            0,
-                            "spinPolarisation":
-                            0
-                        }, {
-                            "id":
-                            "free",
-                            "mag": [0, 0, 1],
-                            "anis":
-                            SpinDevice.kdir[1].tolist(),
-                            "Ms":
-                            SpinDevice.Ms[1].tolist() * 795774.71,
-                            "thickness":
-                            SpinDevice.th[1].tolist(),
-                            "cellSurface":
-                            1e-7,
-                            "demagTensor": [[0, 0, 0], [0, 0, 0], [0, 0, 1]],
-                            "dipoleTensor": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                            "temperature":
-                            0,
-                            "includeSTT":
-                            False,
-                            "damping":
-                            SpinDevice.alpha[1].tolist(),
-                            "currentDensity":
-                            0,
-                            "SlonczewskiSpacerLayerParameter":
-                            1,
-                            "beta":
-                            0,
-                            "spinPolarisation":
-                            0
-                        }]
-                    }
-
-                    Vmix, f_SD, h = task_runner.run_task_json(
-                        payloadNew, task_runner.compose_vsd_spectrogram)
-                    payloadNew["task"] = "pim"
-                    payloadNew["HOedir"] = [0, 0, 1]
-                    del payloadNew["Rp"]
-                    del payloadNew["Rap"]
-                    payloadNew["Rx0"] = [80, 80]
-                    payloadNew["Ry0"] = [0, 0]
-                    payloadNew["AMR"] = [0.001, 0.001]
-                    payloadNew["AHE"] = [0.1, 0.1]
-                    payloadNew["SMR"] = [-0.002, -0.002]
-                    # fields, freqs, np.asarray(z_free), np.asarray(z_bottom), np.asarray(res), np.asarray(mag1), np.asarray(mag2)
-                    h, f_PIMM, Z1, Z2, R, M1, M2 = task_runner.run_task_json(
-                        payloadNew, task_runner.compose_max_PIM)
-
-                    print("finished")
-                    M_avg = (M1 + M2) / 2
-                    Z = Z1 + Z2
-                    data = np.array([
-                        h, M_avg[:, 0], M_avg[:, 1], M_avg[:, 2], R[:, 0],
-                        R[:, 1], R[:, 2]
-                    ]).T
-
-                    SimResults.Spectrogram_data = Z
-                    SimResults.Spectrogram_VSD = Vmix.T
-                plotter.simulationsMenegement.simulations_list["results"].pop(
-                    sim_num)
-                plotter.simulationsMenegement.simulations_list["settings"].pop(
-                    sim_num)
-                plotter.simulationsMenegement.simulations_list[
-                    "results"].insert(
-                        sim_num, {
-                            "MR": data,
-                            "SD_freqs": Stimulus.freqs,
-                            "SD": SimResults.Spectrogram_VSD,
-                            "PIMM_freqs": Stimulus.PIMM_delta_f,
-                            "PIMM": SimResults.Spectrogram_data,
-                            "traj": mtraj,
-                            "mode": Stimulus.mode
-                        })
-                plotter.simulationsMenegement.simulations_list[
-                    "settings"].insert(
-                        sim_num,
-                        ["X", Simulation_Name,
-                         str(SimulationTimeStamp)])
-                plotter.simulationsMenegement.print_and_color_table()
-                plotter.simulationsMenegement.print_and_color_table()
-
-            stop = 1
+                runner.run_simulation(spin_device, stimulus, sim_results,
+                                      plotter, sim_num, curve, sim_name)
 
         else:
             time.sleep(0.001)
