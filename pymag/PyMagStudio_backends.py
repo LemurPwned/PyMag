@@ -7,7 +7,6 @@ from threading import Thread
 import cmtj
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
-    
 import os.path
 import pickle
 import sys
