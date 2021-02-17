@@ -1,15 +1,15 @@
+import datetime
+from pymag.gui.core import LayerStructure, SimulationResults, SimulationStimulus
 import cmtj
-
+import time as tm
 import numpy as np
 from scipy import fft
 from pymag.engine.utils import butter_lowpass_filter, cos_between_arrays, normalize
 import multiprocessing
+import time as tm
 
 
 class Solver:
-    def __init__(self) -> None:
-        pass
-
     @staticmethod
     def calc_trajectoryRK45(spin_device,
                             m_init,
@@ -26,7 +26,7 @@ class Solver:
         t = np.linspace(0, LLGtime, LLGsteps)
         I = I_amp / 8 * np.sin(
             2 * np.pi * f *
-            t)  #+ 2*np.pi*plotter.IACphi/360  +   2*np.pi*Ry0[0]/360)
+            t)  #+ 2*np.pi*self.plotter.IACphi/360  +   2*np.pi*Ry0[0]/360)
         Isdd = I_amp / 8 * np.sin(2 * np.pi * f * t)
         m = np.array(m_init)
 
@@ -132,8 +132,9 @@ class PostProcessing():
 
 
 class SimulationRunner:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, parent) -> None:
+        self.stop = False
+        self.plotter = parent
 
     def initVectorGen(SpinDevice, Stimulus):
         m_init = []
@@ -141,8 +142,8 @@ class SimulationRunner:
             m_init.append(normalize(Stimulus.H_sweep[0, :]))
         return m_init
 
-    def run_simulation(self, spin_device, stimulus, sim_results, plotter,
-                       sim_num, curve, sim_name):
+    def run_simulation(self, spin_device, stimulus, sim_results, sim_num,
+                       curve, sim_name):
         for _ in range(2):
             m, _, _, _, _, _, _, _ = Solver.calc_trajectoryRK45(
                 spin_device=spin_device,
@@ -207,22 +208,23 @@ class SimulationRunner:
             ]).T
             progres = 100 * (H_it + 1) / (stimulus.H_sweep.shape[0])
 
-            plotter.simulationsMenegement.simulations_list["results"].pop(
+            self.plotter.simulationsMenegement.simulations_list["results"].pop(
                 sim_num)
-            plotter.simulationsMenegement.simulations_list["settings"].pop(
-                sim_num)
-            plotter.simulationsMenegement.simulations_list["results"].insert(
-                sim_num, {
-                    "MR": data,
-                    "SD_freqs": stimulus.freqs,
-                    "SD": sim_results.Spectrogram_VSD,
-                    "PIMM_freqs": stimulus.PIMM_delta_f,
-                    "PIMM": sim_results.Spectrogram_data,
-                    "traj": mtraj,
-                    "mode": stimulus.mode
-                })
-            plotter.simulationsMenegement.simulations_list["settings"].insert(
-                sim_num, ["X", sim_name, "In process..."])
+            self.plotter.simulationsMenegement.simulations_list[
+                "settings"].pop(sim_num)
+            self.plotter.simulationsMenegement.simulations_list[
+                "results"].insert(
+                    sim_num, {
+                        "MR": data,
+                        "SD_freqs": stimulus.freqs,
+                        "SD": sim_results.Spectrogram_VSD,
+                        "PIMM_freqs": stimulus.PIMM_delta_f,
+                        "PIMM": sim_results.Spectrogram_data,
+                        "traj": mtraj,
+                        "mode": stimulus.mode
+                    })
+            self.plotter.simulationsMenegement.simulations_list[
+                "settings"].insert(sim_num, ["X", sim_name, "In process..."])
             curve.put((progres, {
                 "MR": data,
                 "SD_freqs": stimulus.freqs,
@@ -232,3 +234,28 @@ class SimulationRunner:
                 "traj": mtraj,
                 "mode": stimulus.mode
             }))
+
+    def run_scheduled_simulations(self):
+        while True:
+            if self.stop:
+                list_todo = self.plotter.simulationsMenegement.active_experiments
+                self.plotter.simulationsMenegement.active_experiments = []
+
+                backend = self.plotter.ctrLayout.Backend_choose.currentText()
+                print("Simulation started with backend", backend)
+
+                for sim_num in list_todo:
+                    spin_device = LayerStructure(sim_num)
+                    stimulus = SimulationStimulus(sim_num)
+                    sim_name = self.plotter.simulationsMenegement.simulations_list[
+                        "settings"][sim_num][1]
+                    SimulationTimeStamp = datetime.datetime.now()
+                    sim_results = SimulationResults(Stimulus=stimulus,
+                                                    SpinDevice=spin_device)
+
+                    self.run_simulation(spin_device, stimulus,
+                                        sim_results, sim_num,
+                                        self.plotter.get_queue(), sim_name)
+
+            else:
+                tm.sleep(0.001)

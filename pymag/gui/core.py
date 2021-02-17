@@ -1,82 +1,264 @@
-import os
-
-import pandas as pd
-import pymag.PyMagStudio_backends
 import pyqtgraph as pg
-import pyqtgraph.console
 from pymag.engine.utils import *
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QCheckBox, QComboBox, QFrame, QLabel
+from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
 from pyqtgraph.Qt import QtCore, QtGui
 
 ResultsColumns = ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz']
 
-import pyqtgraph.opengl as gl
+
+class LayerTableStimulus():
+    def __init__(self, parent):
+        layerParameters = parent.layerParameters
+        StimulusParameters = parent.StimulusParameters
+        self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
+        self.table_stimulus_params = pg.TableWidget(editable=True,
+                                                    sortable=False)
+        self.generate_stimulus_btn = QtWidgets.QPushButton()
+        self.add_btn = QtWidgets.QPushButton()
+        self.remove_button = QtWidgets.QPushButton()
+        self.LoadButton = QtWidgets.QPushButton()
+        self.SaveButton = QtWidgets.QPushButton()
+        self.add_simulation = QtWidgets.QPushButton()
+        self.generate_stimulus_btn.setText("Set stimulus \nfor all")
+        self.generate_stimulus_btn.clicked.connect(parent.set_stimulus_for_all)
+        self.add_btn.setText("Add new \nlayer")
+        self.add_btn.clicked.connect(self.add_layer)
+        self.remove_button.setText("Remove selected\n row")
+        self.remove_button.clicked.connect(self.remove_layer)
+        self.LoadButton.setText("Load params \nfrom file")
+        self.LoadButton.clicked.connect(parent.load_param_table)
+        self.SaveButton.setText("Save params \nto file")
+        self.SaveButton.clicked.connect(parent.save_params)
+        self.add_simulation.setText("Add to \nsimulation list")
+        self.add_simulation.clicked.connect(parent.add_to_simulation_list)
+        self.table_layer_params.setData(layerParameters.to_numpy())
+        self.table_layer_params.setHorizontalHeaderLabels(
+            layerParameters.columns)
+        self.table_stimulus_params.setData(StimulusParameters.to_numpy())
+        self.table_stimulus_params.setHorizontalHeaderLabels(
+            StimulusParameters.columns)
+        self.central_widget = QtGui.QWidget()
+        self.central_layout = QtGui.QVBoxLayout()
+        self.central_widget.setLayout(self.central_layout)
+        self.central_layout.addWidget(self.table_layer_params)
+        self.btn_layout = QtGui.QHBoxLayout()
+        self.btn_layout.addWidget(self.generate_stimulus_btn)
+        self.btn_layout.addWidget(self.add_btn)
+        self.btn_layout.addWidget(self.remove_button)
+        self.btn_layout.addWidget(self.LoadButton)
+        self.btn_layout.addWidget(self.SaveButton)
+        self.btn_layout.addWidget(self.add_simulation)
+        self.central_layout.addWidget(self.table_stimulus_params)
+        self.central_layout.addLayout(self.btn_layout)
+
+    def add_layer(self):
+        self.table_layer_params.addRow([
+            1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
+            0.01, 100, 120, 1
+        ])
+
+    def remove_layer(self):
+        self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
 
-class TrajectoryPlot():
-    def __init__(self):
-        self.w = gl.GLViewWidget()
-        self.init_GL_settings()
-        self.w.setBackgroundColor('w')
+class LayerStructure():
+    def __init__(self, sim_num, parent):
+        self.plotter = parent
+        for val in [
+                "Ms", "Ku", "J", "th", "alpha", "AMR", "SMR", "Rx0", "Ry0",
+                "w", "l"
+        ]:
+            setattr(
+                self, val,
+                np.asarray(
+                    self.plotter.simulation_manager.
+                    simulations_list["layer_params"][sim_num][val].values,
+                    dtype=np.float32))
+        self.Kdir = self.get_kdir(
+            self.plotter.simulation_manager.simulations_list["layer_params"]
+            [sim_num]["Kdir"].values)
+        self.Ndemag2 = self.get_Ndemag(
+            self.plotter.simulation_manager.simulations_list["layer_params"]
+            [sim_num]["N"].values)
+        self.number_of_layers = len(self.Ms)
 
-    def init_GL_settings(self):
-        self.w.opts['distance'] = 3
-        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [1, 0, 0]]),
-                                color=pg.glColor([255, 0, 0]),
-                                width=(2),
-                                antialias=True)
-        self.w.addItem(plt)
-        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [0, 1, 0]]),
-                                color=pg.glColor([0, 255, 0]),
-                                width=(2),
-                                antialias=True)
-        self.w.addItem(plt)
-        plt = gl.GLLinePlotItem(pos=np.array([[0, 0, 0], [0, 0, 1]]),
-                                color=pg.glColor([0, 0, 255]),
-                                width=(2),
-                                antialias=True)
-        self.w.addItem(plt)
-        md = gl.MeshData.sphere(rows=20, cols=20)
-        m1 = gl.GLMeshItem(meshdata=md,
-                           smooth=True,
-                           color=(0.7, 0.7, 0.7, 0.7),
-                           shader='balloon')  #, glOptions='additive'
-        m1.translate(0, 0, 0)
-        m1.scale(1, 1, 1)
-        self.w.addItem(m1)
+    def get_kdir(self, value):
+        listOfParams = []
+        for n in range(0, len(value)):
+            tmp = value[n]
+            tmp = tmp.replace("[", "").replace("]", "")
+            v_tmp = (tmp.split(" "))
+            res = np.array(list(map(float, v_tmp)))
+            res = normalize(res)
+            listOfParams.append(res)
+        return listOfParams
 
-    def pltTraj(self, traj, colory):
+    def get_Ndemag(self, value):
+        tmp = self.plotter.widget_layer_params.table_layer_params.item(
+            0, 7).text()
+        tmp = tmp.replace("[", "").replace("]", "")
+        v_tmp = (tmp.split(" "))
+        res = np.array(list(map(float, v_tmp)))
+        N = np.array([[res[0], 0, 0], [0, res[1], 0], [0, 0, res[2]]])
+        return N
 
-        # pts = traj
-        # color = [100,200,250]
-        # print(traj)
-        plt = gl.GLLinePlotItem(pos=np.array(traj),
-                                color=pg.glColor(colory),
-                                width=(0 + 1) / 10.,
-                                antialias=True)
-        self.w.addItem(plt)
 
-    def pltPoint(self, x, y, z):
+class SimulationStimulus():
+    def __init__(self, sim_num, parent):
+        data = parent.simulations_management.results_list_JSON[
+            "simulation_params"][sim_num]
 
-        md = gl.MeshData.sphere(rows=10, cols=10)
-        m1 = gl.GLMeshItem(meshdata=md,
-                           smooth=True,
-                           color=(1, 0, 0, 0.5),
-                           shader='balloon',
-                           glOptions='additive')
-        m1.translate(x, y, z)
-        m1.scale(0.05, 0.05, 0.05)
-        self.w.addItem(m1)
+        # self.theta = np.array(data["HTheta"].values[0], dtype=np.float32)
+        self.back = np.array(data["Hback"].values[0], dtype=np.int)
+        # self.phi = np.array(data["HPhi"].values[0], dtype=np.float32)
 
-    def clear(self):
-        for item in self.w.items:
-            item._setView(None)
-        self.w.items = []
+        if data["H"].values[1] != "-" and data["HPhi"].values[
+                1] == "-" and data["HTheta"].values[1] == "-":
+            self.mode = "H"
+            self.STEPS = np.array(data["H"].values[1], dtype=np.float32)
+            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
+            self.Hmax = np.array(data["H"].values[2], dtype=np.float32)
+            self.ThetaMin = np.array(data["HTheta"].values[0],
+                                     dtype=np.float32)
+            self.ThetaMax = np.array(data["HTheta"].values[0],
+                                     dtype=np.float32)
+            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
+            self.PhiMax = np.array(data["HPhi"].values[0], dtype=np.float32)
 
-        self.w.update()
-        self.init_GL_settings()
+        elif data["HPhi"].values[1] != "-" and data["H"].values[
+                1] == "-" and data["HTheta"].values[1] == "-":
+            self.mode = "phi"
+            self.STEPS = np.array(data["HPhi"].values[1], dtype=np.float32)
+            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
+            self.Hmax = np.array(data["H"].values[0], dtype=np.float32)
+            self.ThetaMin = np.array(data["HTheta"].values[0],
+                                     dtype=np.float32)
+            self.ThetaMax = np.array(data["HTheta"].values[0],
+                                     dtype=np.float32)
+            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
+            self.PhiMax = np.array(data["HPhi"].values[2], dtype=np.float32)
+        elif data["HTheta"].values[1] != "-" and data["H"].values[
+                1] == "-" and data["HPhi"].values[1] == "-":
+            self.mode = "theta"
+            self.STEPS = np.array(data["HTheta"].values[1], dtype=np.float32)
+            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
+            self.Hmax = np.array(data["H"].values[0], dtype=np.float32)
+            self.ThetaMin = np.array(data["HTheta"].values[0],
+                                     dtype=np.float32)
+            self.ThetaMax = np.array(data["HTheta"].values[2],
+                                     dtype=np.float32)
+            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
+            self.PhiMax = np.array(data["HPhi"].values[0], dtype=np.float32)
+        else:
+            print("Stimulus error")
+        self.H_sweep, self.Hmag = get_stimulus2(self.Hmin, self.Hmax,
+                                                self.ThetaMin, self.ThetaMax,
+                                                self.PhiMin, self.PhiMax,
+                                                self.STEPS, self.back,
+                                                self.mode)
+        self.fmin = np.array(data["f"].values[0], dtype=np.float32)
+        self.fsteps = np.array(data["f"].values[1], dtype=np.int)
+        self.fmax = np.array(data["f"].values[2], dtype=np.float32)
+        self.LLGtime = np.array(data["LLGtime"].values[0], dtype=np.float32)
+        self.LLGsteps = int(
+            np.array(data["LLGsteps"].values[0], dtype=np.float32))
+        self.freqs = np.linspace(self.fmin, self.fmax, self.fsteps)
+        self.spectrum_len = (self.LLGsteps) // 2
+        self.PIMM_delta_f = 1 / self.LLGtime
+        self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
+
+
+class SimulationResults():
+    def __init__(self, Stimulus, SpinDevice):
+        self.H = []
+        self.Rx = []
+        self.Ry = []
+        self.Rz = []
+        self.Hmag_out = []
+        self.Mlayers = np.empty((0, SpinDevice.number_of_layers, 3), float)
+        self.M_avg = np.empty((0, 3), float)
+        self.R_net = np.empty((0, 3), float)
+        self.Spectrogram_data = np.empty((0, Stimulus.spectrum_len), float)
+        self.Spectrogram_VSD = np.empty((0, len(Stimulus.freqs)), float)
+
+
+class ResultsTable():
+    def __init__(self, parent):
+        self.plotter = parent
+        self.active_highlighted = None
+        self.active_list = []
+        self.results_table = pg.TableWidget(editable=False, sortable=False)
+        self.results_list_JSON = {
+            "results": [],
+            "settings": [],
+            "layer_params": [],
+            "simulation_params": []
+        }
+        self.remove_btn = QtWidgets.QPushButton()
+        self.remove_btn.setText("Remove selected result")
+        self.remove_btn.clicked.connect(self.remove_layer)
+        self.remove_btn.setEnabled(False)
+        self.export_btn = QtWidgets.QPushButton()
+        self.export_btn.setText("Export selected to .csv")
+        self.export_btn.clicked.connect(self.export_selected)
+        self.export_btn.setEnabled(False)
+        self.central_widget = QtGui.QWidget()
+        self.central_layout = QtGui.QGridLayout()
+        self.central_widget.setLayout(self.central_layout)
+        self.central_layout.addWidget(self.results_table)
+        self.central_layout.addWidget(self.remove_btn)
+        self.central_layout.addWidget(self.export_btn)
+        self.results_table.cellDoubleClicked.connect(self.clicked2x)
+
+    def remove_layer(self):
+        for n in self.active_list:
+            self.results_list_JSON["settings"].pop(n)
+            self.results_list_JSON["results"].pop(n)
+            self.results_list_JSON["layer_params"].pop(n)
+            self.results_list_JSON["simulation_params"].pop(n)
+            self.results_table.setData(self.results_list_JSON["settings"])
+        self.active_list = []
+        self.plotter.replot_results()
+        self.print_and_color_table()
+
+    def export_selected(self):
+        self.plotter.replot_results(self.active_highlighted, save=1)
+
+    def clicked2x(self, parent):
+        n = self.results_table.currentRow()
+        m = int(self.results_table.rowCount())
+        if n in self.active_list:
+            self.active_list.remove(n)
+        else:
+            self.active_list.append(n)
+        if not self.active_list:
+            self.remove_btn.setEnabled(False)
+            self.export_btn.setEnabled(False)
+        else:
+            self.remove_btn.setEnabled(True)
+            self.export_btn.setEnabled(True)
+
+        for i in range(0, m):
+            if i in self.active_list:
+                self.results_list_JSON["settings"][i][0] = "V"
+            else:
+                self.results_list_JSON["settings"][i][0] = "X"
+        self.print_and_color_table()
+        self.plotter.replot_results()
+
+    def print_and_color_table(self):
+        m = int(self.results_table.rowCount())
+        self.results_table.setData(self.results_list_JSON["settings"])
+        self.results_table.setHorizontalHeaderLabels(
+            ["Select", "Type", "Timestamp"])
+        for i in range(0, m):
+            if i in self.active_list:
+                self.results_table.item(i, 0).setBackground(
+                    QtGui.QColor(255, 0, 0))  ##dosnt work!
+            else:
+                self.results_table.item(i, 0).setBackground(
+                    QtGui.QColor(255, 255, 255))
 
 
 class paramsAndStimulus():
@@ -134,353 +316,100 @@ class paramsAndStimulus():
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
 
-class Res_plot():
-    def __init__(self):
-        self.plotsRes = pg.GraphicsLayoutWidget()
-        self.plotsRes.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plotsRes.nextRow()
-        self.Rx = self.plotsRes.addPlot()
-        self.Rx.setLabel('left', "Rxx", units='\u03A9')
-        self.Rx.enableAutoRange('x', True)
-        self.Rx.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsRes.nextRow()
-        self.Ry = self.plotsRes.addPlot()
-        self.Ry.setLabel('left', "Rxy", units='\u03A9')
-        self.Ry.enableAutoRange('x', True)
-        self.Ry.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsRes.nextRow()
-        self.Rz = self.plotsRes.addPlot()
-        self.Rz.setLabel('bottom', "Field", units=H_unit)
-        self.Rz.setLabel('left', "Rzz CPP G(T)MR", units='\u03A9')
-        self.Rz.enableAutoRange('x', True)
-        self.Rz.showGrid(x=True, y=True, alpha=0.6)
-        self.Rx.setXLink(self.Ry)
-        self.Ry.setXLink(self.Rz)
-        self.plotsRes.setBackground('w')
-
-    def clearPlot(self):
-        self.Rx.clear()
-        self.Ry.clear()
-        self.Rz.clear()
-
-    def setMode(self, mode):
-        if mode == "H":
-            self.Rz.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.Rz.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.Rz.setLabel('bottom', "Theta angle", units="deg")
-
-
-class Line_shape():
-    def __init__(self):
-        self.plotsLS = pg.GraphicsLayoutWidget()
-        self.plotsLS.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.legenda = 0
-        self.LS = self.plotsLS.addPlot()
-        self.LS.setLabel('bottom', "Field", units=H_unit)
-        self.LS.setLabel('left',
-                         "SD voltage with artificial offset",
-                         units='V')
-        self.LS.enableAutoRange('x', True)
-        self.LS.showGrid(x=True, y=True, alpha=0.6)
-        ###RAPORT
-        # self.a = self.LS.addLegend()
-        self.plotsLS.setBackground('w')
-
-    def update(self, spectrogramData, deltaf, H):
-        self.spectrogramData = spectrogramData
-        self.deltaf = deltaf
-        self.H = H
-        self.clearPlot()
-        offset = 0
-        number_of_freqs = spectrogramData.shape[1]
-        a = 4
-        b = 24
-        for ff in range(a, b):
-            curr_LS = self.spectrogramData[:, ff] - np.min(
-                self.spectrogramData[:, ff])
-            self.LS.plot(self.H,
-                         curr_LS + offset,
-                         pen={
-                             'color': (0, int(
-                                 ((ff - a) / (b - a)) * 255), 255 - int(
-                                     ((ff - a) / (b - a)) * 255), 255),
-                             'width':
-                             2
-                         })
-            offset = offset + (np.max(curr_LS) - np.min(curr_LS)) * 1.05
-
-    def update_experimental(self, spectrogramData, deltaf, H):
-        df = pd.read_csv("4651_Pymag/8/SD.dat", sep="\t")
-        self.spectrogramData = np.array(df.values, dtype=np.float32)
-        self.H = np.array(df["H"].values)
-        self.deltaf = 2e9
-        self.clearPlot()
-        offset = 0
-        number_of_freqs = spectrogramData.shape[1]
-        a = 0
-        b = 24
-        for ff in range(a, b):
-            curr_LS = self.spectrogramData[:, ff] - np.min(
-                self.spectrogramData[:, ff])
-            self.LS.plot(self.H,
-                         curr_LS + offset,
-                         pen={
-                             'color': (0, int(
-                                 ((ff - a) / (b - a)) * 255), 255 - int(
-                                     ((ff - a) / (b - a)) * 255), 255),
-                             'width':
-                             2
-                         })
-            offset = offset + (np.max(curr_LS) - np.min(curr_LS)) * 1.05
-
-    def setMode(self, mode):
-        if mode == "H":
-            self.LS.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.LS.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.LS.setLabel('bottom', "Theta angle", units="deg")
-
-    def clearPlot(self):
-        # self.legenda = 0
-        self.LS.clear()
-
-
-class Mag_plot():
-    def __init__(self):
-        self.plotsMag = pg.GraphicsLayoutWidget()
-        self.plotsMag.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plotsMag.nextRow()
-        self.Mx = self.plotsMag.addPlot()
-        self.Mx.setLabel('left', "Mx", units='T')
-        self.Mx.enableAutoRange('x', True)
-        self.Mx.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsMag.nextRow()
-        self.My = self.plotsMag.addPlot()
-        self.My.setLabel('left', "My", units='T')
-        self.My.enableAutoRange('x', True)
-        self.My.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsMag.nextRow()
-        self.Mz = self.plotsMag.addPlot()
-        self.Mz.setLabel('bottom', "Field", units=H_unit)
-        self.Mz.setLabel('left', "Mz", units='T')
-        self.Mz.enableAutoRange('x', True)
-        self.Mz.showGrid(x=True, y=True, alpha=0.6)
-        self.Mx.setXLink(self.My)
-        self.My.setXLink(self.Mz)
-        self.plotsMag.setBackground('w')
-
-    def clearPlot(self):
-        self.Mx.clear()
-        self.My.clear()
-        self.Mz.clear()
-
-    def setMode(self, mode):
-        if mode == "H":
-            self.Mz.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.Mz.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.Mz.setLabel('bottom', "Theta angle", units="deg")
-
-
-class plotDynamics():
-    def __init__(self):
-        self.plotsDynamics_view = pg.GraphicsLayoutWidget()
-        self.plotsDynamics_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plotsSpectrum = self.plotsDynamics_view.addPlot(title="Spectrum")
-        self.plotsSpectrum.setLabel('left', "Frequency", units='Hz')
-        self.plotsSpectrum.setLabel('bottom', "Field", units='A/m')
-        self.imageViewSpectrum = pg.ImageView()
-        self.plotsDynamics_view.setBackground('w')
-        self.imageSpectrum = self.imageViewSpectrum.getImageItem()
-        self.plotsSpectrum.addItem(self.imageSpectrum)
-        self.plotsSpectrum.setYRange(0, 20e9, padding=0)
-        self.plotsSpectrum.showGrid(x=True, y=True, alpha=0.6)
-        self.imageSpectrum.resetTransform()
-        self.imageSpectrum.translate(-20e3, 0)
-        self.imageSpectrum.scale((20e3 + 20e3) / 20, 1 / 20e9)
-        self.hist_SD = pg.HistogramLUTItem()
-        self.hist_SD.setImageItem(self.imageSpectrum)
-        self.hist_SD.vb.disableAutoRange()
-        colors = [(22, 0, 70), (47, 0, 135), (98, 0, 164), (146, 0, 166),
-                  (186, 47, 138), (216, 91, 105), (238, 137, 73),
-                  (246, 189, 39), (228, 250, 211)]
-        cmap = pg.ColorMap(pos=np.linspace(0.0, 1.0, 9), color=colors)
-        self.imageViewSpectrum.setColorMap(cmap)
-        self.hist_SD.gradient.setColorMap(cm=cmap)
-        self.inf1_SD = pg.InfiniteLine(movable=True,
-                                       angle=0,
-                                       label='x={value:0.2f}',
-                                       pos=[0, 1e9],
-                                       bounds=[0, 100e9],
-                                       labelOpts={
-                                           'position': 5e9,
-                                           'color': (200, 200, 100),
-                                           'fill': (200, 200, 200, 50),
-                                           'movable': True
-                                       })
-        self.inf1_SD.sigPositionChanged.connect(self.update_roi_loc)
-        self.plotsSpectrum.addItem(self.inf1_SD)
-        self.plotsDynamics_view.addItem(self.hist_SD)
-        self.hist_SD.setLevels(-0.001, 0.01)
-        self.hist_SD.autoHistogramRange()
-
-    def init_setup(self, Xmin, Xmax, Xsteps, dy):
-        self.imageSpectrum.clear()
-        self.imageSpectrum.resetTransform()
-        self.imageSpectrum.translate(Xmin, 0)
-        self.imageSpectrum.scale((Xmax - Xmin) / Xsteps, dy)
-
-    def update(self, spectrogramData, deltaf, H, rm_bkg=0):
-        if rm_bkg == 1:
-            self.spectrogramData = spectrogramData
-            self.spectrogramData2 = spectrogramData * 0
-            for ff in range(0, spectrogramData.shape[1]):
-                self.spectrogramData2[:,
-                                      ff] = spectrogramData[:, ff] - np.median(
-                                          spectrogramData[:, ff])
-                self.imageSpectrum.setImage(
-                    self.spectrogramData2, autoLevels=False
-                )  # , autoHistogramRange=False,levels=[3, 6])
-            del self.spectrogramData2
-        else:
-            self.spectrogramData = spectrogramData
-            self.imageSpectrum.setImage(self.spectrogramData, autoLevels=False)
-        self.deltaf = deltaf
-        self.H = H
-        # self.setMode(mode)
-        self.update_roi_loc()
-
-    def setMode(self, mode):
-        if mode == "H":
-            self.plotsSpectrum.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.plotsSpectrum.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.plotsSpectrum.setLabel('bottom', "Theta angle", units="deg")
-
-    def update_roi_loc(self):
-        try:
-            self.plotLineShape.clear()
-            self.plotLineShape.plot(
-                self.H,
-                self.spectrogramData[:,
-                                     int(self.inf1_SD.value() / self.deltaf)],
-                pen=(255, 255, 255))
-        except:
-            pass
-
-    def clearPlot(self):
-        self.imageSpectrum.clear()
-        self.plotsSpectrum.clear()  ########
-        try:
-            self.plotsSpectrum.addItem(self.inf1_SD)
-            self.plotsSpectrum.addItem(self.imageSpectrum)
-            self.plotLineShape.clear()
-        except:
-            pass
-        try:
-            del (self.spectrogramData)
-        except:
-            pass
-
-
-class addMenuBar():
+class AddMenuBar():
     def __init__(self, parent):
         self.menubar = QtWidgets.QMenuBar()
-        self.File_menu = self.menubar.addMenu("File")
+        self.file_menu = self.menubar.addMenu("File")
 
-        self.File_menu.addAction("Save layer params").triggered.connect(
-            parent.saveParams)
-        self.File_menu.addAction("Load layer params").triggered.connect(
-            parent.loadParams)
-        self.File_menu.addAction(
+        self.file_menu.addAction("Save layer params").triggered.connect(
+            parent.save_params)
+        self.file_menu.addAction("Load layer params").triggered.connect(
+            parent.load_param_table)
+        self.file_menu.addAction(
             "Load multiple layer params").triggered.connect(
-                parent.loadMultipleLayerParams)
-        self.File_menu.addSeparator()
-        self.File_menu.addAction("Open results from csv").triggered.connect(
-            parent.loadResults)
-        self.File_menu.addAction("Save results as csv").triggered.connect(
-            parent.saveResults)
+                parent.load_multiple)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction("Open results from csv").triggered.connect(
+            parent.load_results)
+        self.file_menu.addAction("Save results as csv").triggered.connect(
+            parent.save_results)
 
-        self.File_menu.addAction(
-            "Save simulation report as docx").triggered.connect(
-                parent.saveReport)
-        self.File_menu.addAction("Append results to pptx").triggered.connect(
-            parent.appendPptx)
-        self.File_menu.addAction("Save all to binary file").triggered.connect(
-            parent.saveBinary)
-        self.File_menu.addAction(
-            "Load all from binary file").triggered.connect(parent.loadBinary)
-        self.File_menu.addSeparator()
-        self.exitButton = self.File_menu.addAction("Exit").triggered.connect(
-            parent.endProgram)
+        self.file_menu.addAction("Save all to binary file").triggered.connect(
+            parent.save_binary)
+        self.file_menu.addAction(
+            "Load all from binary file").triggered.connect(parent.load_binary)
+        self.file_menu.addSeparator()
+        self.exit_btn = self.file_menu.addAction("Exit").triggered.connect(
+            parent.end_program)
 
-        self.SettingsMenu = self.menubar.addMenu("Settings")
-        self.SettingsMenu.addAction("Change Settings").triggered.connect(
-            parent.newSettings)
-        self.SettingsMenu.addSeparator()
-        self.WindowMenu = self.menubar.addMenu("Window")
-        self.WindowMenu.addAction(
-            "Switch full/normal screen").triggered.connect(
-                parent.fullScreenMode)
-        self.WindowMenu.addAction("Save dock state").triggered.connect(
-            parent.saveDockState)
-        self.WindowMenu.addAction("Load dock state").triggered.connect(
-            parent.loadDockState)
-        self.HelpMenu = self.menubar.addMenu("Help")
-        self.HelpMenu.addAction("About").triggered.connect(parent.newAbout)
+        self.window_menu = self.menubar.addMenu("Window")
+        self.window_menu.addAction(
+            "Switch full/normal screen").triggered.connect(parent.full_screen)
+        self.window_menu.addAction("Save dock state").triggered.connect(
+            parent.save_dock_state)
+        self.window_menu.addAction("Load dock state").triggered.connect(
+            parent.load_dock_state)
+        self.help_menu = self.menubar.addMenu("Help")
+        self.help_menu.addAction("About").triggered.connect(parent.about)
 
-        self.Simulation_Name_Label = QLabel("Simulation\nName:")
-        self.Simulation_Name = QtWidgets.QLineEdit()
+        self.simulation_name_label = QLabel("Simulation\nName:")
+        self.simulation_name = QtWidgets.QLineEdit()
 
-        self.startButton = QtWidgets.QPushButton()
-        self.stopButton = QtWidgets.QPushButton()
-        self.startButton.setText("Start")
-        self.stopButton.setText("Stop")
-        self.stopButton.setText("Stop")
-        self.startButton.clicked.connect(parent.btn_clk)
-        self.stopButton.clicked.connect(parent.stop_clk)
+        self.start_btn = QtWidgets.QPushButton()
+        self.stop_btn = QtWidgets.QPushButton()
+        self.start_btn.setText("Start")
+        self.stop_btn.setText("Stop")
+        self.stop_btn.setText("Stop")
+        self.start_btn.clicked.connect(parent.btn_clk)
+        self.stop_btn.clicked.connect(parent.stop_clk)
 
-        self.MultiprocessingLabel = QLabel("MP")
-        self.Backend_choose = QComboBox()
+        self.multiprocessing_label = QLabel("MP")
+        self.backend_select = QComboBox()
 
-        self.Backend_choose.addItem("C++")
-        self.Backend_choose.addItem("Docker")
-        self.Backend_choose.addItem("Python")
-        self.BackEndLabel = QLabel("Backend:")
+        self.backend_select.addItem("C++")
+        self.backend_select.addItem("Docker")
+        self.backend_select.addItem("Python")
+        self.back_end_label = QLabel("Backend:")
 
-        self.MultiprocessingCheckBox = QCheckBox()
-        self.MultiprocessingCheckBox.setObjectName("Multiprocessing")
-        self.MultiprocessingCheckBox.setChecked(True)
+        self.multiprocessing_select = QCheckBox()
+        self.multiprocessing_select.setObjectName("Multiprocessing")
+        self.multiprocessing_select.setChecked(True)
 
         self.progress = QtWidgets.QProgressBar()
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
 
-        self.ctrlWidget = QtGui.QWidget()
-        self.ctrLayout = QtGui.QVBoxLayout()
-        self.ctrlWidget.setLayout(self.ctrLayout)
-        self.ctrLayout.addWidget(self.menubar)
-        self.ctrLayout.addWidget(self.progress)
+        self.central_widget = QtGui.QWidget()
+        self.central_layout = QtGui.QVBoxLayout()
+        self.central_widget.setLayout(self.central_layout)
+        self.central_layout.addWidget(self.menubar)
+        self.central_layout.addWidget(self.progress)
 
         self.btn_layout = QtGui.QHBoxLayout()
+        self.btn_layout.addWidget(self.start_btn)
+        self.btn_layout.addWidget(self.simulation_name_label)
+        self.btn_layout.addWidget(self.simulation_name)
 
-        self.btn_layout.addWidget(self.startButton)
-        self.btn_layout.addWidget(self.Simulation_Name_Label)
-        self.btn_layout.addWidget(self.Simulation_Name)
+        self.btn_layout.addWidget(self.stop_btn)
+        # self.btn_layout.addWidget(self.clear_plotsButton)
+        self.btn_layout.addWidget(self.multiprocessing_label)
+        self.btn_layout.addWidget(self.multiprocessing_select)
+        self.btn_layout.addWidget(self.back_end_label)
+        self.btn_layout.addWidget(self.backend_select)
 
-        self.btn_layout.addWidget(self.stopButton)
-        # self.btn_layout.addWidget(self.clearPlotButton)
-        self.btn_layout.addWidget(self.MultiprocessingLabel)
-        self.btn_layout.addWidget(self.MultiprocessingCheckBox)
-        self.btn_layout.addWidget(self.BackEndLabel)
-        self.btn_layout.addWidget(self.Backend_choose)
+        self.central_layout.addLayout(self.btn_layout)
 
-        self.ctrLayout.addLayout(self.btn_layout)
+
+class About(QtGui.QDialog):
+    def __init__(self, parent):
+        super(About, self).__init__()
+        self.setWindowTitle(PyMagVersion + " - About")
+        self.setFixedSize(200, 100)
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout)
+        self.about_label = QtWidgets.QLabel(PyMagVersion + "\n" + PyMagDate)
+        self.layout.addWidget(self.about_label)
+        self.close()
 
 
 class LabeledDoubleSpinBox():
@@ -543,16 +472,4 @@ class Settings(QtGui.QDialog):
         self.CheckBoxLayout.addWidget(self.STOCheckBox)
         self.layout.addLayout(self.CheckBoxLayout)
 
-        self.close()
-
-
-class About(QtGui.QDialog):
-    def __init__(self, parent):
-        super(About, self).__init__()
-        self.setWindowTitle(PyMagVersion + " - About")
-        self.setFixedSize(200, 100)
-        self.layout = QtWidgets.QVBoxLayout()
-        self.setLayout(self.layout)
-        self.AboutLabel = QtWidgets.QLabel(PyMagVersion + "\n" + PyMagDate)
-        self.layout.addWidget(self.AboutLabel)
         self.close()
