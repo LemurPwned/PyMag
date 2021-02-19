@@ -23,8 +23,8 @@ class UIMainWindow(QMainWindow):
         self.runner = SimulationRunner(self)
         #load defaults
         # TODO: CHANGE PATHS HERE
-        self.defaultStimulusFile = "defaultStimulus.csv"
-        self.defaultParametersFile = "defaultParameters.csv"
+        self.defaultStimulusFile =   os.path.join("pymag","presets","defaultStimulus.csv")
+        self.defaultParametersFile = os.path.join("pymag","presets","defaultParameters.csv")
         self.load_defaults()
 
         #Main window properties
