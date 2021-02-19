@@ -106,7 +106,7 @@ class LayerStructure():
 
 class SimulationStimulus():
     def __init__(self, sim_num, parent):
-        data = parent.simulations_management.results_list_JSON[
+        data = parent.simulation_manager.results_list_JSON[
             "simulation_params"][sim_num]
 
         # self.theta = np.array(data["HTheta"].values[0], dtype=np.float32)

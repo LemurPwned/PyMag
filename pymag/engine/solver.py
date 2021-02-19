@@ -177,15 +177,15 @@ class SimulationRunner:
             mtraj = MagnStat.get()[5]
             PIMM_ = MagnStat.get()[7]
 
-            sim_results.Spectrogram_VSD = np.concatenate(
-                (sim_results.Spectrogram_VSD, [SD_f]), axis=0)
+            sim_results.spectrogram_VSD = np.concatenate(
+                (sim_results.spectrogram_VSD, [SD_f]), axis=0)
             yf = abs(fft(PIMM_))
-            sim_results.Spectrogram_data = np.concatenate(
-                (sim_results.Spectrogram_data, np.array([yf[0:(len(yf) // 2)]
+            sim_results.spectrogram_data = np.concatenate(
+                (sim_results.spectrogram_data, np.array([yf[0:(len(yf) // 2)]
                                                          ])),
                 axis=0)
-            sim_results.Mlayers = np.concatenate(
-                (sim_results.Mlayers, np.array([m])), axis=0)
+            sim_results.M_layers = np.concatenate(
+                (sim_results.M_layers, np.array([m])), axis=0)
             sim_results.M_avg = np.concatenate(
                 (sim_results.M_avg, np.array([m_avg])), axis=0)
             sim_results.H.append(((stimulus.H_sweep[H_it][0])**2 +
@@ -208,29 +208,28 @@ class SimulationRunner:
             ]).T
             progres = 100 * (H_it + 1) / (stimulus.H_sweep.shape[0])
 
-            self.plotter.simulationsMenegement.simulations_list["results"].pop(
+            self.plotter.simulation_manager.simulations_list["results"].pop(
                 sim_num)
-            self.plotter.simulationsMenegement.simulations_list[
-                "settings"].pop(sim_num)
-            self.plotter.simulationsMenegement.simulations_list[
-                "results"].insert(
-                    sim_num, {
-                        "MR": data,
-                        "SD_freqs": stimulus.freqs,
-                        "SD": sim_results.Spectrogram_VSD,
-                        "PIMM_freqs": stimulus.PIMM_delta_f,
-                        "PIMM": sim_results.Spectrogram_data,
-                        "traj": mtraj,
-                        "mode": stimulus.mode
-                    })
-            self.plotter.simulationsMenegement.simulations_list[
+            self.plotter.simulation_manager.simulations_list["settings"].pop(
+                sim_num)
+            self.plotter.simulation_manager.simulations_list["results"].insert(
+                sim_num, {
+                    "MR": data,
+                    "SD_freqs": stimulus.freqs,
+                    "SD": sim_results.spectrogram_VSD,
+                    "PIMM_freqs": stimulus.PIMM_delta_f,
+                    "PIMM": sim_results.spectrogram_data,
+                    "traj": mtraj,
+                    "mode": stimulus.mode
+                })
+            self.plotter.simulation_manager.simulations_list[
                 "settings"].insert(sim_num, ["X", sim_name, "In process..."])
             curve.put((progres, {
                 "MR": data,
                 "SD_freqs": stimulus.freqs,
-                "SD": sim_results.Spectrogram_VSD,
+                "SD": sim_results.spectrogram_VSD,
                 "PIMM_freqs": stimulus.PIMM_delta_f,
-                "PIMM": sim_results.Spectrogram_data,
+                "PIMM": sim_results.spectrogram_data,
                 "traj": mtraj,
                 "mode": stimulus.mode
             }))
@@ -238,18 +237,17 @@ class SimulationRunner:
     def run_scheduled_simulations(self):
         while True:
             if self.stop:
-                list_todo = self.plotter.simulationsMenegement.active_experiments
-                self.plotter.simulationsMenegement.active_experiments = []
+                list_todo = self.plotter.simulation_manager.active_experiments
+                self.plotter.simulation_manager.active_experiments = []
 
                 backend = self.plotter.ctrLayout.Backend_choose.currentText()
-                print("Simulation started with backend", backend)
+                print("Simulation started with backend: ", backend)
 
                 for sim_num in list_todo:
                     spin_device = LayerStructure(sim_num)
                     stimulus = SimulationStimulus(sim_num)
-                    sim_name = self.plotter.simulationsMenegement.simulations_list[
+                    sim_name = self.plotter.simulation_manager.simulations_list[
                         "settings"][sim_num][1]
-                    SimulationTimeStamp = datetime.datetime.now()
                     sim_results = SimulationResults(Stimulus=stimulus,
                                                     SpinDevice=spin_device)
 
