@@ -168,6 +168,7 @@ class SimulationStimulus():
 
     def to_dict(self):
         return {
+            # "f": self.
             "H_sweep": self.H_sweep,
             "freqs": self.freqs,
             "LLG_steps": self.LLG_steps,

@@ -1,14 +1,12 @@
 import os
 import pickle
+from pymag.result_queue import ResultQueueSynchroniser
 from pymag.engine.backend import Backend
 import queue as Queue
-from threading import Thread
-
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from natsort import natsorted
-from pymag.engine.solver import SimulationRunner
 from pymag.engine.utils import PyMagVersion
 from pymag.gui.core import About, AddMenuBar, LayerStructure, LayerTableStimulus, ResultsTable, SimulationStimulus
 from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot
@@ -21,20 +19,19 @@ class UIMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.runner = SimulationRunner(self)
-        #load defaults
+        # load defaults
         self.defaultStimulusFile = os.path.join("pymag", "presets",
                                                 "defaultStimulus.csv")
         self.defaultParametersFile = os.path.join("pymag", "presets",
                                                   "defaultParameters.csv")
         self.load_defaults()
 
-        #Main window properties
+        # main window properties
         self.setObjectName(PyMagVersion)
         self.setWindowTitle(PyMagVersion)
         self.resize(1200, 900)
 
-        #dock area as a central widget of GUI
+        # dock area as a central widget of GUI
         self.area = DockArea()
         self.setCentralWidget(self.area)
 
@@ -46,9 +43,10 @@ class UIMainWindow(QMainWindow):
         self.PIMM_plot = PlotDynamics()
         self.res_plot = ResPlot()
         self.mag_plot = MagPlot()
+        self.traj_plot = TrajectoryPlot()
+
         self.central_layout = AddMenuBar(self)
         self.central_widget = self.central_layout.central_widget
-        self.traj_plot = TrajectoryPlot()
         self.simulation_manager = ResultsTable(self)
         self.measurement_manager = ResultsTable(self)
         self.widget_layer_params = LayerTableStimulus(self)
@@ -56,7 +54,7 @@ class UIMainWindow(QMainWindow):
         self.table_results.setHorizontalHeaderLabels(
             ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz'])
 
-        #define dock area structure
+        #  define dock area structure
         self.d1 = Dock("Control panel", size=(300, 50))
         self.d2 = Dock("PIMM-FMR", size=(300, 300))
         self.d7 = Dock("SD-FMR", size=(300, 300))
@@ -94,16 +92,24 @@ class UIMainWindow(QMainWindow):
         self.d1.addWidget(self.central_widget)
         self.d10.addWidget(self.traj_plot.w)
 
+        # QUEUE
+        self.result_queue_synchroniser = ResultQueueSynchroniser(
+            magnetisation_plot=self.mag_plot,
+            resistance_plot=self.res_plot,
+            SD_plot=self.SD_plot,
+            SD_lines=self.SD_lines,
+            PIMM_plot=self.PIMM_plot,
+            trajectory_plot=self.traj_plot,
+        )
+        self.backend = Backend(self.result_queue_synchroniser.result_queue,
+                               self.central_layout.progress)
+
         self.ports = []
         self.timer = pg.QtCore.QTimer()
-        self.timer.timeout.connect(self.update)
+        self.timer.timeout.connect(
+            self.result_queue_synchroniser.on_new_element_update)
         self.timer.start(0)
         self.show()
-
-        self.result_queue = Queue.Queue()
-        self.backend = Backend(self.result_queue)
-
-
 
     def load_defaults(self):
         try:
@@ -395,74 +401,59 @@ class UIMainWindow(QMainWindow):
                 os.path.basename(fileName).replace(".dat", ""))
 
     def plot_experimental(self, df, fileName):
-        try:
-            self.mag_plot.Mx.plot(df['H'],
-                                  df['Mx'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolPen=(255, 0, 0, 90),
-                                  symbolBrush=(255, 0, 0, 50))
-        except:
-            pass
-        try:
-            self.mag_plot.My.plot(df['H'],
-                                  df['My'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolBrush=(0, 255, 0, 90),
-                                  symbolPen=(0, 255, 0, 50))
-        except:
-            pass
-        try:
-            self.mag_plot.Mz.plot(df['H'],
-                                  df['Mz'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolBrush=(0, 0, 255, 90),
-                                  symbolPen=(0, 0, 255, 50))
-        except:
-            pass
-        try:
-            self.res_plot.Rx.plot(df['H'],
-                                  df['Rx'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolBrush=(255, 0, 0, 90),
-                                  symbolPen=(255, 0, 0, 50))
-        except:
-            pass
-        try:
-            self.res_plot.Ry.plot(df['H'],
-                                  df['Ry'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolBrush=(0, 255, 0, 90),
-                                  symbolPen=(0, 255, 255, 50))
-        except:
-            pass
-        try:
-            self.res_plot.Rz.plot(df['H'],
-                                  df['Rz'],
-                                  symbol='o',
-                                  pen=None,
-                                  symbolBrush=(0, 0, 255, 90),
-                                  symbolPen=(0, 0, 255, 50))
-        except:
-            pass
-        try:
-            self.measurement_manager.results_list_JSON["settings"].append(
-                ["X", "Exp", fileName])
-            self.measurement_manager.results_list_JSON["results"].append({
-                "H":
-                df['H'],
-                "f":
-                df['f']
-            })
-            self.measurement_manager.results_list_JSON["layer_params"].append(
-                ["X"])
-            self.measurement_manager.print_and_color_table()
-        except:
-            pass
+        self.mag_plot.Mx.plot(df['H'],
+                                df['Mx'],
+                                symbol='o',
+                                pen=None,
+                                symbolPen=(255, 0, 0, 90),
+                                symbolBrush=(255, 0, 0, 50))
+        self.mag_plot.My.plot(df['H'],
+                                df['My'],
+                                symbol='o',
+                                pen=None,
+                                symbolBrush=(0, 255, 0, 90),
+                                symbolPen=(0, 255, 0, 50))
+
+        self.mag_plot.Mz.plot(df['H'],
+                                df['Mz'],
+                                symbol='o',
+                                pen=None,
+                                symbolBrush=(0, 0, 255, 90),
+                                symbolPen=(0, 0, 255, 50))
+
+        self.res_plot.Rx.plot(df['H'],
+                                df['Rx'],
+                                symbol='o',
+                                pen=None,
+                                symbolBrush=(255, 0, 0, 90),
+                                symbolPen=(255, 0, 0, 50))
+
+        self.res_plot.Ry.plot(df['H'],
+                                df['Ry'],
+                                symbol='o',
+                                pen=None,
+                                symbolBrush=(0, 255, 0, 90),
+                                symbolPen=(0, 255, 255, 50))
+
+        self.res_plot.Rz.plot(df['H'],
+                                df['Rz'],
+                                symbol='o',
+                                pen=None,
+                                symbolBrush=(0, 0, 255, 90),
+                                symbolPen=(0, 0, 255, 50))
+    
+        self.measurement_manager.results_list_JSON["settings"].append(
+            ["X", "Exp", fileName])
+        self.measurement_manager.results_list_JSON["results"].append({
+            "H":
+            df['H'],
+            "f":
+            df['f']
+        })
+        self.measurement_manager.results_list_JSON["layer_params"].append(
+            ["X"])
+        self.measurement_manager.print_and_color_table()
+      
 
     def btn_clk(self):
         self.central_layout.progress.setValue(0)
@@ -550,108 +541,4 @@ class UIMainWindow(QMainWindow):
                                                                   70),
                                                      symbolPen=(255, 0, 0, 70))
         except:
-            pass
-
-    def replot_all(self, xp, plot_realtime=0, save=0):
-        try:
-            mode = xp["mode"]
-            H = xp["MR"][:, 0]
-            Mx = xp["MR"][:, 1]
-            My = xp["MR"][:, 2]
-            Mz = xp["MR"][:, 3]
-            Rx = xp["MR"][:, 4]
-            Ry = xp["MR"][:, 5]
-            Rz = xp["MR"][:, 6]
-            SD_freqs = xp["SD_freqs"]
-            PIMM_delta_f = xp["PIMM_freqs"]
-            if plot_realtime == 0:
-                self.PIMM_plot.init_setup(Xmin=min(H),
-                                          Xmax=max(H),
-                                          Xsteps=len(H),
-                                          dy=PIMM_delta_f)
-                self.SD_plot.init_setup(Xmin=min(H),
-                                        Xmax=max(H),
-                                        Xsteps=len(H),
-                                        dy=SD_freqs[1] - SD_freqs[0])
-            self.mag_plot.Mx.plot(H, Mx, pen=(255, 0, 0))
-            self.mag_plot.My.plot(H, My, pen=(0, 255, 0))
-            self.mag_plot.Mz.plot(H, Mz, pen=(0, 0, 255))
-            self.mag_plot.Mx.setYRange(-1.5, 1.5, padding=0)
-            self.mag_plot.My.setYRange(-1.5, 1.5, padding=0)
-            self.mag_plot.Mz.setYRange(-1.5, 1.5, padding=0)
-            self.mag_plot.set_mode(mode)
-            self.res_plot.Rx.plot(H, Rx, pen=(255, 0, 0))
-            self.res_plot.Ry.plot(H, Ry, pen=(0, 255, 0))
-            self.res_plot.Rz.plot(H, Rz, pen=(0, 0, 255))
-            self.res_plot.set_mode(mode)
-
-            self.SD_plot.update(xp["SD"],
-                                SD_freqs[1] - SD_freqs[0],
-                                H,
-                                rm_bkg=1)
-            self.SD_plot.set_mode(mode)
-
-            self.PIMM_plot.update(xp["PIMM"], PIMM_delta_f, H)
-            self.PIMM_plot.set_mode(mode)
-
-            self.SD_lines.update(xp["SD"], SD_freqs[1] - SD_freqs[0], H)
-            self.SD_lines.set_mode(mode)
-
-            self.traj_plot.plt_traj(
-                xp["traj"],
-                [10 * len(H), 255 - 10 * len(H), 255 - 10 * len(H)])
-            self.table_results.setData(xp["MR"].astype(np.str))
-            if save == 1:
-                fileName = self.save_file_dialog("")
-                if fileName:
-                    pd.DataFrame(
-                        xp["SD"].T,
-                        columns=np.array(H)).set_index(SD_freqs).to_csv(
-                            fileName + "_SD.csv",
-                            encoding='utf-8',
-                            index=True,
-                            sep='\t')
-        except:
-            pass
-
-    def replot_results(self, plot_realtime=0, save=0):
-        plot_realtime = 0
-        self.clear_plots()
-        n = self.simulation_manager.active_list
-        if not n and plot_realtime == 0:
-            self.replot_experimental()
-            return 0
-        elif plot_realtime == 1:
-            return
-        else:
-            for n in self.simulation_manager.active_list:
-                xp = self.simulation_manager.results_list_JSON["results"][n]
-                self.widget_layer_params.table_layer_params.setData(
-                    self.simulation_manager.results_list_JSON["layer_params"]
-                    [n].to_numpy())
-                self.widget_layer_params.table_layer_params.setHorizontalHeaderLabels(
-                    self.simulation_manager.results_list_JSON["layer_params"]
-                    [n].columns)
-                self.widget_layer_params.table_stimulus_params.setData(
-                    self.simulation_manager.
-                    results_list_JSON["simulation_params"][n].to_numpy())
-                self.widget_layer_params.table_stimulus_params.setHorizontalHeaderLabels(
-                    self.simulation_manager.
-                    results_list_JSON["simulation_params"][n].columns)
-                self.replot_all(xp, save=save)
-        self.replot_experimental()
-
-    def update(self):
-        # for q in self.ports:
-        try:
-            prog, self.exp = self.result_queue.get(block=False)
-            self.central_layout.progress.setValue(prog)
-            self.replot_results(plot_realtime=1)
-        except Queue.Empty:
-            pass
-
-    def simple_update(self):
-        try:
-            self.replot_results(plot_realtime=1)
-        except Queue.Empty:
             pass

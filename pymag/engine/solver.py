@@ -95,8 +95,6 @@ class Solver:
         return np.array(m), m_avg, np.asarray(
             DynamicR), Cdt, SD_voltage_after_bias, m_traj, M_full, PIMM_
 
-
-class PostProcessing():
     @staticmethod
     def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l,
                              w):
@@ -132,8 +130,6 @@ class PostProcessing():
             m_init.append(normalize(H_sweep[0, :]))
         return m_init
 
-
-class SimulationRunner:
     def __init__(self, parent) -> None:
         self.stop = False
         self.plotter = parent
@@ -169,7 +165,7 @@ class SimulationRunner:
         PIMM_ = mag_stat.get()[7]
 
         yf = abs(np.fft.fft(PIMM_))
-        Rx, Ry, Rz = PostProcessing.calculate_resistance(
+        Rx, Ry, Rz = Solver.calculate_resistance(
             spin_device["Rx0"], spin_device["Ry0"], spin_device["AMR"],
             spin_device["AHE"], spin_device["SMR"], m,
             spin_device["number_of_layers"], spin_device["l"],
@@ -187,111 +183,3 @@ class SimulationRunner:
             "Ry": Ry,
             "Rz": Rz
         }
-
-
-    def run_simulation(plotter, spin_device, stimulus, sim_results, sim_num,
-                       curve, sim_name):
-        for _ in range(2):
-            m, _, _, _, _, _, _, _ = Solver.calc_trajectoryRK45(
-                spin_device=spin_device,
-                m_init=SimulationRunner.initVectorGen(spin_device, stimulus),
-                Hext=stimulus.H_sweep[0, :],
-                f=0,
-                I_amp=0,
-                LLGtime=stimulus.LLGtime,
-                LLGsteps=stimulus.LLGsteps)
-
-        for H_it in range(0, stimulus.H_sweep.shape[0]):
-            pool = multiprocessing.Pool()
-            results = []
-            MagnStat = (pool.apply_async(
-                Solver.calc_trajectoryRK45,
-                args=(spin_device, m, stimulus.H_sweep[H_it, :], 0, 0,
-                      stimulus.LLGtime, stimulus.LLGsteps)))
-            for f in stimulus.freqs:
-                results.append(
-                    pool.apply_async(
-                        Solver.calc_trajectoryRK45,
-                        args=(spin_device, m, stimulus.H_sweep[H_it, :], f,
-                              20000, stimulus.LLGtime, stimulus.LLGsteps)))
-
-            SD_f = list(zip(*[r.get() for r in results]))[4]
-            pool.close()
-            pool.join()
-            m = MagnStat.get()[0]
-            m_avg = MagnStat.get()[1]
-            DynamicR = MagnStat.get()[2]
-            mtraj = MagnStat.get()[5]
-            PIMM_ = MagnStat.get()[7]
-
-            sim_results.spectrogram_VSD = np.concatenate(
-                (sim_results.spectrogram_VSD, [SD_f]), axis=0)
-            yf = abs(fft(PIMM_))
-            sim_results.spectrogram_data = np.concatenate(
-                (sim_results.spectrogram_data, np.array([yf[0:(len(yf) // 2)]
-                                                         ])),
-                axis=0)
-            sim_results.M_layers = np.concatenate(
-                (sim_results.M_layers, np.array([m])), axis=0)
-            sim_results.M_avg = np.concatenate(
-                (sim_results.M_avg, np.array([m_avg])), axis=0)
-            sim_results.H.append(((stimulus.H_sweep[H_it][0])**2 +
-                                  (stimulus.H_sweep[H_it][1])**2 +
-                                  (stimulus.H_sweep[H_it][2])**2)**0.5)
-            sim_results.Hmag_out.append(stimulus.Hmag[H_it])
-
-            Rx, Ry, Rz = PostProcessing.calculate_resistance(
-                spin_device.Rx0, spin_device.Ry0, spin_device.AMR,
-                spin_device.AHE, spin_device.SMR, m,
-                spin_device.number_of_layers, spin_device.l, spin_device.w)
-            sim_results.Rx.append(Rx)
-            sim_results.Ry.append(Ry)
-            sim_results.Rz.append(Rz)
-
-            data = np.array([
-                sim_results.Hmag_out[:], sim_results.M_avg[:, 0],
-                sim_results.M_avg[:, 1], sim_results.M_avg[:, 2],
-                sim_results.Rx[:], sim_results.Ry[:], sim_results.Rz[:]
-            ]).T
-            progres = 100 * (H_it + 1) / (stimulus.H_sweep.shape[0])
-
-            plotter.simulation_manager.simulations_list["results"].pop(sim_num)
-            plotter.simulation_manager.simulations_list["settings"].pop(
-                sim_num)
-            plotter.simulation_manager.simulations_list["results"].insert(
-                sim_num, {
-                    "MR": data,
-                    "SD_freqs": stimulus.freqs,
-                    "SD": sim_results.spectrogram_VSD,
-                    "PIMM_freqs": stimulus.PIMM_delta_f,
-                    "PIMM": sim_results.spectrogram_data,
-                    "traj": mtraj,
-                    "mode": stimulus.mode
-                })
-            plotter.simulation_manager.simulations_list["settings"].insert(
-                sim_num, ["X", sim_name, "In process..."])
-            curve.put((progres, {
-                "MR": data,
-                "SD_freqs": stimulus.freqs,
-                "SD": sim_results.spectrogram_VSD,
-                "PIMM_freqs": stimulus.PIMM_delta_f,
-                "PIMM": sim_results.spectrogram_data,
-                "traj": mtraj,
-                "mode": stimulus.mode
-            }))
-
-    @staticmethod
-    def run_scheduled_simulations(plotter):
-        list_todo = plotter.simulation_manager.active_list
-        plotter.simulation_manager.active_list = []
-        for sim_num in list_todo:
-            spin_device = LayerStructure(sim_num, plotter)
-            stimulus = SimulationStimulus(sim_num, plotter)
-            sim_name = plotter.simulation_manager.results_list_JSON[
-                "settings"][sim_num][1]
-            sim_results = SimulationResults(Stimulus=stimulus,
-                                            SpinDevice=spin_device)
-
-            SimulationRunner.run_simulation(plotter, spin_device, stimulus,
-                                            sim_results, sim_num,
-                                            plotter.get_queue(), sim_name)

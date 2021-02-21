@@ -53,7 +53,7 @@ PYBIND11_MODULE(cmtj, m)
                  double,               // Ms
                  double,               // J
                  double,               // thickness
-                 double,               // cekkSurface
+                 double,               // cellSurface
                  std::vector<CVector>, // demagTensor
                  std::vector<CVector>, // dipoleTensor
                  double,               // temperature
