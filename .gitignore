@@ -1,3 +1,9 @@
+.eggs/
+build/
+*.egg-info/
+var/
 __pycache__/
 .DS_Store
 .vscode
+.pymag
+*.so

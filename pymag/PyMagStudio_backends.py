@@ -1064,8 +1064,8 @@ def Simulate():
     while 1 == 1:
         global stop
         if stop == 0:
-            list_todo = plotter.simulationsMenegement.active_experiments
-            plotter.simulationsMenegement.active_experiments = []
+            list_todo = plotter.simulation_manager.active_experiments
+            plotter.simulation_manager.active_experiments = []
 
             backend = plotter.ctrLayout.Backend_choose.currentText()
             print("Simulation started with backend", backend)
@@ -1073,7 +1073,7 @@ def Simulate():
             for sim_num in list_todo:
                 spin_device = LayerStructure(sim_num)
                 stimulus = SimulationStimulus(sim_num)
-                sim_name = plotter.simulationsMenegement.simulations_list[
+                sim_name = plotter.simulation_manager.simulations_list[
                     "settings"][sim_num][1]
                 SimulationTimeStamp = datetime.datetime.now()
                 sim_results = SimulationResults(Stimulus=stimulus,

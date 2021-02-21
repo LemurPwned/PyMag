@@ -7,8 +7,6 @@ import pandas as pd
 H_unit = "A/m"
 
 
-
-
 class ResPlot():
     def __init__(self):
         self.plotsRes = pg.GraphicsLayoutWidget()

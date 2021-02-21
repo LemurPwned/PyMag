@@ -3,7 +3,7 @@
 #include <pybind11/functional.h>
 
 #include "cvector.hpp"
-#include "parallel.hpp"
+// #include "parallel.hpp"
 #include "junction.hpp"
 #include <stdio.h>
 #include <vector>
@@ -14,24 +14,7 @@ namespace py = pybind11;
 
 #define USING_PY true
 
-static std::map<std::string, std::vector<double>> parallelGILWrapper(Junction &mtj,
-                                                                     double minField,
-                                                                     double maxField,
-                                                                     int numberOfPoints,
-                                                                     int threadNumber,
-                                                                     const std::function<fnRes(Junction &mtj,
-                                                                                               const double scanningParam)>
-                                                                         runnableFunction)
-{
-    std::map<std::string, std::vector<double>> res;
-    pybind11::gil_scoped_acquire acquire;
-    {
-        pybind11::gil_scoped_release release;
-        res = ComputeUtil::parallelFieldScan(mtj, minField, maxField, numberOfPoints, threadNumber, runnableFunction);
-    }
 
-    return res;
-}
 
 PYBIND11_MODULE(cmtj, m)
 {
@@ -43,18 +26,7 @@ PYBIND11_MODULE(cmtj, m)
     m.def("c_dot", &c_dot);
     m.def("cos_between_arrays", &cos_between_arrays);
     m.def("SpinDiode2Layers", &SpinDiode2Layers);
-    m.def("customResultMap", &ComputeUtil::customResultMap,
-          "resultMap"_a,
-          "filename"_a);
 
-    m.def("parallelFieldScan", &parallelGILWrapper,
-          pybind11::call_guard<pybind11::gil_scoped_release>(),
-          "mtj"_a,
-          "minField"_a,
-          "maxField"_a,
-          "numberOfPoints"_a,
-          "numberOfThreads"_a,
-          "runnableFunction"_a);
 
     py::enum_<Axis>(m, "Axis")
         .value("xaxis", xaxis)

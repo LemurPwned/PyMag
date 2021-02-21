@@ -64,23 +64,22 @@ class LayerTableStimulus():
 
 class LayerStructure():
     def __init__(self, sim_num, parent):
-        self.plotter = parent
+        self.layer_dict = {}
         for val in [
-                "Ms", "Ku", "J", "th", "alpha", "AMR", "SMR", "Rx0", "Ry0",
-                "w", "l"
+                "Ms", "Ku", "J", "th", "alpha", "AMR", "AHE", "SMR", "Rx0",
+                "Ry0", "w", "l"
         ]:
+
             setattr(
                 self, val,
                 np.asarray(
-                    self.plotter.simulation_manager.
-                    simulations_list["layer_params"][sim_num][val].values,
+                    parent.simulation_manager.results_list_JSON["layer_params"]
+                    [sim_num][val].values,
                     dtype=np.float32))
         self.Kdir = self.get_kdir(
-            self.plotter.simulation_manager.simulations_list["layer_params"]
+            parent.simulation_manager.results_list_JSON["layer_params"]
             [sim_num]["Kdir"].values)
-        self.Ndemag2 = self.get_Ndemag(
-            self.plotter.simulation_manager.simulations_list["layer_params"]
-            [sim_num]["N"].values)
+        self.Ndemag = self.get_Ndemag(parent)
         self.number_of_layers = len(self.Ms)
 
     def get_kdir(self, value):
@@ -94,9 +93,8 @@ class LayerStructure():
             listOfParams.append(res)
         return listOfParams
 
-    def get_Ndemag(self, value):
-        tmp = self.plotter.widget_layer_params.table_layer_params.item(
-            0, 7).text()
+    def get_Ndemag(self, parent):
+        tmp = parent.widget_layer_params.table_layer_params.item(0, 7).text()
         tmp = tmp.replace("[", "").replace("]", "")
         v_tmp = (tmp.split(" "))
         res = np.array(list(map(float, v_tmp)))
@@ -160,13 +158,25 @@ class SimulationStimulus():
         self.fmin = np.array(data["f"].values[0], dtype=np.float32)
         self.fsteps = np.array(data["f"].values[1], dtype=np.int)
         self.fmax = np.array(data["f"].values[2], dtype=np.float32)
-        self.LLGtime = np.array(data["LLGtime"].values[0], dtype=np.float32)
-        self.LLGsteps = int(
+        self.LLG_time = np.array(data["LLGtime"].values[0], dtype=np.float32)
+        self.LLG_steps = int(
             np.array(data["LLGsteps"].values[0], dtype=np.float32))
         self.freqs = np.linspace(self.fmin, self.fmax, self.fsteps)
-        self.spectrum_len = (self.LLGsteps) // 2
-        self.PIMM_delta_f = 1 / self.LLGtime
+        self.spectrum_len = (self.LLG_steps) // 2
+        self.PIMM_delta_f = 1 / self.LLG_time
         self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
+
+    def to_dict(self):
+        return {
+            "H_sweep": self.H_sweep,
+            "freqs": self.freqs,
+            "LLG_steps": self.LLG_steps,
+            "LLG_time": self.LLG_time,
+            "PIMM_delta_f": self.PIMM_delta_f,
+            "H_mag": self.Hmag,
+            "spectrum_len": self.spectrum_len,
+            "mode": self.mode
+        }
 
 
 class SimulationResults():
@@ -261,7 +271,7 @@ class ResultsTable():
                     QtGui.QColor(255, 255, 255))
 
 
-class paramsAndStimulus():
+class ParamsAndStimulus():
     def __init__(self, parent):
         layerParameters = parent.layerParameters
         StimulusParameters = parent.StimulusParameters

@@ -1,5 +1,6 @@
 import os
 import pickle
+from pymag.engine.backend import Backend
 import queue as Queue
 from threading import Thread
 
@@ -9,7 +10,7 @@ import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.solver import SimulationRunner
 from pymag.engine.utils import PyMagVersion
-from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
+from pymag.gui.core import About, AddMenuBar, LayerStructure, LayerTableStimulus, ResultsTable, SimulationStimulus
 from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
@@ -22,9 +23,10 @@ class UIMainWindow(QMainWindow):
 
         self.runner = SimulationRunner(self)
         #load defaults
-        # TODO: CHANGE PATHS HERE
-        self.defaultStimulusFile =   os.path.join("pymag","presets","defaultStimulus.csv")
-        self.defaultParametersFile = os.path.join("pymag","presets","defaultParameters.csv")
+        self.defaultStimulusFile = os.path.join("pymag", "presets",
+                                                "defaultStimulus.csv")
+        self.defaultParametersFile = os.path.join("pymag", "presets",
+                                                  "defaultParameters.csv")
         self.load_defaults()
 
         #Main window properties
@@ -97,8 +99,11 @@ class UIMainWindow(QMainWindow):
         self.timer.timeout.connect(self.update)
         self.timer.start(0)
         self.show()
-        self.p = Thread(target=self.runner.run_scheduled_simulations)
-        self.p.start()
+
+        self.result_queue = Queue.Queue()
+        self.backend = Backend(self.result_queue)
+
+
 
     def load_defaults(self):
         try:
@@ -270,7 +275,7 @@ class UIMainWindow(QMainWindow):
         self.simulation_manager.results_list_JSON["simulation_params"].append(
             df_stimulus)
         self.simulation_manager.print_and_color_table()
-        self.simulation_manager.print_and_color_table()
+        # self.simulation_manager.print_and_color_table()
 
     def load_multiple(self):
         dirName = "/home/sz/Desktop/AGH/PyMag/20 Oct 2020/4651_Pymag"
@@ -461,13 +466,18 @@ class UIMainWindow(QMainWindow):
 
     def btn_clk(self):
         self.central_layout.progress.setValue(0)
-        global stop
-        stop = 0
+        self.backend.start_process(
+            device_list=[
+                LayerStructure(sim_num, self).__dict__
+                for sim_num in range(len(self.simulation_manager.active_list))
+            ],
+            stimulus_list=[
+                SimulationStimulus(sim_num, self).to_dict()
+                for sim_num in range(len(self.simulation_manager.active_list))
+            ])
 
     def stop_clk(self):
-        global stop
-        print(stop)
-        stop = 1
+        pass
 
     def save_dock_state(self):
         global state
@@ -632,13 +642,13 @@ class UIMainWindow(QMainWindow):
         self.replot_experimental()
 
     def update(self):
-        for q in self.ports:
-            try:
-                prog, self.exp = q.get(block=False)
-                self.central_layout.progress.setValue(prog)
-                self.replot_results(plot_realtime=1)
-            except Queue.Empty:
-                pass
+        # for q in self.ports:
+        try:
+            prog, self.exp = self.result_queue.get(block=False)
+            self.central_layout.progress.setValue(prog)
+            self.replot_results(plot_realtime=1)
+        except Queue.Empty:
+            pass
 
     def simple_update(self):
         try:

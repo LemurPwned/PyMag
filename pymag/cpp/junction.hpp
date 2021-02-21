@@ -1,20 +1,20 @@
 #ifndef JUNCTION_H
 #define JUNCTION_H
 
-#include <iostream>
-#include <stdio.h>
-#include <vector>
-#include <map>
-#include <cstring>
-#include <cmath>
-#include <fstream>
-#include <string>
-#include <chrono>
-#include <numeric>
-#include <tuple>
-#include <random>
-#include <complex>
 #include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <complex>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <numeric>
+#include <random>
+#include <stdio.h>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include <fftw3.h>
 
@@ -73,22 +73,19 @@ double c_dot(CVector a, CVector b)
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-
 double cos_between_arrays(CVector a, CVector b)
-{   
-    double res  = c_dot(a,b)/(a.length()*b.length());
-    
-    return res*res;
+{
+    double res = c_dot(a, b) / (a.length() * b.length());
+
+    return res * res;
 }
 
 double SpinDiode2Layers(CVector I, CVector m1, CVector m2, double Rlow, double deltaR)
-{   
-    double SD  = Rlow+ deltaR* cos_between_arrays( I,  m1) + Rlow+ deltaR* cos_between_arrays( I,  m2);
-    
+{
+    double SD = Rlow + deltaR * cos_between_arrays(I, m1) + Rlow + deltaR * cos_between_arrays(I, m2);
+
     return SD;
 }
-
-
 
 enum Axis
 {
@@ -702,19 +699,19 @@ public:
             std::cout << "Simulation time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
     }
 
-    static CVector RK45(CVector mag, CVector mTop, CVector mBottom, CVector Hext, int layer, double dt, CVector HOe,
-                                     std::vector<double> Ms,
-                                     std::vector<double> Ku,
-                                     std::vector<double> Ju,
-                                     std::vector<CVector> Kdir,
-                                     std::vector<double> th,
-                                     std::vector<double> alpha,
-                                     std::vector<CVector> demag)
+    static CVector RK45(CVector mag, CVector other, CVector Hext, int layer, double dt, CVector HOe,
+                        std::vector<double> Ms,
+                        std::vector<double> Ku,
+                        std::vector<double> Ju,
+                        std::vector<CVector> Kdir,
+                        std::vector<double> th,
+                        std::vector<double> alpha,
+                        std::vector<CVector> demag)
     {
 
         CVector k1, k2, k3, k4, dm;
 
-        k1 = Junction::LLG(mag, mTop, mBottom, Hext, HOe, layer, Ms,
+        k1 = Junction::LLG(mag, other, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -722,7 +719,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k2 = Junction::LLG(mag + k1 * 0.5, mTop, mBottom, Hext, HOe, layer, Ms,
+        k2 = Junction::LLG(mag + k1 * 0.5, other, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -730,7 +727,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k3 = Junction::LLG(mag + k2 * 0.5, mTop, mBottom, Hext, HOe, layer, Ms,
+        k3 = Junction::LLG(mag + k2 * 0.5, other, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -738,7 +735,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k4 = Junction::LLG(mag + k3, mTop, mBottom, Hext, HOe, layer, Ms,
+        k4 = Junction::LLG(mag + k3, other, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -765,8 +762,7 @@ public:
 
         CVector Heff, noise, dm, Pprod, Hprod;
 
-
-        Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (other-mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (other - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
 
         // Pprod = c_cross(mag, p);
         Hprod = c_cross(mag, Heff);
