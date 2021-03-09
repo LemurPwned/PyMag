@@ -51,9 +51,6 @@ class ResultHolder(GenericHolder):
         self.PIMM_freqs = PIMM_freqs
         self.traj = traj
 
-    def update_result(self):
-        pass
-
 
 class Layer(GenericHolder):
     def __init__(self,
@@ -75,12 +72,25 @@ class Layer(GenericHolder):
         self.dipole = dipole
         self.demag = demag
 
+
     def to_cmtj(self, id: str) -> cmtj.Layer:
         return cmtj.Layer("0", cmtj.CVector(*self.mag),
                           cmtj.CVector(*self.kdir), self.Ku, self.Ms, self.J,
                           self.th, self.demag, self.dipole, 0, False)
 
+class LayerGui:
+    def __init__(self) -> None:
+        pass
 
+    def get_demag(demag_row):
+        pass
+
+    def get_kdir(kdir_row):
+        pass 
+
+    def parse_from_gui(table) -> List[Layer]:
+
+        pass
 class Stimulus(GenericHolder):
     def __init__(self):
         pass
@@ -90,4 +100,3 @@ class SimulationInput(GenericHolder):
     def __init__(self, layers: List[Layer], stimulus: Stimulus) -> None:
         self.layers = layers
         self.stimulus = stimulus
-         

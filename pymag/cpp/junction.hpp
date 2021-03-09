@@ -762,7 +762,10 @@ public:
 
         CVector Heff, noise, dm, Pprod, Hprod;
 
-        Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (other - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        Heff = Hext + HOe + 
+                Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + 
+                (other - mag) * (Ju[0] / (Ms[layer] * th[layer])) 
+                - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
 
         // Pprod = c_cross(mag, p);
         Hprod = c_cross(mag, Heff);

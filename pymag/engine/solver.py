@@ -1,7 +1,4 @@
-import datetime
-from pymag.gui.core import LayerStructure, SimulationResults, SimulationStimulus
 import cmtj
-import time as tm
 import numpy as np
 from scipy import fft
 from pymag.engine.utils import butter_lowpass_filter, cos_between_arrays, normalize
