@@ -1,3 +1,5 @@
+from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
+from typing import List
 import numpy as np
 from pymag.engine.solver import Solver
 from PyQt5 import QtCore
@@ -6,114 +8,70 @@ from PyQt5 import QtCore
 class SolverTask(QtCore.QThread):
     progress = QtCore.pyqtSignal(int)
 
-    def __init__(self, queue, device_list, stimulus_list, parent=None):
+    def __init__(self, queue, simulation_indices, simulations, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.queue = queue
-        self.device_list = device_list
-        self.stimulus_list = stimulus_list
+        self.simulation_indices = simulation_indices
+        self.simulations = simulations
 
     def run(self):
-        all_H_sweep_vals = sum(
-            [stimulus["H_sweep"].shape[0] for stimulus in self.stimulus_list])
+        all_H_sweep_vals = sum([
+            sim.get_simulation_input().stimulus.H_sweep.shape[0]
+            for sim in self.simulations
+        ])
         all_H_indx = 0
 
-        for device, stimulus in zip(self.device_list, self.stimulus_list):
-            simulation_results = {
-                "Hmag_out": [],
-                "H": [],
-                "m_avg": np.empty((0, 3), float),
-                "m": np.empty((0, device["number_of_layers"], 3), np.float32),
-                "Rx": [],
-                "Ry": [],
-                "Rz": [],
-                "SD_f": np.empty((0, len(stimulus["freqs"])), float),
-                "spectrogram_PIMM": np.empty((0, stimulus["spectrum_len"]),
-                                             float)
-            }
+        for sim_index, simulation in zip(self.simulation_indices,
+                                         self.simulations):
+            simulation_input = simulation.get_simulation_input()
+            stimulus: Stimulus = simulation_input.stimulus
+            layers: List[Layer] = simulation_input.layers
+            print(layers[0].__dict__)
             m, _, _, _, _, _, _, _ = Solver.calc_trajectoryRK45(
-                device["Ku"],
-                device["Ms"],
-                device["J"],
-                device["th"],
-                device["Kdir"],
-                device["Ndemag"],
-                device["alpha"],
-                device["number_of_layers"],
-                m_init=Solver.init_vector_gen(device["number_of_layers"],
-                                              H_sweep=stimulus["H_sweep"]),
-                Hext=stimulus["H_sweep"][0, :],
+                layers=layers,
+                m_init=Solver.init_vector_gen(len(layers),
+                                              H_sweep=stimulus.H_sweep),
+                Hext=stimulus.H_sweep[0, :],
                 f=0,
                 I_amp=0,
-                LLG_time=stimulus["LLG_time"],
-                LLG_steps=stimulus["LLG_steps"])
-            for hstep, Hval in enumerate(stimulus["H_sweep"]):
-                Hstep_result = Solver.run_H_step(
-                    m=m,
-                    Hval=Hval,
-                    freqs=stimulus["freqs"],
-                    spin_device=device,
-                    LLG_time=stimulus["LLG_time"],
-                    LLG_steps=stimulus["LLG_steps"])
+                LLG_time=stimulus.LLG_time,
+                LLG_steps=stimulus.LLG_steps)
+            for hstep, Hval in enumerate(stimulus.H_sweep):
+                m, _, _, _, _, _, _, PIMM = Solver.calc_trajectoryRK45(
+                    layers=layers,
+                    m_init=Solver.init_vector_gen(len(layers),
+                                                  H_sweep=stimulus.H_sweep),
+                    Hext=stimulus.H_sweep[0, :],
+                    f=0,
+                    I_amp=0,
+                    LLG_time=stimulus.LLG_time,
+                    LLG_steps=stimulus.LLG_steps)
+                Hstep_result = Solver.run_H_step(m=m,
+                                                 Hval=Hval,
+                                                 freqs=stimulus.freqs,
+                                                 layers=layers,
+                                                 LLG_time=stimulus.LLG_time,
+                                                 LLG_steps=stimulus.LLG_steps)
                 all_H_indx += 1
                 progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
 
-                for key in ["SD_f", "m", "m_avg"]:
-                    simulation_results[key] = np.concatenate(
-                        (simulation_results[key], [Hstep_result[key]]), axis=0)
+                yf = abs(np.fft.fft(PIMM))
+                partial_result = ResultHolder(mode=stimulus.mode,
+                                              H_mag=stimulus.Hmag,
+                                              PIMM_freqs=stimulus.PIMM_delta_f,
+                                              SD_freqs=stimulus.freqs,
+                                              PIMM=yf[0:(len(yf) // 2)],
+                                              **{
+                                                  key: Hstep_result[key]
+                                                  for key in (
+                                                      'Rx',
+                                                      'Ry',
+                                                      'Rz',
+                                                      'SD',
+                                                      'm_avg', 
+                                                      'm_traj'
+                                                  )
+                                              })
 
-                for key in ["Rx", "Ry", "Rz"]:
-                    simulation_results[key].append(Hstep_result[key])
-
-                simulation_results["Hmag_out"].append(stimulus["H_mag"][hstep])
-                simulation_results["spectrogram_PIMM"] = np.concatenate(
-                    (simulation_results["spectrogram_PIMM"],
-                     np.asarray([
-                         Hstep_result["yf"][0:(len(Hstep_result["yf"]) // 2)]
-                     ])))
-
-                self.queue.put((progr, {
-                    "H_mag": simulation_results["Hmag_out"],
-                    "m_avg": simulation_results["m_avg"],
-                    "Rx": simulation_results["Rx"],
-                    "Ry": simulation_results["Ry"],
-                    "Rz": simulation_results["Rz"],
-                    "SD_freqs": stimulus["freqs"],
-                    "SD": simulation_results["SD_f"],
-                    "PIMM_freqs": stimulus["PIMM_delta_f"],
-                    "PIMM": simulation_results["spectrogram_PIMM"],
-                    "traj": Hstep_result["m_traj"],
-                    "mode": stimulus["mode"]
-                }))
-
+                self.queue.put((sim_index, partial_result))
                 self.progress.emit(progr)
-
-
-class Backend(QtCore.QObject):
-    changed = QtCore.pyqtSignal(int)
-
-    def __init__(self, queue, progress_unit):
-        super().__init__()
-        self._num = 0
-        self.queue = queue
-        self.progress_bar = progress_unit
-
-    @QtCore.pyqtProperty(int, notify=changed)
-    def num(self):
-        return self._num
-
-    @QtCore.pyqtSlot(int)
-    def set_progress(self, val):
-        if self._num == val:
-            return
-        self._num = val
-        self.progress_bar.setValue(self._num)
-        self.changed.emit(self._num)
-
-    @QtCore.pyqtSlot()
-    def start_process(self, device_list, stimulus_list):
-        self.thread = SolverTask(queue=self.queue,
-                                 device_list=device_list,
-                                 stimulus_list=stimulus_list,
-                                 parent=self)
-        self.thread.progress.connect(self.set_progress)
-        self.thread.start()

@@ -344,6 +344,7 @@ class Ui_MainWindow(
                          simulations_list["settings"])).to_numpy())
 
     def addToSimulationList(self):
+        print("IM CALLED")
         df = self.getDfFromTable(self.widget_layer_params.table_layer_params)
         df_stimulus = self.getDfFromTable(
             self.widget_layer_params.table_stimulus_params)

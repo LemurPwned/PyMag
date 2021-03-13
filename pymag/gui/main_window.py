@@ -1,14 +1,17 @@
 import os
 import pickle
-from pymag.result_queue import ResultQueueSynchroniser
-from pymag.engine.backend import Backend
-import queue as Queue
+
+from pymag.gui.simulation_manager import Simulation, SimulationManager
+from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
+from pymag.result_queue import Replotter
+import queue
+import logging
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.utils import PyMagVersion
-from pymag.gui.core import About, AddMenuBar, LayerStructure, LayerTableStimulus, ResultsTable, SimulationStimulus
+from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
 from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
@@ -93,7 +96,7 @@ class UIMainWindow(QMainWindow):
         self.d10.addWidget(self.traj_plot.w)
 
         # QUEUE
-        self.result_queue_synchroniser = ResultQueueSynchroniser(
+        self.replotter = Replotter(
             magnetisation_plot=self.mag_plot,
             resistance_plot=self.res_plot,
             SD_plot=self.SD_plot,
@@ -101,13 +104,15 @@ class UIMainWindow(QMainWindow):
             PIMM_plot=self.PIMM_plot,
             trajectory_plot=self.traj_plot,
         )
-        self.backend = Backend(self.result_queue_synchroniser.result_queue,
-                               self.central_layout.progress)
+
+        self.result_queue = queue.Queue()
+
+        self.global_sim_manager = SimulationManager(
+            self.result_queue, self.central_layout.progress)
 
         self.ports = []
         self.timer = pg.QtCore.QTimer()
-        self.timer.timeout.connect(
-            self.result_queue_synchroniser.on_new_element_update)
+        self.timer.timeout.connect(self.on_simulation_data_update)
         self.timer.start(0)
         self.show()
 
@@ -261,6 +266,14 @@ class UIMainWindow(QMainWindow):
             self.widget_layer_params.table_layer_params)
         df_stimulus = self.get_df_from_table(
             self.widget_layer_params.table_stimulus_params)
+
+        sim_layers = [
+            Layer(**df_dict) for df_dict in df.to_dict(orient="records")
+        ]
+        self.global_sim_manager.add_simulation(
+            Simulation(simulation_input=SimulationInput(
+                layers=sim_layers, stimulus=Stimulus(df_stimulus))))
+
         self.simulation_manager.results_list_JSON["results"].append({
             "MR":
             np.array([[0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]]),
@@ -289,7 +302,6 @@ class UIMainWindow(QMainWindow):
         listab = []
         listac = []
         for path, subdirs, files in os.walk(dirName):
-
             for name in files:
                 if os.path.splitext(name)[1] == ".csv":
                     listaa.append(os.path.join(path, name))
@@ -402,46 +414,46 @@ class UIMainWindow(QMainWindow):
 
     def plot_experimental(self, df, fileName):
         self.mag_plot.Mx.plot(df['H'],
-                                df['Mx'],
-                                symbol='o',
-                                pen=None,
-                                symbolPen=(255, 0, 0, 90),
-                                symbolBrush=(255, 0, 0, 50))
+                              df['Mx'],
+                              symbol='o',
+                              pen=None,
+                              symbolPen=(255, 0, 0, 90),
+                              symbolBrush=(255, 0, 0, 50))
         self.mag_plot.My.plot(df['H'],
-                                df['My'],
-                                symbol='o',
-                                pen=None,
-                                symbolBrush=(0, 255, 0, 90),
-                                symbolPen=(0, 255, 0, 50))
+                              df['My'],
+                              symbol='o',
+                              pen=None,
+                              symbolBrush=(0, 255, 0, 90),
+                              symbolPen=(0, 255, 0, 50))
 
         self.mag_plot.Mz.plot(df['H'],
-                                df['Mz'],
-                                symbol='o',
-                                pen=None,
-                                symbolBrush=(0, 0, 255, 90),
-                                symbolPen=(0, 0, 255, 50))
+                              df['Mz'],
+                              symbol='o',
+                              pen=None,
+                              symbolBrush=(0, 0, 255, 90),
+                              symbolPen=(0, 0, 255, 50))
 
         self.res_plot.Rx.plot(df['H'],
-                                df['Rx'],
-                                symbol='o',
-                                pen=None,
-                                symbolBrush=(255, 0, 0, 90),
-                                symbolPen=(255, 0, 0, 50))
+                              df['Rx'],
+                              symbol='o',
+                              pen=None,
+                              symbolBrush=(255, 0, 0, 90),
+                              symbolPen=(255, 0, 0, 50))
 
         self.res_plot.Ry.plot(df['H'],
-                                df['Ry'],
-                                symbol='o',
-                                pen=None,
-                                symbolBrush=(0, 255, 0, 90),
-                                symbolPen=(0, 255, 255, 50))
+                              df['Ry'],
+                              symbol='o',
+                              pen=None,
+                              symbolBrush=(0, 255, 0, 90),
+                              symbolPen=(0, 255, 255, 50))
 
         self.res_plot.Rz.plot(df['H'],
-                                df['Rz'],
-                                symbol='o',
-                                pen=None,
-                                symbolBrush=(0, 0, 255, 90),
-                                symbolPen=(0, 0, 255, 50))
-    
+                              df['Rz'],
+                              symbol='o',
+                              pen=None,
+                              symbolBrush=(0, 0, 255, 90),
+                              symbolPen=(0, 0, 255, 50))
+
         self.measurement_manager.results_list_JSON["settings"].append(
             ["X", "Exp", fileName])
         self.measurement_manager.results_list_JSON["results"].append({
@@ -453,22 +465,21 @@ class UIMainWindow(QMainWindow):
         self.measurement_manager.results_list_JSON["layer_params"].append(
             ["X"])
         self.measurement_manager.print_and_color_table()
-      
 
     def btn_clk(self):
         self.central_layout.progress.setValue(0)
-        self.backend.start_process(
-            device_list=[
-                LayerStructure(sim_num, self).__dict__
-                for sim_num in range(len(self.simulation_manager.active_list))
-            ],
-            stimulus_list=[
-                SimulationStimulus(sim_num, self).to_dict()
-                for sim_num in range(len(self.simulation_manager.active_list))
-            ])
-
-    def stop_clk(self):
-        pass
+        self.global_sim_manager.simulate_selected()
+        # self.backend.start_process(
+        #     device_list=[
+        #         LayerStructure(sim_num, self).__dict__
+        #         for sim_num in range(len(self.simulation_manager.active_list))
+        #     ],
+        #     stimulus_list=[
+        #         Stimulus(
+        #             self.simulation_manager.
+        #             results_list_JSON["simulation_params"][sim_num]).to_dict()
+        #         for sim_num in range(len(self.simulation_manager.active_list))
+        #     ])
 
     def save_dock_state(self):
         global state
@@ -478,10 +489,18 @@ class UIMainWindow(QMainWindow):
         global state
         self.area.restoreState(state)
 
-    def get_queue(self):
-        q = Queue.Queue()
-        self.ports.append((q))
-        return q
+    def stop_clk(self):
+        pass
+
+    def on_simulation_data_update(self):
+        try:
+            sim_indx, res = self.result_queue.get(block=False)
+            # TODO: change this
+            self.global_sim_manager.update_simulation_data(sim_indx, res)
+            self.replotter.plot_current_queue_result(
+                self.global_sim_manager.get_simulation_result(sim_indx))
+        except queue.Empty:
+            logging.debug("Queue emptied!")
 
     def replot_experimental(self):
         try:

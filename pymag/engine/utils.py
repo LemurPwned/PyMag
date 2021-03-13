@@ -11,8 +11,8 @@ mu0_x_gamma = gamma * mu0
 Am_to_Oe = 79.57
 
 
-def get_stimulus2(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
-                  mode):
+def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
+                 mode):
 
     if mode == "H":
         theta = ThetaMin
@@ -64,7 +64,7 @@ def butter_lowpass(cutoff, fs, order=5):
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
     b, a = butter_lowpass(cutoff, fs, order=order)
-    y = lfilter(b, a, data)
+    y = lfilter(b, a, data, zi=None)
     return y
 
 
