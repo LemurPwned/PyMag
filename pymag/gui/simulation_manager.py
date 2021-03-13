@@ -52,14 +52,23 @@ class SimulationManager():
         if simulation_index in self.selected_simulation_indices:
             self.selected_simulation_indices.remove(simulation_index)
 
+    def remove_selected(self):
+        """
+        Removes the simulations that were active
+        """
+        for index in sorted(self.selected_simulation_indices, reverse=True):
+            del self.simulations[index]
+
+    def swap_simulation_status(self, index):
+        if index in self.selected_simulation_indices:
+            pass
+        else:
+            pass 
+
     def get_selected_simulations(self) -> List[Simulation]:
         return [
             self.simulations[indx] for indx in self.selected_simulation_indices
         ]
-
-    def iterate_selected(self):
-        for indx in self.selected_simulation_indices:
-            yield self.simulations[indx]
 
     def get_simulation(self, indx) -> Simulation:
         return self.simulations[indx]
@@ -68,7 +77,6 @@ class SimulationManager():
         return self.simulations[indx].get_simulation_result()
 
     def simulate_selected(self):
-        print(f"Simulating")
         self.backend.start_simulations(self.selected_simulation_indices,
                                        self.get_selected_simulations())
 
@@ -107,4 +115,6 @@ class Backend(QtCore.QObject):
                                  simulation_indices=simulation_indices,
                                  parent=self)
         self.thread.progress.connect(self.set_progress)
+        # self.thread.stop_signal.connect(self.stop_signal)
+        # self.thread.terminate()
         self.thread.start()

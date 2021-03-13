@@ -90,6 +90,8 @@ class LineShape():
         self.deltaf = 2e9
         self.clear_plots()
         offset = 0
+
+        # TODO FIX A&B
         a = 0
         b = 24
         for ff in range(a, b):
@@ -104,6 +106,7 @@ class LineShape():
                              'width':
                              2
                          })
+            # TODO 1.05?
             offset = offset + (np.max(curr_LS) - np.min(curr_LS)) * 1.05
 
     def set_mode(self, mode):
@@ -158,6 +161,9 @@ class MagPlot():
 
 
 class PlotDynamics():
+    """
+    TODO: Rename SpectrogramPlot?
+    """
     def __init__(self):
         self.plot_dynamics_view = pg.GraphicsLayoutWidget()
         self.plot_dynamics_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
@@ -173,6 +179,8 @@ class PlotDynamics():
         self.image_spectrum.resetTransform()
         self.image_spectrum.translate(-20e3, 0)
         self.image_spectrum.scale((20e3 + 20e3) / 20, 1 / 20e9)
+
+        # TODO RENAME Because PIMM uses that too 
         self.hist_SD = pg.HistogramLUTItem()
         self.hist_SD.setImageItem(self.image_spectrum)
         self.hist_SD.vb.disableAutoRange()
@@ -236,6 +244,7 @@ class PlotDynamics():
 
     def update_roi_loc(self):
         try:
+            # TODO: plotLineShape this does not exist
             self.plotLineShape.clear()
             self.plotLineShape.plot(
                 self.H,
@@ -247,7 +256,8 @@ class PlotDynamics():
 
     def clear_plots(self):
         self.image_spectrum.clear()
-        self.plots_spectrum.clear()  ########
+        self.plots_spectrum.clear()  
+        # TODO: remove try exepct
         try:
             self.plots_spectrum.addItem(self.inf1_SD)
             self.plots_spectrum.addItem(self.image_spectrum)
@@ -256,5 +266,6 @@ class PlotDynamics():
             pass
         try:
             del (self.spectrogramData)
-        except:
-            pass
+        except: # except ValueErrror as ex 
+            # logging.exception(ex)
+            pass 

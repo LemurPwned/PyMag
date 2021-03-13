@@ -2,34 +2,35 @@ import pyqtgraph as pg
 from pymag.engine.utils import *
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtGui
 
 ResultsColumns = ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz']
 
 
 class LayerTableStimulus():
+    """
+    Don't pass parent -- pass Layer & Stimulus
+    """
     def __init__(self, parent):
         layerParameters = parent.layerParameters
         StimulusParameters = parent.StimulusParameters
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         self.table_stimulus_params = pg.TableWidget(editable=True,
                                                     sortable=False)
-        self.generate_stimulus_btn = QtWidgets.QPushButton()
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
-        self.LoadButton = QtWidgets.QPushButton()
-        self.SaveButton = QtWidgets.QPushButton()
+        self.load_button = QtWidgets.QPushButton()
+        self.save_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
-        self.generate_stimulus_btn.setText("Set stimulus \nfor all")
-        self.generate_stimulus_btn.clicked.connect(parent.set_stimulus_for_all)
+
         self.add_btn.setText("Add new \nlayer")
         self.add_btn.clicked.connect(self.add_layer)
         self.remove_button.setText("Remove selected\n row")
         self.remove_button.clicked.connect(self.remove_layer)
-        self.LoadButton.setText("Load params \nfrom file")
-        self.LoadButton.clicked.connect(parent.load_param_table)
-        self.SaveButton.setText("Save params \nto file")
-        self.SaveButton.clicked.connect(parent.save_params)
+        self.load_button.setText("Load params \nfrom file")
+        self.load_button.clicked.connect(parent.load_param_table)
+        self.save_button.setText("Save params \nto file")
+        self.save_button.clicked.connect(parent.save_params)
         self.add_simulation.setText("Add to \nsimulation list")
         self.add_simulation.clicked.connect(parent.add_to_simulation_list)
         self.table_layer_params.setData(layerParameters.to_numpy())
@@ -43,11 +44,10 @@ class LayerTableStimulus():
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.table_layer_params)
         self.btn_layout = QtGui.QHBoxLayout()
-        self.btn_layout.addWidget(self.generate_stimulus_btn)
         self.btn_layout.addWidget(self.add_btn)
         self.btn_layout.addWidget(self.remove_button)
-        self.btn_layout.addWidget(self.LoadButton)
-        self.btn_layout.addWidget(self.SaveButton)
+        self.btn_layout.addWidget(self.load_button)
+        self.btn_layout.addWidget(self.save_button)
         self.btn_layout.addWidget(self.add_simulation)
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
@@ -62,63 +62,12 @@ class LayerTableStimulus():
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
 
-class LayerStructure():
-    def __init__(self, sim_num, parent):
-        self.layer_dict = {}
-        for val in [
-                "Ms", "Ku", "J", "th", "alpha", "AMR", "AHE", "SMR", "Rx0",
-                "Ry0", "w", "l"
-        ]:
-
-            setattr(
-                self, val,
-                np.asarray(
-                    parent.simulation_manager.results_list_JSON["layer_params"]
-                    [sim_num][val].values,
-                    dtype=np.float32))
-        self.Kdir = self.get_kdir(
-            parent.simulation_manager.results_list_JSON["layer_params"]
-            [sim_num]["Kdir"].values)
-        self.Ndemag = self.get_Ndemag(parent)
-        self.number_of_layers = len(self.Ms)
-
-    def get_kdir(self, value):
-        listOfParams = []
-        for n in range(0, len(value)):
-            tmp = value[n]
-            tmp = tmp.replace("[", "").replace("]", "")
-            v_tmp = (tmp.split(" "))
-            res = np.array(list(map(float, v_tmp)))
-            res = normalize(res)
-            listOfParams.append(res)
-        return listOfParams
-
-    def get_Ndemag(self, parent):
-        tmp = parent.widget_layer_params.table_layer_params.item(0, 7).text()
-        tmp = tmp.replace("[", "").replace("]", "")
-        v_tmp = (tmp.split(" "))
-        res = np.array(list(map(float, v_tmp)))
-        N = np.array([[res[0], 0, 0], [0, res[1], 0], [0, 0, res[2]]])
-        return N
-
-
-class SimulationResults():
-    def __init__(self, Stimulus, SpinDevice):
-        self.H = []
-        self.Rx = []
-        self.Ry = []
-        self.Rz = []
-        self.Hmag_out = []
-        self.Mlayers = np.empty((0, SpinDevice.number_of_layers, 3), float)
-        self.M_avg = np.empty((0, 3), float)
-        self.R_net = np.empty((0, 3), float)
-        self.Spectrogram_data = np.empty((0, Stimulus.spectrum_len), float)
-        self.Spectrogram_VSD = np.empty((0, len(Stimulus.freqs)), float)
-
-
 class ResultsTable():
+    """
+    To be changed & renamed -- must use Simulation Manager
+    """
     def __init__(self, parent):
-        self.plotter = parent
+        self.main_window = parent
         self.active_highlighted = None
         self.active_list = []
         self.results_table = pg.TableWidget(editable=False, sortable=False)
@@ -145,6 +94,7 @@ class ResultsTable():
         self.results_table.cellDoubleClicked.connect(self.clicked2x)
 
     def remove_layer(self):
+        self.main_window.global_sim_manager.remove_selected()
         for n in self.active_list:
             self.results_list_JSON["settings"].pop(n)
             self.results_list_JSON["results"].pop(n)
@@ -152,14 +102,17 @@ class ResultsTable():
             self.results_list_JSON["simulation_params"].pop(n)
             self.results_table.setData(self.results_list_JSON["settings"])
         self.active_list = []
-        self.plotter.replot_results()
+        self.main_window.replot_results()
         self.print_and_color_table()
 
     def export_selected(self):
-        self.plotter.replot_results(self.active_highlighted, save=1)
+        self.main_window.replot_results(self.active_highlighted, save=1)
 
-    def clicked2x(self, parent):
+    def clicked2x(self, row_number: int, column_number: int):
+        # self.main_window.global_sim_manager.swap_simulation_status(row_number)
+        print("Index number", row_number)
         n = self.results_table.currentRow()
+                
         m = int(self.results_table.rowCount())
         if n in self.active_list:
             self.active_list.remove(n)
@@ -178,7 +131,7 @@ class ResultsTable():
             else:
                 self.results_list_JSON["settings"][i][0] = "X"
         self.print_and_color_table()
-        self.plotter.replot_results()
+        self.main_window.replot_results()
 
     def print_and_color_table(self):
         m = int(self.results_table.rowCount())
@@ -192,61 +145,6 @@ class ResultsTable():
             else:
                 self.results_table.item(i, 0).setBackground(
                     QtGui.QColor(255, 255, 255))
-
-
-class ParamsAndStimulus():
-    def __init__(self, parent):
-        layerParameters = parent.layerParameters
-        StimulusParameters = parent.StimulusParameters
-        self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
-        self.table_stimulus_params = pg.TableWidget(editable=True,
-                                                    sortable=False)
-        self.GenerateStimulus = QtWidgets.QPushButton()
-        self.AddButton = QtWidgets.QPushButton()
-        self.RemoveButton = QtWidgets.QPushButton()
-        self.LoadButton = QtWidgets.QPushButton()
-        self.SaveButton = QtWidgets.QPushButton()
-        self.AddSimulationButton = QtWidgets.QPushButton()
-        self.GenerateStimulus.setText("Set stimulus \nfor all")
-        self.GenerateStimulus.clicked.connect(parent.setStimulusForALl)
-        self.AddButton.setText("Add new \nlayer")
-        self.AddButton.clicked.connect(self.addLayer)
-        self.RemoveButton.setText("Remove selected\n row")
-        self.RemoveButton.clicked.connect(self.removeLayer)
-        self.LoadButton.setText("Load params \nfrom file")
-        self.LoadButton.clicked.connect(parent.loadParams)
-        self.SaveButton.setText("Save params \nto file")
-        self.SaveButton.clicked.connect(parent.saveParams)
-        self.AddSimulationButton.setText("Add to \nsimulation list")
-        self.AddSimulationButton.clicked.connect(parent.addToSimulationList)
-        self.table_layer_params.setData(layerParameters.to_numpy())
-        self.table_layer_params.setHorizontalHeaderLabels(
-            layerParameters.columns)
-        self.table_stimulus_params.setData(StimulusParameters.to_numpy())
-        self.table_stimulus_params.setHorizontalHeaderLabels(
-            StimulusParameters.columns)
-        self.ctrlWidget = QtGui.QWidget()
-        self.ctrLayout = QtGui.QVBoxLayout()
-        self.ctrlWidget.setLayout(self.ctrLayout)
-        self.ctrLayout.addWidget(self.table_layer_params)
-        self.btn_layout = QtGui.QHBoxLayout()
-        self.btn_layout.addWidget(self.GenerateStimulus)
-        self.btn_layout.addWidget(self.AddButton)
-        self.btn_layout.addWidget(self.RemoveButton)
-        self.btn_layout.addWidget(self.LoadButton)
-        self.btn_layout.addWidget(self.SaveButton)
-        self.btn_layout.addWidget(self.AddSimulationButton)
-        self.ctrLayout.addWidget(self.table_stimulus_params)
-        self.ctrLayout.addLayout(self.btn_layout)
-
-    def addLayer(self):
-        self.table_layer_params.addRow([
-            1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
-            0.01, 100, 120, 1
-        ])
-
-    def removeLayer(self):
-        self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
 
 class AddMenuBar():
@@ -293,7 +191,7 @@ class AddMenuBar():
         self.start_btn.setText("Start")
         self.stop_btn.setText("Stop")
         self.stop_btn.setText("Stop")
-        self.start_btn.clicked.connect(parent.btn_clk)
+        self.start_btn.clicked.connect(parent.start_simulations)
         self.stop_btn.clicked.connect(parent.stop_clk)
 
         self.multiprocessing_label = QLabel("MP")
@@ -342,67 +240,4 @@ class About(QtGui.QDialog):
         self.setLayout(self.layout)
         self.about_label = QtWidgets.QLabel(PyMagVersion + "\n" + PyMagDate)
         self.layout.addWidget(self.about_label)
-        self.close()
-
-
-class LabeledDoubleSpinBox():
-    def __init__(self,
-                 label="Label",
-                 minimum=0,
-                 maximum=1,
-                 value=0,
-                 mode='Double'):
-        self.Label = QLabel(label)
-        if mode == 'Double':
-            self.Value = QtWidgets.QDoubleSpinBox()
-            self.Value.setMinimum(minimum)
-            self.Value.setMaximum(maximum)
-            self.Value.setValue(value)
-            self.Value.setObjectName(label)
-        elif mode == 'Integer':
-            self.Value = QtWidgets.QSpinBox()
-            self.Value.setMinimum(minimum)
-            self.Value.setMaximum(maximum)
-            self.Value.setValue(value)
-            self.Value.setObjectName(label)
-
-        if mode == 'Binary':
-            self.Value = QtWidgets.QCheckBox()
-            self.Value.setObjectName(label)
-            self.Value.setChecked(value)
-
-
-class Settings(QtGui.QDialog):
-    signal = QtCore.pyqtSignal(float, float, int, bool, float, float)
-
-    def __init__(self, parent):
-        super(Settings, self).__init__()
-        self.setWindowTitle(PyMagVersion + " - Settings")
-
-        self.setFixedSize(650, 400)
-        self.layout = QtWidgets.QVBoxLayout()
-        self.setLayout(self.layout)
-
-        self.MHCheckBox = QtWidgets.QCheckBox()
-        self.MHCheckLabel = QtWidgets.QLabel("M(H)")
-        self.RHCheckBox = QtWidgets.QCheckBox()
-        self.RHCheckLabel = QtWidgets.QLabel("R(H)")
-        self.SDCheckBox = QtWidgets.QCheckBox()
-        self.SDCheckBox.setChecked(True)
-        self.SDCheckLabel = QtWidgets.QLabel("SD(H,f)")
-        self.STOCheckBox = QtWidgets.QCheckBox()
-
-        self.STOCheckLabel = QtWidgets.QLabel("STO(H,f)")
-
-        self.CheckBoxLayout = QtWidgets.QHBoxLayout()
-        self.CheckBoxLayout.addWidget(self.MHCheckLabel)
-        self.CheckBoxLayout.addWidget(self.MHCheckBox)
-        self.CheckBoxLayout.addWidget(self.RHCheckLabel)
-        self.CheckBoxLayout.addWidget(self.RHCheckBox)
-        self.CheckBoxLayout.addWidget(self.SDCheckLabel)
-        self.CheckBoxLayout.addWidget(self.SDCheckBox)
-        self.CheckBoxLayout.addWidget(self.STOCheckLabel)
-        self.CheckBoxLayout.addWidget(self.STOCheckBox)
-        self.layout.addLayout(self.CheckBoxLayout)
-
         self.close()

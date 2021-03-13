@@ -3,7 +3,7 @@ import pickle
 
 from pymag.gui.simulation_manager import Simulation, SimulationManager
 from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
-from pymag.result_queue import Replotter
+from pymag.gui.plot_manager import PlotManager
 import queue
 import logging
 import numpy as np
@@ -95,8 +95,9 @@ class UIMainWindow(QMainWindow):
         self.d1.addWidget(self.central_widget)
         self.d10.addWidget(self.traj_plot.w)
 
-        # QUEUE
-        self.replotter = Replotter(
+        # MAIN OBJECTS
+        # REPLOTTTER == "PLOT MANAGER"
+        self.plot_manager = PlotManager(
             magnetisation_plot=self.mag_plot,
             resistance_plot=self.res_plot,
             SD_plot=self.SD_plot,
@@ -175,14 +176,6 @@ class UIMainWindow(QMainWindow):
                 index=False,
                 sep='\t')
         os._exit(0)
-
-    def set_stimulus_for_all(self):
-        df_stimulus = self.get_df_from_table(
-            self.widget_layer_params.table_stimulus_params)
-        for n in range(self.simulation_manager.results_table.rowCount()):
-            self.simulation_manager.results_list_JSON["simulation_params"][
-                n] = df_stimulus
-        self.replot_results()
 
     def clear_plots(self):
         self.res_plot.clear_plots()
@@ -466,20 +459,9 @@ class UIMainWindow(QMainWindow):
             ["X"])
         self.measurement_manager.print_and_color_table()
 
-    def btn_clk(self):
+    def start_simulations(self):
         self.central_layout.progress.setValue(0)
         self.global_sim_manager.simulate_selected()
-        # self.backend.start_process(
-        #     device_list=[
-        #         LayerStructure(sim_num, self).__dict__
-        #         for sim_num in range(len(self.simulation_manager.active_list))
-        #     ],
-        #     stimulus_list=[
-        #         Stimulus(
-        #             self.simulation_manager.
-        #             results_list_JSON["simulation_params"][sim_num]).to_dict()
-        #         for sim_num in range(len(self.simulation_manager.active_list))
-        #     ])
 
     def save_dock_state(self):
         global state
@@ -497,7 +479,7 @@ class UIMainWindow(QMainWindow):
             sim_indx, res = self.result_queue.get(block=False)
             # TODO: change this
             self.global_sim_manager.update_simulation_data(sim_indx, res)
-            self.replotter.plot_current_queue_result(
+            self.plot_manager.plot_current_queue_result(
                 self.global_sim_manager.get_simulation_result(sim_indx))
         except queue.Empty:
             logging.debug("Queue emptied!")

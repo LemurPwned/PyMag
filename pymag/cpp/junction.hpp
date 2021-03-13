@@ -699,7 +699,83 @@ public:
             std::cout << "Simulation time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
     }
 
-    static CVector RK45(CVector mag, CVector other, CVector Hext, int layer, double dt, CVector HOe,
+    //     static CVector RK45(CVector mag, CVector other, CVector Hext, int layer, double dt, CVector HOe,
+    //                         std::vector<double> Ms,
+    //                         std::vector<double> Ku,
+    //                         std::vector<double> Ju,
+    //                         std::vector<CVector> Kdir,
+    //                         std::vector<double> th,
+    //                         std::vector<double> alpha,
+    //                         std::vector<CVector> demag)
+    //     {
+
+    //         CVector k1, k2, k3, k4, dm;
+
+    //         k1 = Junction::LLG(mag, other, Hext, HOe, layer, Ms,
+    //                            Ku,
+    //                            Ju,
+    //                            Kdir,
+    //                            th,
+    //                            alpha,
+    //                            demag) *
+    //              dt;
+    //         k2 = Junction::LLG(mag + k1 * 0.5, other, Hext, HOe, layer, Ms,
+    //                            Ku,
+    //                            Ju,
+    //                            Kdir,
+    //                            th,
+    //                            alpha,
+    //                            demag) *
+    //              dt;
+    //         k3 = Junction::LLG(mag + k2 * 0.5, other, Hext, HOe, layer, Ms,
+    //                            Ku,
+    //                            Ju,
+    //                            Kdir,
+    //                            th,
+    //                            alpha,
+    //                            demag) *
+    //              dt;
+    //         k4 = Junction::LLG(mag + k3, other, Hext, HOe, layer, Ms,
+    //                            Ku,
+    //                            Ju,
+    //                            Kdir,
+    //                            th,
+    //                            alpha,
+    //                            demag) *
+    //              dt;
+
+    //         dm = (k1 + (k2 * 2.0) + (k3 * 2.0) + k4) / 6.0;
+    //         mag = mag + dm;
+    //         mag.normalize();
+    //         return mag;
+    //     }
+
+    //     static CVector LLG(CVector mag, CVector other, CVector Hext, CVector HOe, int layer,
+    //                        std::vector<double> Ms,
+    //                        std::vector<double> Ku,
+    //                        std::vector<double> Ju,
+    //                        std::vector<CVector> Kdir,
+    //                        std::vector<double> th,
+    //                        std::vector<double> alpha,
+    //                        std::vector<CVector> demag)
+    //     {
+
+    //         CVector Heff, noise, dm, Pprod, Hprod;
+
+    //         Heff = Hext + HOe +
+    //                 Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) +
+    //                 (other - mag) * (Ju[0] / (Ms[layer] * th[layer]))
+    //                 - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+
+    //         // Pprod = c_cross(mag, p);
+    //         Hprod = c_cross(mag, Heff);
+    //         dm = Hprod * -PERGYR + c_cross(mag, Hprod) * alpha[layer] * -PERGYR;
+
+    //         return dm;
+    //     }
+    // };
+
+    static CVector RK45(CVector mag, CVector mTop, CVector mBottom, CVector Hext, int layer, double dt, CVector HOe,
                         std::vector<double> Ms,
                         std::vector<double> Ku,
                         std::vector<double> Ju,
@@ -711,7 +787,7 @@ public:
 
         CVector k1, k2, k3, k4, dm;
 
-        k1 = Junction::LLG(mag, other, Hext, HOe, layer, Ms,
+        k1 = Junction::LLG(mag, mTop, mBottom, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -719,7 +795,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k2 = Junction::LLG(mag + k1 * 0.5, other, Hext, HOe, layer, Ms,
+        k2 = Junction::LLG(mag + k1 * 0.5, mTop, mBottom, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -727,7 +803,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k3 = Junction::LLG(mag + k2 * 0.5, other, Hext, HOe, layer, Ms,
+        k3 = Junction::LLG(mag + k2 * 0.5, mTop, mBottom, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -735,7 +811,7 @@ public:
                            alpha,
                            demag) *
              dt;
-        k4 = Junction::LLG(mag + k3, other, Hext, HOe, layer, Ms,
+        k4 = Junction::LLG(mag + k3, mTop, mBottom, Hext, HOe, layer, Ms,
                            Ku,
                            Ju,
                            Kdir,
@@ -750,7 +826,7 @@ public:
         return mag;
     }
 
-    static CVector LLG(CVector mag, CVector other, CVector Hext, CVector HOe, int layer,
+    static CVector LLG(CVector mag, CVector mTop, CVector mBottom, CVector Hext, CVector HOe, int layer,
                        std::vector<double> Ms,
                        std::vector<double> Ku,
                        std::vector<double> Ju,
@@ -762,11 +838,20 @@ public:
 
         CVector Heff, noise, dm, Pprod, Hprod;
 
-        Heff = Hext + HOe + 
-                Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + 
-                (other - mag) * (Ju[0] / (Ms[layer] * th[layer])) 
-                - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        //Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + mTop * (Ju[layer - 1] / (Ms[layer] * th[layer])) + mBottom * (Ju[layer] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);;
 
+        if (layer == 0)
+        {
+            Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (mBottom - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        }
+        if (layer == 1)
+        {
+            Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (mTop - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        }
+
+        //	std::cout<<"\nlayer: "<<layer<<" Ku: "<<Ku[layer]<<" th: "<<th[layer]<<" mTopx: "<<mTop.x<<" mBottomx: "<<mBottom.x<<" kdirx: "<<Kdir[layer].x << " "<<Kdir[layer].y<< " "<<Kdir[layer].z<<" Ju_bottom: "<<Ju[layer]<<" Ju_top: "<<Ju[layer - 1];
+
+        // noise
         // Pprod = c_cross(mag, p);
         Hprod = c_cross(mag, Heff);
         dm = Hprod * -PERGYR + c_cross(mag, Hprod) * alpha[layer] * -PERGYR;

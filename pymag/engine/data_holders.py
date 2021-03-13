@@ -28,7 +28,7 @@ class GenericHolder:
 
 
 class ResultHolder(GenericHolder):
-    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs, SD,
+    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_delta_f, SD,
                  SD_freqs, Rx, Ry, Rz) -> None:
         self.mode = mode
         self.H_mag = H_mag
@@ -40,10 +40,10 @@ class ResultHolder(GenericHolder):
 
         self.SD = np.asarray(SD).reshape(-1, len(SD_freqs))
         self.SD_freqs = SD_freqs
-        self.PIMM = PIMM
-        self.PIMM_freqs = PIMM_freqs
+        self.PIMM = np.asarray(PIMM).reshape(1, -1)
+        self.PIMM_delta_f = PIMM_delta_f
         self.m_traj = m_traj
-        self.limiter = 1
+        self.update_count = 1
 
     def merge_partial_result(self, partial_result: Dict[str, Any]):
         self.SD = np.concatenate((self.SD, np.asarray(partial_result['SD'])),
@@ -69,9 +69,7 @@ class ResultHolder(GenericHolder):
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
-        self.limiter += 1
-        # self.PIMM_freqs = result.PIMM_freqs
-        # self.SD_freqs = result.SD_freqs
+        self.update_count += result.update_count
 
 
 class Layer(GenericHolder):
@@ -97,6 +95,7 @@ class Layer(GenericHolder):
         self.layer = int(layer)
         self.mag = mag
         self.Kdir = self.parse_list(Kdir)
+        self.Kdir = self.Kdir / np.linalg.norm(self.Kdir)
         self.Ku = float(Ku)
         self.J = float(J)
         self.Ms = float(Ms)
@@ -117,13 +116,7 @@ class Layer(GenericHolder):
             float(i)
             for i in str_list.replace("[", "").replace("]", "").split(" ")
         ]
-
         return actual_list
-
-    def to_cmtj(self, id: str) -> cmtj.Layer:
-        return cmtj.Layer("0", cmtj.CVector(*self.mag),
-                          cmtj.CVector(*self.kdir), self.Ku, self.Ms, self.J,
-                          self.th, self.demag, self.dipole, 0, False)
 
 
 class Stimulus():
@@ -182,16 +175,20 @@ class Stimulus():
         self.LLG_time = np.array(data["LLGtime"].values[0], dtype=np.float32)
         self.LLG_steps = int(
             np.array(data["LLGsteps"].values[0], dtype=np.float32))
-        self.freqs = np.linspace(self.fmin, self.fmax, self.fsteps)
+        self.SD_freqs = np.linspace(self.fmin, self.fmax, self.fsteps)
         self.spectrum_len = (self.LLG_steps) // 2
         self.PIMM_delta_f = 1 / self.LLG_time
+
+        self.PIMM_freqs = np.arange(0,
+                                    self.PIMM_delta_f * self.LLG_steps,
+                                    step=self.PIMM_delta_f)
         self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
 
     def to_dict(self):
         return {
             # "f": self.
             "H_sweep": self.H_sweep,
-            "freqs": self.freqs,
+            "SD_freqs": self.SD_freqs,
             "LLG_steps": self.LLG_steps,
             "LLG_time": self.LLG_time,
             "PIMM_delta_f": self.PIMM_delta_f,
