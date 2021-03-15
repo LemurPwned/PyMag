@@ -7,6 +7,35 @@ import pandas as pd
 H_unit = "A/m"
 
 
+
+class MultiplePlot():
+    def __init__(self, left, number_of_plots, y_unit='\u03A9'):
+        self.number_of_plots = number_of_plots
+        self.plot_area = pg.GraphicsLayoutWidget()
+        self.plot_area.setGeometry(QtCore.QRect(0, 0, 600, 300))
+        self.plot_area.nextRow()
+        self.plot_area.setBackground('w')
+        self.plots = []
+
+        for i in range(0, number_of_plots):
+            self.plots.append(self.plot_area.addPlot())
+            self.plots[i].setLabel('left', left[i], units=y_unit)
+            self.plots[i].enableAutoRange('x', True)
+            self.plots[i].showGrid(x=True, y=True, alpha=0.6)
+            self.plot_area.nextRow()
+
+    def clear_plots(self):
+        for i in range(0, self.number_of_plots):
+            self.plots[i].clear()
+
+    def set_plots(self, X, Y, colors, units):
+        for i in range(0, self.number_of_plots):
+            self.plots[i].plot(X, Y[i], pen = (colors[i]))
+            
+    def set_plot(self, n, X, Y):
+        self.plots[n].plot(np.array(X), np.array(Y))
+
+
 class ResPlot():
     def __init__(self):
         self.plotsRes = pg.GraphicsLayoutWidget()

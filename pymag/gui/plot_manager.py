@@ -50,19 +50,30 @@ class PlotManager:
                                 dy=result_holder.SD_freqs[1] -
                                 result_holder.SD_freqs[0])
 
-        self.magnetisation_plot.Mx.plot(result_holder.H_mag[:lim],
-                                        result_holder.m_avg[:, 0],
-                                        pen=(255, 0, 0))
-        self.magnetisation_plot.My.plot(result_holder.H_mag[:lim],
+        # self.magnetisation_plot.Mx.plot(result_holder.H_mag[:lim],
+        #                                 result_holder.m_avg[:, 0],
+        #                                 pen=(255, 0, 0))
+        # self.magnetisation_plot.My.plot(result_holder.H_mag[:lim],
+        #                                 result_holder.m_avg[:, 1],
+        #                                 pen=(0, 255, 0))
+        # self.magnetisation_plot.Mz.plot(result_holder.H_mag[:lim],
+        #                                 result_holder.m_avg[:, 2],
+        #                                 pen=(0, 0, 255))
+        # self.magnetisation_plot.Mx.setYRange(-1.5, 1.5, padding=0)
+        # self.magnetisation_plot.My.setYRange(-1.5, 1.5, padding=0)
+        # self.magnetisation_plot.Mz.setYRange(-1.5, 1.5, padding=0)
+        # self.magnetisation_plot.set_mode(result_holder.mode)
+
+        # self.magnetisation_plot.set_plot(1,result_holder.H_mag[:lim],
+        #                                 result_holder.m_avg[:, 0])
+        self.magnetisation_plot.set_plots(result_holder.H_mag[:lim],
+                                        [result_holder.m_avg[:, 0],
                                         result_holder.m_avg[:, 1],
-                                        pen=(0, 255, 0))
-        self.magnetisation_plot.Mz.plot(result_holder.H_mag[:lim],
-                                        result_holder.m_avg[:, 2],
-                                        pen=(0, 0, 255))
-        self.magnetisation_plot.Mx.setYRange(-1.5, 1.5, padding=0)
-        self.magnetisation_plot.My.setYRange(-1.5, 1.5, padding=0)
-        self.magnetisation_plot.Mz.setYRange(-1.5, 1.5, padding=0)
-        self.magnetisation_plot.set_mode(result_holder.mode)
+                                        result_holder.m_avg[:, 2]],
+                                        [[255, 0, 0],[0, 255, 0],[0, 0, 255]]
+                                        )
+
+
         self.resistance_plot.Rx.plot(result_holder.H_mag[:lim],
                                      result_holder.Rx,
                                      pen=(255, 0, 0))

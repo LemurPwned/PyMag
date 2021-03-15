@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.utils import PyMagVersion
 from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
-from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot
+from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot, MultiplePlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
 from pyqtgraph.dockarea import Dock, DockArea
@@ -45,7 +45,8 @@ class UIMainWindow(QMainWindow):
         self.SD_plot = PlotDynamics()
         self.PIMM_plot = PlotDynamics()
         self.res_plot = ResPlot()
-        self.mag_plot = MagPlot()
+        # self.mag_plot = MagPlot()
+        self.mag_plot = MultiplePlot(left=["alpha", "beta", "gamma"], number_of_plots=3)
         self.traj_plot = TrajectoryPlot()
 
         self.central_layout = AddMenuBar(self)
@@ -90,7 +91,8 @@ class UIMainWindow(QMainWindow):
         self.d7.addWidget(self.SD_plot.plot_dynamics_view)
         self.d2.addWidget(self.PIMM_plot.plot_dynamics_view)
         self.d6.addWidget(self.res_plot.plotsRes)
-        self.d3.addWidget(self.mag_plot.plotsMag)
+        # self.d3.addWidget(self.mag_plot.plotsMag) 
+        self.d3.addWidget(self.mag_plot.plot_area)
         self.d4.addWidget(self.table_results)
         self.d1.addWidget(self.central_widget)
         self.d10.addWidget(self.traj_plot.w)
