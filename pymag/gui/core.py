@@ -11,9 +11,9 @@ class LayerTableStimulus():
     """
     Don't pass parent -- pass Layer & Stimulus
     """
-    def __init__(self, parent):
-        layerParameters = parent.layerParameters
-        StimulusParameters = parent.StimulusParameters
+    def __init__(self, parent, layerParameters,StimulusParameters):
+        # layerParameters = layerParameters
+        # StimulusParameters = StimulusParameters
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         self.table_stimulus_params = pg.TableWidget(editable=True,
                                                     sortable=False)
@@ -232,7 +232,7 @@ class AddMenuBar():
 
 
 class About(QtGui.QDialog):
-    def __init__(self, parent):
+    def __init__(self):
         super(About, self).__init__()
         self.setWindowTitle(PyMagVersion + " - About")
         self.setFixedSize(200, 100)

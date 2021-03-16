@@ -28,51 +28,13 @@ class MultiplePlot():
         for i in range(0, self.number_of_plots):
             self.plots[i].clear()
 
-    def set_plots(self, X, Y, colors, units):
+    def set_plots(self, X: list, Y: list, colors: list, left_caption, left_units, bottom_caption, bottom_units):
         for i in range(0, self.number_of_plots):
             self.plots[i].plot(X, Y[i], pen = (colors[i]))
-            
+            self.plots[i].setLabel('left', left_caption[i], units=left_units[i])
+        self.plots[i].setLabel('bottom', bottom_caption, units=bottom_units)
     def set_plot(self, n, X, Y):
         self.plots[n].plot(np.array(X), np.array(Y))
-
-
-class ResPlot():
-    def __init__(self):
-        self.plotsRes = pg.GraphicsLayoutWidget()
-        self.plotsRes.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plotsRes.nextRow()
-        self.Rx = self.plotsRes.addPlot()
-        self.Rx.setLabel('left', "Rxx", units='\u03A9')
-        self.Rx.enableAutoRange('x', True)
-        self.Rx.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsRes.nextRow()
-        self.Ry = self.plotsRes.addPlot()
-        self.Ry.setLabel('left', "Rxy", units='\u03A9')
-        self.Ry.enableAutoRange('x', True)
-        self.Ry.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsRes.nextRow()
-        self.Rz = self.plotsRes.addPlot()
-        self.Rz.setLabel('bottom', "Field", units=H_unit)
-        self.Rz.setLabel('left', "Rzz CPP G(T)MR", units='\u03A9')
-        self.Rz.enableAutoRange('x', True)
-        self.Rz.showGrid(x=True, y=True, alpha=0.6)
-        self.Rx.setXLink(self.Ry)
-        self.Ry.setXLink(self.Rz)
-        self.plotsRes.setBackground('w')
-
-    def clear_plots(self):
-        self.Rx.clear()
-        self.Ry.clear()
-        self.Rz.clear()
-
-    def set_mode(self, mode):
-        if mode == "H":
-            self.Rz.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.Rz.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.Rz.setLabel('bottom', "Theta angle", units="deg")
-
 
 class LineShape():
     def __init__(self):
@@ -149,46 +111,7 @@ class LineShape():
     def clear_plots(self):
         # self.legenda = 0
         self.LS.clear()
-
-
-class MagPlot():
-    def __init__(self):
-        self.plotsMag = pg.GraphicsLayoutWidget()
-        self.plotsMag.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plotsMag.nextRow()
-        self.Mx = self.plotsMag.addPlot()
-        self.Mx.setLabel('left', "Mx", units='T')
-        self.Mx.enableAutoRange('x', True)
-        self.Mx.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsMag.nextRow()
-        self.My = self.plotsMag.addPlot()
-        self.My.setLabel('left', "My", units='T')
-        self.My.enableAutoRange('x', True)
-        self.My.showGrid(x=True, y=True, alpha=0.6)
-        self.plotsMag.nextRow()
-        self.Mz = self.plotsMag.addPlot()
-        self.Mz.setLabel('bottom', "Field", units=H_unit)
-        self.Mz.setLabel('left', "Mz", units='T')
-        self.Mz.enableAutoRange('x', True)
-        self.Mz.showGrid(x=True, y=True, alpha=0.6)
-        self.Mx.setXLink(self.My)
-        self.My.setXLink(self.Mz)
-        self.plotsMag.setBackground('w')
-
-    def clear_plots(self):
-        self.Mx.clear()
-        self.My.clear()
-        self.Mz.clear()
-
-    def set_mode(self, mode):
-        if mode == "H":
-            self.Mz.setLabel('bottom', "Field", units=H_unit)
-        elif mode == "phi":
-            self.Mz.setLabel('bottom', "Phi angle", units="deg")
-        elif mode == "theta":
-            self.Mz.setLabel('bottom', "Theta angle", units="deg")
-
-
+        
 class PlotDynamics():
     """
     TODO: Rename SpectrogramPlot?

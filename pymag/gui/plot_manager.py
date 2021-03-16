@@ -1,5 +1,5 @@
 from pymag.gui.trajectory import TrajectoryPlot
-from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot
+from pymag.gui.plots import LineShape, PlotDynamics, MultiplePlot
 from pymag.engine.data_holders import ResultHolder
 import queue
 
@@ -8,7 +8,7 @@ class PlotManager:
     """
     Plot Manager manages all plot updates in the dock
     """
-    def __init__(self, magnetisation_plot: MagPlot, resistance_plot: ResPlot,
+    def __init__(self, magnetisation_plot: MultiplePlot, resistance_plot: MultiplePlot,
                  SD_plot: PlotDynamics, SD_lines: LineShape,
                  PIMM_plot: PlotDynamics,
                  trajectory_plot: TrajectoryPlot) -> None:
@@ -50,40 +50,34 @@ class PlotManager:
                                 dy=result_holder.SD_freqs[1] -
                                 result_holder.SD_freqs[0])
 
-        # self.magnetisation_plot.Mx.plot(result_holder.H_mag[:lim],
-        #                                 result_holder.m_avg[:, 0],
-        #                                 pen=(255, 0, 0))
-        # self.magnetisation_plot.My.plot(result_holder.H_mag[:lim],
-        #                                 result_holder.m_avg[:, 1],
-        #                                 pen=(0, 255, 0))
-        # self.magnetisation_plot.Mz.plot(result_holder.H_mag[:lim],
-        #                                 result_holder.m_avg[:, 2],
-        #                                 pen=(0, 0, 255))
-        # self.magnetisation_plot.Mx.setYRange(-1.5, 1.5, padding=0)
-        # self.magnetisation_plot.My.setYRange(-1.5, 1.5, padding=0)
-        # self.magnetisation_plot.Mz.setYRange(-1.5, 1.5, padding=0)
-        # self.magnetisation_plot.set_mode(result_holder.mode)
+        units_SI = {"H": "A/m", 
+                    "theta": "deg", 
+                    "phi": "deg"}
+        units = units_SI
 
-        # self.magnetisation_plot.set_plot(1,result_holder.H_mag[:lim],
-        #                                 result_holder.m_avg[:, 0])
         self.magnetisation_plot.set_plots(result_holder.H_mag[:lim],
                                         [result_holder.m_avg[:, 0],
                                         result_holder.m_avg[:, 1],
                                         result_holder.m_avg[:, 2]],
-                                        [[255, 0, 0],[0, 255, 0],[0, 0, 255]]
+                                        [[255, 0, 0],[0, 255, 0],[0, 0, 255]],
+                                        ["Mx", "My", "Mz"],
+                                        ["norm.", "norm.", "norm."],
+                                        str(result_holder.mode), 
+                                        units[str(result_holder.mode)]
                                         )
 
 
-        self.resistance_plot.Rx.plot(result_holder.H_mag[:lim],
-                                     result_holder.Rx,
-                                     pen=(255, 0, 0))
-        self.resistance_plot.Ry.plot(result_holder.H_mag[:lim],
-                                     result_holder.Ry,
-                                     pen=(0, 255, 0))
-        self.resistance_plot.Rz.plot(result_holder.H_mag[:lim],
-                                     result_holder.Rz,
-                                     pen=(0, 0, 255))
-        self.resistance_plot.set_mode(result_holder.mode)
+        self.resistance_plot.set_plots(result_holder.H_mag[:lim],
+                                        [result_holder.Rx,
+                                        result_holder.Ry,
+                                        result_holder.Rz],
+                                        [[255, 0, 0],[0, 255, 0],[0, 0, 255]],
+                                        ["Rxx", "Rxy", "Rzz"],
+                                        ["\u03A9", "\u03A9", "\u03A9"],
+                                        str(result_holder.mode), 
+                                        units[str(result_holder.mode)]
+                                        )
+
 
         if lim >= 2:
             # two updates of frequencies

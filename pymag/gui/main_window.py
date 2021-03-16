@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.utils import PyMagVersion
 from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
-from pymag.gui.plots import LineShape, MagPlot, PlotDynamics, ResPlot, MultiplePlot
+from pymag.gui.plots import LineShape, PlotDynamics, MultiplePlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
 from pyqtgraph.dockarea import Dock, DockArea
@@ -39,21 +39,25 @@ class UIMainWindow(QMainWindow):
         self.setCentralWidget(self.area)
 
         # define classes
-        self.window_about = About(self)
+        self.window_about = About()
 
         self.SD_lines = LineShape()
         self.SD_plot = PlotDynamics()
         self.PIMM_plot = PlotDynamics()
-        self.res_plot = ResPlot()
+        # self.res_plot = ResPlot()
+        self.res_plot = MultiplePlot(left=["Rxx", "Rxy", "Rzz"], number_of_plots=3)
         # self.mag_plot = MagPlot()
-        self.mag_plot = MultiplePlot(left=["alpha", "beta", "gamma"], number_of_plots=3)
+        self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"], number_of_plots=3)
         self.traj_plot = TrajectoryPlot()
 
         self.central_layout = AddMenuBar(self)
         self.central_widget = self.central_layout.central_widget
         self.simulation_manager = ResultsTable(self)
         self.measurement_manager = ResultsTable(self)
-        self.widget_layer_params = LayerTableStimulus(self)
+        self.widget_layer_params = LayerTableStimulus(self, self.layerParameters,self.StimulusParameters)
+
+
+
         self.table_results = pg.TableWidget(editable=True, sortable=False)
         self.table_results.setHorizontalHeaderLabels(
             ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz'])
@@ -90,7 +94,7 @@ class UIMainWindow(QMainWindow):
         self.d11.addWidget(self.SD_lines.plotsLS)
         self.d7.addWidget(self.SD_plot.plot_dynamics_view)
         self.d2.addWidget(self.PIMM_plot.plot_dynamics_view)
-        self.d6.addWidget(self.res_plot.plotsRes)
+        self.d6.addWidget(self.res_plot.plot_area)
         # self.d3.addWidget(self.mag_plot.plotsMag) 
         self.d3.addWidget(self.mag_plot.plot_area)
         self.d4.addWidget(self.table_results)
