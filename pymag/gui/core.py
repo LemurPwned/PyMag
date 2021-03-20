@@ -33,6 +33,8 @@ class LayerTableStimulus():
         self.save_button.clicked.connect(parent.save_params)
         self.add_simulation.setText("Add to \nsimulation list")
         self.add_simulation.clicked.connect(parent.add_to_simulation_list)
+
+        
         self.table_layer_params.setData(layerParameters.to_numpy())
         self.table_layer_params.setHorizontalHeaderLabels(
             layerParameters.columns)
@@ -109,29 +111,34 @@ class ResultsTable():
         self.main_window.replot_results(self.active_highlighted, save=1)
 
     def clicked2x(self, row_number: int, column_number: int):
-        # self.main_window.global_sim_manager.swap_simulation_status(row_number)
-        print("Index number", row_number)
-        n = self.results_table.currentRow()
+        # print("Index number", row_number)
+        # n = self.results_table.currentRow()
                 
-        m = int(self.results_table.rowCount())
-        if n in self.active_list:
-            self.active_list.remove(n)
-        else:
-            self.active_list.append(n)
-        if not self.active_list:
-            self.remove_btn.setEnabled(False)
-            self.export_btn.setEnabled(False)
-        else:
-            self.remove_btn.setEnabled(True)
-            self.export_btn.setEnabled(True)
+        # m = int(self.results_table.rowCount())
+        # if n in self.active_list:
+        #     self.active_list.remove(n)
+        # else:
+        #     self.active_list.append(n)
+        # if not self.active_list:
+        #     self.remove_btn.setEnabled(False)
+        #     self.export_btn.setEnabled(False)
+        # else:
+        #     self.remove_btn.setEnabled(True)
+        #     self.export_btn.setEnabled(True)
 
-        for i in range(0, m):
-            if i in self.active_list:
-                self.results_list_JSON["settings"][i][0] = "V"
-            else:
-                self.results_list_JSON["settings"][i][0] = "X"
+        # for i in range(0, m):
+        #     if i in self.active_list:
+        #         self.results_list_JSON["settings"][i][0] = "V"
+        #     else:
+        #         self.results_list_JSON["settings"][i][0] = "X"
         self.print_and_color_table()
-        self.main_window.replot_results()
+
+        self.main_window.global_sim_manager.swap_simulation_status(row_number)
+        results_to_plot = self.main_window.global_sim_manager.get_selected_simulations()
+        self.main_window.plot_manager.plot_active_results(results_to_plot)
+
+
+        # self.main_window.replot_results()
 
     def print_and_color_table(self):
         m = int(self.results_table.rowCount())

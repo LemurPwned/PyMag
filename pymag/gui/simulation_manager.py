@@ -61,9 +61,9 @@ class SimulationManager():
 
     def swap_simulation_status(self, index):
         if index in self.selected_simulation_indices:
-            pass
+            self.selected_simulation_indices.remove(index)
         else:
-            pass 
+            self.selected_simulation_indices.append(index)
 
     def get_selected_simulations(self) -> List[Simulation]:
         return [

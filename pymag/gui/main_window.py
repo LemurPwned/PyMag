@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.utils import PyMagVersion
 from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
-from pymag.gui.plots import LineShape, PlotDynamics, MultiplePlot
+from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
 from pyqtgraph.dockarea import Dock, DockArea
@@ -41,65 +41,63 @@ class UIMainWindow(QMainWindow):
         # define classes
         self.window_about = About()
 
-        self.SD_lines = LineShape()
-        self.SD_plot = PlotDynamics()
-        self.PIMM_plot = PlotDynamics()
+        # self.SD_plot = PlotDynamics()
+        self.SD_plot = SpectrogramPlot()
+        self.PIMM_plot = SpectrogramPlot()
+
+
+        
         # self.res_plot = ResPlot()
-        self.res_plot = MultiplePlot(left=["Rxx", "Rxy", "Rzz"], number_of_plots=3)
+        self.res_plot = MultiplePlot(left=["Rxx", "Rxy", "Rzz"],
+                                     number_of_plots=3)
         # self.mag_plot = MagPlot()
-        self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"], number_of_plots=3)
+        self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"],
+                                     number_of_plots=3)
         self.traj_plot = TrajectoryPlot()
 
         self.central_layout = AddMenuBar(self)
         self.central_widget = self.central_layout.central_widget
         self.simulation_manager = ResultsTable(self)
         self.measurement_manager = ResultsTable(self)
-        self.widget_layer_params = LayerTableStimulus(self, self.layerParameters,self.StimulusParameters)
-
-
+        self.widget_layer_params = LayerTableStimulus(self,
+                                                      self.layerParameters,
+                                                      self.StimulusParameters)
 
         self.table_results = pg.TableWidget(editable=True, sortable=False)
         self.table_results.setHorizontalHeaderLabels(
             ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz'])
 
-        #  define dock area structure
-        self.d1 = Dock("Control panel", size=(300, 50))
-        self.d2 = Dock("PIMM-FMR", size=(300, 300))
-        self.d7 = Dock("SD-FMR", size=(300, 300))
-        self.d3 = Dock("Magnetization", size=(300, 300))
-        self.d4 = Dock("Simulation results", size=(300, 200))
-        self.d6 = Dock("Resistance", size=(300, 300))
-        self.d10 = Dock("Trajectory", size=(200, 200))
-        self.d11 = Dock("SD lines", size=(300, 300))
-        self.d20 = Dock("Layer parameters", size=(100, 200))
-        self.d13 = Dock("Python console", size=(200, 200))
-        self.d14 = Dock("Simulation management", size=(200, 200))
-        self.d15 = Dock("Measurement management", size=(200, 200))
+        self.d = []
+        dock_titles = [
+            "Control panel", "PIMM-FMR", "Magnetization", "Simulation results",
+            "Resistance", "SD-FMR", "Measurement management",
+            "Simulation management", "Layer parameters"
+        ]
 
-        self.area.addDock(self.d1, 'left')
-        self.area.addDock(self.d2, 'right')
-        self.area.addDock(self.d3, 'bottom', self.d1)
-        self.area.moveDock(self.d15, 'right', self.d2)
-        self.area.moveDock(self.d14, 'above', self.d15)
-        self.area.addDock(self.d4, 'above', self.d3)
-        self.area.addDock(self.d6, 'above', self.d3)
-        self.area.addDock(self.d7, 'above', self.d2)
-        self.area.addDock(self.d10, 'above', self.d7)
-        self.area.addDock(self.d11, 'above', self.d7)
-        self.area.moveDock(self.d20, 'top', self.d2)
+        dock_contents = [
+            self.central_widget, self.PIMM_plot.plot_view,
+            self.mag_plot.plot_area, self.table_results,
+            self.res_plot.plot_area, self.SD_plot.plot_view,
+            self.measurement_manager.central_widget,
+            self.simulation_manager.central_widget,
+            self.widget_layer_params.central_widget
+        ]
 
-        self.d20.addWidget(self.widget_layer_params.central_widget)
-        self.d14.addWidget(self.simulation_manager.central_widget)
-        self.d15.addWidget(self.measurement_manager.central_widget)
-        self.d11.addWidget(self.SD_lines.plotsLS)
-        self.d7.addWidget(self.SD_plot.plot_dynamics_view)
-        self.d2.addWidget(self.PIMM_plot.plot_dynamics_view)
-        self.d6.addWidget(self.res_plot.plot_area)
-        # self.d3.addWidget(self.mag_plot.plotsMag) 
-        self.d3.addWidget(self.mag_plot.plot_area)
-        self.d4.addWidget(self.table_results)
-        self.d1.addWidget(self.central_widget)
-        self.d10.addWidget(self.traj_plot.w)
+        for i in range(len(dock_titles)):
+            self.d.append(Dock(dock_titles[i], size=(300, 50)))
+            self.d[i].addWidget(dock_contents[i])
+
+        dock_pos = [(self.d[0], 'left'), (self.d[1], 'right'),
+                    (self.d[2], 'bottom', self.d[0]),
+                    (self.d[3], 'above', self.d[2]),
+                    (self.d[4], 'above', self.d[2]),
+                    (self.d[5], 'above', self.d[1]),
+                    (self.d[6], 'right', self.d[1]),
+                    (self.d[7], 'above', self.d[6]),
+                    (self.d[8], 'top', self.d[1])]
+
+        for i in range(len(dock_titles)):
+            self.area.addDock(*dock_pos[i])
 
         # MAIN OBJECTS
         # REPLOTTTER == "PLOT MANAGER"
@@ -107,7 +105,6 @@ class UIMainWindow(QMainWindow):
             magnetisation_plot=self.mag_plot,
             resistance_plot=self.res_plot,
             SD_plot=self.SD_plot,
-            SD_lines=self.SD_lines,
             PIMM_plot=self.PIMM_plot,
             trajectory_plot=self.traj_plot,
         )
@@ -124,51 +121,56 @@ class UIMainWindow(QMainWindow):
         self.show()
 
     def load_defaults(self):
-        try:
-            self.StimulusParameters = pd.read_csv(self.defaultStimulusFile,
-                                                  delimiter='\t')
-        except:
-            print("No file with default stimulus was found")
-            self.StimulusParameters = pd.DataFrame(
-                np.array([[
-                    -800000, 800000, 50, 0, 89.9, 45, 0, 47e9, 48, 0.01, 0.01,
-                    "[1 0 0]", 0, "[1 0 0]", 4e-9, 2000
-                ]]),
-                columns=[
-                    'Hmin', 'Hmax', 'Hsteps', 'Hback', 'HTheta', 'HPhi',
-                    'fmin', 'fmax', 'fsteps', 'IAC', 'IDC', 'Idir', 'fphase',
-                    'Vdir', 'LLGtime', 'LLGsteps'
-                ])
+        # try:
+        self.StimulusParameters = pd.read_csv(self.defaultStimulusFile,delimiter='\t')
+        # except:
+        #     print("No file with default stimulus was found")
+        #     self.StimulusParameters = pd.DataFrame(
+        #         np.array([[
+        #             -800000, 800000, 50, 0, 89.9, 45, 0, 47e9, 48, 0.01, 0.01,
+        #             "[1 0 0]", 0, "[1 0 0]", 4e-9, 2000
+        #         ]]),
+        #         columns=[
+        #             'Hmin', 'Hmax', 'Hsteps', 'Hback', 'HTheta', 'HPhi',
+        #             'fmin', 'fmax', 'fsteps', 'IAC', 'IDC', 'Idir', 'fphase',
+        #             'Vdir', 'LLGtime', 'LLGsteps'
+        #         ])
 
-        try:
-            self.layerParameters = pd.read_csv(self.defaultParametersFile,
+        # try:
+        self.layerParameters = pd.read_csv(self.defaultParametersFile,
                                                delimiter='\t')
-        except:
-            print("No file with default parameters was found")
-            self.layerParameters = pd.DataFrame(
-                np.array([[
-                    1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 0 1]",
-                    0.02, 0.01, 0.01, 100, 120
-                ],
-                          [
-                              2, 1.1, 4000, "[1 0 0]", -1e-5, 0.01, 1e-9,
-                              "[0 0 1]", 0.02, 0.01, 0.01, 100, 120
-                          ]]),
-                columns=[
-                    'layer', 'Ms', 'Ku', 'Kdir', 'J', 'alpha', 'th', 'N',
-                    'AMR', 'SMR', 'AHE', 'Rx0', 'Ry0'
-                ])
+        # except:
+        #     print("No file with default parameters was found")
+        #     self.layerParameters = pd.DataFrame(
+        #         np.array([[
+        #             1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 0 1]",
+        #             0.02, 0.01, 0.01, 100, 120
+        #         ],
+        #                   [
+        #                       2, 1.1, 4000, "[1 0 0]", -1e-5, 0.01, 1e-9,
+        #                       "[0 0 1]", 0.02, 0.01, 0.01, 100, 120
+        #                   ]]),
+        #         columns=[
+        #             'layer', 'Ms', 'Ku', 'Kdir', 'J', 'alpha', 'th', 'N',
+        #             'AMR', 'SMR', 'AHE', 'Rx0', 'Ry0'
+        #         ])
 
     def about(self):
         self.window_about.show()
 
     def full_screen(self):
+        """
+            Switch between normal and full screen mode
+        """
         if self.isFullScreen():
             self.showNormal()
         else:
             self.showFullScreen()
 
     def end_program(self):
+        """
+            stimulus and layer params are saved when exit
+        """
         self.get_df_from_table(
             self.widget_layer_params.table_stimulus_params).to_csv(
                 self.defaultStimulusFile,
@@ -182,14 +184,6 @@ class UIMainWindow(QMainWindow):
                 index=False,
                 sep='\t')
         os._exit(0)
-
-    def clear_plots(self):
-        self.res_plot.clear_plots()
-        self.mag_plot.clear_plots()
-        self.PIMM_plot.clear_plots()
-        self.SD_plot.clear_plots()
-        self.SD_lines.clear_plots()
-        self.traj_plot.clear()
 
     def open_file_dialog(self, extention=".csv"):
         options = QFileDialog.Options()
@@ -485,7 +479,7 @@ class UIMainWindow(QMainWindow):
             sim_indx, res = self.result_queue.get(block=False)
             # TODO: change this
             self.global_sim_manager.update_simulation_data(sim_indx, res)
-            self.plot_manager.plot_current_queue_result(
+            self.plot_manager.plot_result(
                 self.global_sim_manager.get_simulation_result(sim_indx))
         except queue.Empty:
             logging.debug("Queue emptied!")
