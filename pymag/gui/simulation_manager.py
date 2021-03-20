@@ -6,7 +6,10 @@ from pymag.engine.data_holders import (GenericHolder, ResultHolder,
 
 
 class Simulation(GenericHolder):
-    def __init__(self, simulation_input, simulation_result=None, simulation_name = "SimName") -> None:
+    def __init__(self,
+                 simulation_input,
+                 simulation_result=None,
+                 simulation_name="SimName") -> None:
         self.simulated: bool = False
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
@@ -85,7 +88,10 @@ class SimulationManager():
             partial_result)
 
     def get_simulation_names(self):
-        return  [self.simulations[i].simulation_name for i in range(len(self.simulations))] 
+        return [
+            self.simulations[i].simulation_name
+            for i in range(len(self.simulations))
+        ]
 
 
 class Backend(QtCore.QObject):

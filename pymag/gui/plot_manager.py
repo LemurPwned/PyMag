@@ -11,9 +11,9 @@ class PlotManager:
     Plot Manager manages all plot updates in the dock
     """
     def __init__(self, magnetisation_plot: MultiplePlot,
-                 resistance_plot: MultiplePlot, SD_plot: SpectrogramPlot,
-                 PIMM_plot: SpectrogramPlot,
-                 trajectory_plot: TrajectoryPlot) -> None:
+                 resistance_plot: MultiplePlot, 
+                 SD_plot: SpectrogramPlot,
+                 PIMM_plot: SpectrogramPlot) -> None:
         """
         :param magnetisation_plot
         :param resistance_plot
@@ -31,7 +31,7 @@ class PlotManager:
         self.SD_plot = SD_plot
         # self.SD_lines = SD_lines
         self.PIMM_plot = PIMM_plot
-        self.trajectory_plot = trajectory_plot
+        # self.trajectory_plot = trajectory_plot
 
         units_SI = {"H": "A/m", "theta": "deg", "phi": "deg", "f": "Hz"}
         self.units = units_SI
