@@ -11,7 +11,7 @@ import pandas as pd
 import pyqtgraph as pg
 from natsort import natsorted
 from pymag.engine.utils import PyMagVersion
-from pymag.gui.core import About, AddMenuBar, LayerTableStimulus, ResultsTable
+from pymag.gui.core import About, AddMenuBar, SimulationParameters, ResultsTable
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.trajectory import TrajectoryPlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
@@ -59,7 +59,7 @@ class UIMainWindow(QMainWindow):
         self.central_widget = self.central_layout.central_widget
         self.simulation_manager = ResultsTable(self)
         self.measurement_manager = ResultsTable(self)
-        self.widget_layer_params = LayerTableStimulus(self,
+        self.widget_layer_params = SimulationParameters(self,
                                                       self.layerParameters,
                                                       self.StimulusParameters)
 
@@ -121,39 +121,11 @@ class UIMainWindow(QMainWindow):
         self.show()
 
     def load_defaults(self):
-        # try:
+        """
+            Load default parameters: Simulus and Layer Structure
+        """
         self.StimulusParameters = pd.read_csv(self.defaultStimulusFile,delimiter='\t')
-        # except:
-        #     print("No file with default stimulus was found")
-        #     self.StimulusParameters = pd.DataFrame(
-        #         np.array([[
-        #             -800000, 800000, 50, 0, 89.9, 45, 0, 47e9, 48, 0.01, 0.01,
-        #             "[1 0 0]", 0, "[1 0 0]", 4e-9, 2000
-        #         ]]),
-        #         columns=[
-        #             'Hmin', 'Hmax', 'Hsteps', 'Hback', 'HTheta', 'HPhi',
-        #             'fmin', 'fmax', 'fsteps', 'IAC', 'IDC', 'Idir', 'fphase',
-        #             'Vdir', 'LLGtime', 'LLGsteps'
-        #         ])
-
-        # try:
-        self.layerParameters = pd.read_csv(self.defaultParametersFile,
-                                               delimiter='\t')
-        # except:
-        #     print("No file with default parameters was found")
-        #     self.layerParameters = pd.DataFrame(
-        #         np.array([[
-        #             1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 0 1]",
-        #             0.02, 0.01, 0.01, 100, 120
-        #         ],
-        #                   [
-        #                       2, 1.1, 4000, "[1 0 0]", -1e-5, 0.01, 1e-9,
-        #                       "[0 0 1]", 0.02, 0.01, 0.01, 100, 120
-        #                   ]]),
-        #         columns=[
-        #             'layer', 'Ms', 'Ku', 'Kdir', 'J', 'alpha', 'th', 'N',
-        #             'AMR', 'SMR', 'AHE', 'Rx0', 'Ry0'
-        #         ])
+        self.layerParameters = pd.read_csv(self.defaultParametersFile,delimiter='\t')
 
     def about(self):
         self.window_about.show()
@@ -171,8 +143,7 @@ class UIMainWindow(QMainWindow):
         """
             stimulus and layer params are saved when exit
         """
-        self.get_df_from_table(
-            self.widget_layer_params.table_stimulus_params).to_csv(
+        self.get_df_from_table(self.widget_layer_params.table_stimulus_params).to_csv(
                 self.defaultStimulusFile,
                 encoding='utf-8',
                 index=False,
@@ -230,29 +201,34 @@ class UIMainWindow(QMainWindow):
                                      sep='\t')
 
     def save_binary(self):
-        fileName = self.save_file_dialog(".bin")
-        a_file = open(fileName, "wb")
-        pickle.dump([
-            self.simulation_manager.results_list_JSON,
-            self.measurement_manager.results_list_JSON
-        ], a_file)
-        a_file.close()
+        """todo"""
+        return 0
+        
+        # fileName = self.save_file_dialog(".bin")
+        # a_file = open(fileName, "wb")
+        # pickle.dump([
+        #     self.simulation_manager.results_list_JSON,
+        #     self.measurement_manager.results_list_JSON
+        # ], a_file)
+        # a_file.close()
 
     def load_binary(self):
-        fileName = self.open_file_dialog(".bin")
-        a_file = open(fileName, "rb")
-        package1 = pickle.load(a_file)
-        self.simulation_manager.results_list_JSON = package1[0]
-        self.measurement_manager.results_list_JSON = package1[1]
-        a_file.close()
-        self.simulation_manager.results_table.setData(
-            pd.DataFrame(
-                np.array(self.simulation_manager.results_list_JSON["settings"])
-            ).to_numpy())
-        self.measurement_manager.results_table.setData(
-            pd.DataFrame(
-                np.array(self.measurement_manager.results_list_JSON["settings"]
-                         )).to_numpy())
+        """todo"""
+        return 0
+        # fileName = self.open_file_dialog(".bin")
+        # a_file = open(fileName, "rb")
+        # package1 = pickle.load(a_file)
+        # self.simulation_manager.results_list_JSON = package1[0]
+        # self.measurement_manager.results_list_JSON = package1[1]
+        # a_file.close()
+        # self.simulation_manager.results_table.setData(
+        #     pd.DataFrame(
+        #         np.array(self.simulation_manager.results_list_JSON["settings"])
+        #     ).to_numpy())
+        # self.measurement_manager.results_table.setData(
+        #     pd.DataFrame(
+        #         np.array(self.measurement_manager.results_list_JSON["settings"]
+        #                  )).to_numpy())
 
     def add_to_simulation_list(self):
         df = self.get_df_from_table(
@@ -266,91 +242,71 @@ class UIMainWindow(QMainWindow):
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=Stimulus(df_stimulus))))
+        self.simulation_manager.update()
 
-        self.simulation_manager.results_list_JSON["results"].append({
-            "MR":
-            np.array([[0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]]),
-            "SD_freqs":
-            np.array([0, 1]),
-            "SD":
-            np.array([[0, 0, 0], [0, 0, 0]]),
-            "PIMM_freqs":
-            1,
-            "PIMM":
-            np.array([[0, 0]]),
-            "traj":
-            np.array([[0, 0, 0]])
-        })
-        self.simulation_manager.results_list_JSON["settings"].append(
-            ["X", "from_table", "To be simulated"])
-        self.simulation_manager.results_list_JSON["layer_params"].append(df)
-        self.simulation_manager.results_list_JSON["simulation_params"].append(
-            df_stimulus)
-        self.simulation_manager.print_and_color_table()
-        # self.simulation_manager.print_and_color_table()
 
-    def load_multiple(self):
-        dirName = "/home/sz/Desktop/AGH/PyMag/20 Oct 2020/4651_Pymag"
-        listaa = []
-        listab = []
-        listac = []
-        for path, subdirs, files in os.walk(dirName):
-            for name in files:
-                if os.path.splitext(name)[1] == ".csv":
-                    listaa.append(os.path.join(path, name))
-                elif os.path.splitext(name)[1] == ".dat" and os.path.splitext(
-                        name)[0].find("PO") != -1:
-                    listab.append(os.path.join(path, name))
-                elif os.path.splitext(name)[1] == ".dat" and os.path.splitext(
-                        name)[0].find("ment") != -1:
-                    listac.append(os.path.join(path, name))
-        for a in natsorted(listaa):
-            self.load_param_table(auto=False, filename=a)
-        for b in natsorted(listab):
-            self.load_results(auto=False, filename=b)
-        for c in natsorted(listac):
-            self.load_results(auto=False, filename=c)
+    # def load_multiple(self):
+    #     dirName = "/home/sz/Desktop/AGH/PyMag/20 Oct 2020/4651_Pymag"
+    #     listaa = []
+    #     listab = []
+    #     listac = []
+    #     for path, subdirs, files in os.walk(dirName):
+    #         for name in files:
+    #             if os.path.splitext(name)[1] == ".csv":
+    #                 listaa.append(os.path.join(path, name))
+    #             elif os.path.splitext(name)[1] == ".dat" and os.path.splitext(
+    #                     name)[0].find("PO") != -1:
+    #                 listab.append(os.path.join(path, name))
+    #             elif os.path.splitext(name)[1] == ".dat" and os.path.splitext(
+    #                     name)[0].find("ment") != -1:
+    #                 listac.append(os.path.join(path, name))
+    #     for a in natsorted(listaa):
+    #         self.load_param_table(auto=False, filename=a)
+    #     for b in natsorted(listab):
+    #         self.load_results(auto=False, filename=b)
+    #     for c in natsorted(listac):
+    #         self.load_results(auto=False, filename=c)
 
-    def load_param_table(self, dialog=True, auto=True, filename=""):
-        if auto == True:
-            fileName = self.open_file_dialog()
-        else:
-            fileName = filename
-        if fileName:
-            df = pd.read_csv(fileName, delimiter='\t')
-            self.widget_layer_params.table_layer_params.setData(np.array(df))
-            self.widget_layer_params.table_layer_params.setHorizontalHeaderLabels(
-                df.columns)
-            simulationName = os.path.basename(fileName).replace(
-                ".csv",
-                "").replace("_layer_params",
-                            "").replace("_layers_params",
-                                        "").replace("_layer_param", "")
-            self.central_layout.Simulation_Name.setText(simulationName)
-            self.simulation_manager.results_list_JSON["results"].append({
-                "MR":
-                np.array([[0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]]),
-                "SD_freqs":
-                np.array([0, 1]),
-                "SD":
-                np.array([[0, 0, 0], [0, 0, 0]]),
-                "PIMM_freqs":
-                1,
-                "PIMM":
-                np.array([[0, 0]]),
-                "traj":
-                np.array([[0, 0, 0]])
-            })
-            self.simulation_manager.results_list_JSON["settings"].append(
-                ["X", simulationName, "To be simulated"])
-            self.simulation_manager.results_list_JSON["layer_params"].append(
-                df)
-            df_stimulus = self.get_df_from_table(
-                self.widget_layer_params.table_stimulus_params)
-            self.simulation_manager.results_list_JSON[
-                "simulation_params"].append(df_stimulus)
-            self.simulation_manager.print_and_color_table()
-            self.simulation_manager.print_and_color_table()
+    # def load_param_table(self, dialog=True, auto=True, filename=""):
+    #     if auto == True:
+    #         fileName = self.open_file_dialog()
+    #     else:
+    #         fileName = filename
+    #     if fileName:
+    #         df = pd.read_csv(fileName, delimiter='\t')
+    #         self.widget_layer_params.table_layer_params.setData(np.array(df))
+    #         self.widget_layer_params.table_layer_params.setHorizontalHeaderLabels(
+    #             df.columns)
+    #         simulationName = os.path.basename(fileName).replace(
+    #             ".csv",
+    #             "").replace("_layer_params",
+    #                         "").replace("_layers_params",
+    #                                     "").replace("_layer_param", "")
+    #         self.central_layout.Simulation_Name.setText(simulationName)
+    #         self.simulation_manager.results_list_JSON["results"].append({
+    #             "MR":
+    #             np.array([[0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]]),
+    #             "SD_freqs":
+    #             np.array([0, 1]),
+    #             "SD":
+    #             np.array([[0, 0, 0], [0, 0, 0]]),
+    #             "PIMM_freqs":
+    #             1,
+    #             "PIMM":
+    #             np.array([[0, 0]]),
+    #             "traj":
+    #             np.array([[0, 0, 0]])
+    #         })
+    #         self.simulation_manager.results_list_JSON["settings"].append(
+    #             ["X", simulationName, "To be simulated"])
+    #         self.simulation_manager.results_list_JSON["layer_params"].append(
+    #             df)
+    #         df_stimulus = self.get_df_from_table(
+    #             self.widget_layer_params.table_stimulus_params)
+    #         self.simulation_manager.results_list_JSON[
+    #             "simulation_params"].append(df_stimulus)
+    #         self.simulation_manager.print_and_color_table()
+    #         self.simulation_manager.print_and_color_table()
 
     def get_df_from_table(self, table):
         number_of_rows = table.rowCount()
@@ -365,45 +321,45 @@ class UIMainWindow(QMainWindow):
         tmp_df.columns = tmp_col_name
         return tmp_df
 
-    def save_results(self):
-        fileName = self.save_file_dialog("_MR.csv")
-        if fileName:
-            df_generated_data = self.get_df_from_table(self.table_results)
-            df_generated_data.to_csv(fileName,
-                                     encoding='utf-8',
-                                     index=False,
-                                     sep='\t')
+    # def save_results(self):
+    #     fileName = self.save_file_dialog("_MR.csv")
+    #     if fileName:
+    #         df_generated_data = self.get_df_from_table(self.table_results)
+    #         df_generated_data.to_csv(fileName,
+    #                                  encoding='utf-8',
+    #                                  index=False,
+    #                                  sep='\t')
 
-    def export_images(self, num=1):
-        self.simulation_manager.active_list = [num]
-        self.measurement_manager.active_list = [
-            num, num + int(self.simulation_manager.results_table.rowCount())
-        ]
-        self.replot_results()
-        exporter = pg.exporters.ImageExporter(self.res_plot.plotsRes.sceneObj)
-        exporter.export('Res' + '.png')
-        exporter = pg.exporters.ImageExporter(self.mag_plot.plotsMag.sceneObj)
-        exporter.export('Mag' + '.png')
-        exporter = pg.exporters.ImageExporter(
-            self.SD_plot.plot_dynamics_view.sceneObj)
-        exporter.export('SD' + '.png')
-        # self.PIMM_plot.export()
-        exporter = pg.exporters.ImageExporter(
-            self.PIMM_plot.plot_dynamics_view.sceneObj)
-        exporter.export('PIMM' + '.png')
-        exporter = pg.exporters.ImageExporter(self.SD_lines.plotsLS.sceneObj)
-        exporter.export('LS' + '.png')
+    # def export_images(self, num=1):
+    #     self.simulation_manager.active_list = [num]
+    #     self.measurement_manager.active_list = [
+    #         num, num + int(self.simulation_manager.results_table.rowCount())
+    #     ]
+    #     self.replot_results()
+    #     exporter = pg.exporters.ImageExporter(self.res_plot.plotsRes.sceneObj)
+    #     exporter.export('Res' + '.png')
+    #     exporter = pg.exporters.ImageExporter(self.mag_plot.plotsMag.sceneObj)
+    #     exporter.export('Mag' + '.png')
+    #     exporter = pg.exporters.ImageExporter(
+    #         self.SD_plot.plot_dynamics_view.sceneObj)
+    #     exporter.export('SD' + '.png')
+    #     # self.PIMM_plot.export()
+    #     exporter = pg.exporters.ImageExporter(
+    #         self.PIMM_plot.plot_dynamics_view.sceneObj)
+    #     exporter.export('PIMM' + '.png')
+    #     exporter = pg.exporters.ImageExporter(self.SD_lines.plotsLS.sceneObj)
+    #     exporter.export('LS' + '.png')
 
-    def load_results(self, dialog=True, auto=True, filename=""):
-        if auto == True:
-            fileName = self.open_file_dialog(".dat")
-        else:
-            fileName = filename
-        if fileName:
-            df = pd.read_csv(fileName, delimiter='\t')
-            self.plot_experimental(
-                df,
-                os.path.basename(fileName).replace(".dat", ""))
+    # def load_results(self, dialog=True, auto=True, filename=""):
+    #     if auto == True:
+    #         fileName = self.open_file_dialog(".dat")
+    #     else:
+    #         fileName = filename
+    #     if fileName:
+    #         df = pd.read_csv(fileName, delimiter='\t')
+    #         self.plot_experimental(
+    #             df,
+    #             os.path.basename(fileName).replace(".dat", ""))
 
     def plot_experimental(self, df, fileName):
         self.mag_plot.Mx.plot(df['H'],
@@ -463,13 +419,13 @@ class UIMainWindow(QMainWindow):
         self.central_layout.progress.setValue(0)
         self.global_sim_manager.simulate_selected()
 
-    def save_dock_state(self):
-        global state
-        state = self.area.saveState()
+    # def save_dock_state(self):
+    #     global state
+    #     state = self.area.saveState()
 
-    def load_dock_state(self):
-        global state
-        self.area.restoreState(state)
+    # def load_dock_state(self):
+    #     global state
+    #     self.area.restoreState(state)
 
     def stop_clk(self):
         pass

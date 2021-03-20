@@ -1,17 +1,16 @@
 from pymag.engine.backend import SolverTask
 from typing import Any, Dict, List
-
 from PyQt5 import QtCore
-
 from pymag.engine.data_holders import (GenericHolder, ResultHolder,
                                        SimulationInput)
 
 
 class Simulation(GenericHolder):
-    def __init__(self, simulation_input, simulation_result=None) -> None:
+    def __init__(self, simulation_input, simulation_result=None, simulation_name = "SimName") -> None:
         self.simulated: bool = False
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
+        self.simulation_name = simulation_name
 
     def set_simulation_input(self, sinput: SimulationInput):
         self.simulation_input = sinput
@@ -54,7 +53,7 @@ class SimulationManager():
 
     def remove_selected(self):
         """
-        Removes the simulations that were active
+        Remove the simulations that were active
         """
         for index in sorted(self.selected_simulation_indices, reverse=True):
             del self.simulations[index]
@@ -84,6 +83,9 @@ class SimulationManager():
                                partial_result: ResultHolder):
         self.simulations[simulation_index].update_simulation_result(
             partial_result)
+
+    def get_simulation_names(self):
+        return  [self.simulations[i].simulation_name for i in range(len(self.simulations))] 
 
 
 class Backend(QtCore.QObject):
