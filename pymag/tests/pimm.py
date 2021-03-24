@@ -1,4 +1,5 @@
-from pymag.engine.utils import get_stimulus2
+from pymag.engine.data_holders import Layer
+from pymag.engine.utils import get_stimulus
 from typing import final
 import matplotlib.pyplot as plt
 from pymag.engine.solver import Solver
@@ -7,7 +8,9 @@ from scipy.fft import fft
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import time as tm
 
+
 def run_PIMM():
+
     device = {
         "Ms": [1.07, 1.07],
         "Ku": [305e3, 728e3],
@@ -20,39 +23,63 @@ def run_PIMM():
         "number_of_layers": 2
     }
 
-    #     CVector(0.00022708623583019705, 0., 0.),
-    # CVector(0., 0.0011629799534817735, 0.),
-    # CVector(0., 0., 0.99861)
+    l1 = Layer(0,
+               alpha=0.01,
+               Ku=305e3,
+               Kdir=[0, -0.0871557, 0.996195],
+               N=[0, 0, 1],
+               th=1e-9,
+               Ms=1.07,
+               J=4e-5,
+               AMR=0,
+               SMR=0,
+               AHE=0,
+               Rx0=0,
+               Ry0=0,
+               w=0,
+               l=0)
+
+    l2 = Layer(1,
+               alpha=0.01,
+               Ku=728e3,
+               Kdir=[0.34071865, -0.08715574, 0.936116],
+               N=[0, 0, 1],
+               th=1e-9,
+               Ms=1.07,
+               J=0,
+               AMR=0,
+               SMR=0,
+               AHE=0,
+               Rx0=0,
+               Ry0=0,
+               w=0,
+               l=0)
+
+    layers = [l1, l2]
+
     Hmin = -800e3
     Hmax = 800e3
     hsteps = 100
     frequency = 0
     LLG_steps = 2000
     LLG_time = 8e-9
-    theta = 90
+    theta = 89.9
     phi = 45
-    H, _ = get_stimulus2(Hmin=Hmin,
-                         Hmax=Hmax,
-                         ThetaMin=theta,
-                         ThetaMax=theta,
-                         PhiMin=phi,
-                         PhiMax=phi,
-                         STEPS=hsteps,
-                         back=False,
-                         mode="H")
+    H, _ = get_stimulus(Hmin=Hmin,
+                        Hmax=Hmax,
+                        ThetaMin=theta,
+                        ThetaMax=theta,
+                        PhiMin=phi,
+                        PhiMax=phi,
+                        STEPS=hsteps,
+                        back=False,
+                        mode="H")
     final_PIMM = []
     m = None
     start = tm.time()
-    for Hval in H:
+    for Hval in reversed(H):
         m, _, _, _, _, _, _, PIMM_ = Solver.calc_trajectoryRK45(
-            device["Ku"],
-            device["Ms"],
-            device["J"],
-            device["th"],
-            device["Kdir"],
-            np.asarray(device["Ndemag"]),
-            device["alpha"],
-            device["number_of_layers"],
+            layers=layers,
             m_init=m if m is not None else [[1, 1, 0], [1, 1, 0]],
             Hext=Hval,
             f=frequency,

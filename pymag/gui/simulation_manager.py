@@ -1,5 +1,5 @@
 from pymag.engine.backend import SolverTask
-from typing import Any, Dict, List
+from typing import List
 
 from PyQt5 import QtCore
 
@@ -63,7 +63,7 @@ class SimulationManager():
         if index in self.selected_simulation_indices:
             pass
         else:
-            pass 
+            pass
 
     def get_selected_simulations(self) -> List[Simulation]:
         return [

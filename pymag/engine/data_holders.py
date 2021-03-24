@@ -3,8 +3,6 @@ import json
 from pyqtgraph.metaarray.MetaArray import axis
 from pymag.engine.utils import get_stimulus
 from typing import Any, Dict, List
-import cmtj
-from cmtj import CVector
 import numpy as np
 
 
@@ -94,13 +92,13 @@ class Layer(GenericHolder):
         super().__init__()
         self.layer = int(layer)
         self.mag = mag
-        self.Kdir = self.parse_list(Kdir)
-        self.Kdir = self.Kdir / np.linalg.norm(self.Kdir)
+        self.Kdir = Kdir
+        self.Kdir = np.asarray(self.Kdir) / np.linalg.norm(self.Kdir)
         self.Ku = float(Ku)
         self.J = float(J)
         self.Ms = float(Ms)
         self.th = float(th)
-        self.N = self.parse_list(N)
+        self.N = N
         self.dipole = dipole
         self.alpha = float(alpha)
         self.AMR = float(AMR)
@@ -111,7 +109,32 @@ class Layer(GenericHolder):
         self.w = float(w)
         self.l = float(l)
 
-    def parse_list(self, str_list: str):
+    @classmethod
+    def create_layer_from_gui(cls,
+                              layer,
+                              alpha,
+                              Kdir,
+                              Ku,
+                              Ms,
+                              J,
+                              N,
+                              th,
+                              AMR,
+                              SMR,
+                              AHE,
+                              Rx0,
+                              Ry0,
+                              w,
+                              l,
+                              mag=[0, 0, 1],
+                              dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
+        parsed_Kdir = Layer.parse_list(Kdir)
+        parsed_N = Layer.parse_list(N)
+        return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
+                   SMR, AHE, Rx0, Ry0, w, l, mag, dipole)
+
+    @staticmethod
+    def parse_list(str_list: str):
         actual_list = [
             float(i)
             for i in str_list.replace("[", "").replace("]", "").split(" ")

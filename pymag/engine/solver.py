@@ -17,7 +17,6 @@ class Solver:
                             LLG_steps=2000):
 
         n_layers = len(layers)
-
         m_traj = np.empty((0, 3), float)
         M_full = np.empty((0, n_layers, 3), float)
 

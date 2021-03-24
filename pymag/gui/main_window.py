@@ -261,7 +261,8 @@ class UIMainWindow(QMainWindow):
             self.widget_layer_params.table_stimulus_params)
 
         sim_layers = [
-            Layer(**df_dict) for df_dict in df.to_dict(orient="records")
+            Layer.create_layer_from_gui(**df_dict)
+            for df_dict in df.to_dict(orient="records")
         ]
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
