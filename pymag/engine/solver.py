@@ -179,7 +179,7 @@ class Solver:
 
         pool = multiprocessing.Pool(8)
         results = []
-        mag_stat = Solver.calc_trajectoryRK45(layers, m, Hval, 0, 0, LLG_time,
+        m, m_avg, dynamic_r, _, _, m_traj, _, _ = Solver.calc_trajectoryRK45(layers, m, Hval, 0, 0, LLG_time,
                                               LLG_steps)
         # for f in freqs:
         #     results.append(
@@ -189,13 +189,15 @@ class Solver:
         results = pool.starmap(Solver.calc_trajectoryRK45,
                                iterable=((layers, m, Hval, f, 20000, LLG_time,
                                           LLG_steps) for f in freqs))
-        SD = list(zip(*[r.get() for r in results]))[4]
+        # print(results[0])
+        SD = list(zip(*results))[4]
+        # SD = list(zip(*[r.get() for r in results]))[4]
         pool.close()
         pool.join()
-        m = mag_stat.get()[0]
-        m_avg = mag_stat.get()[1]
-        dynamic_r = mag_stat.get()[2]
-        m_traj = mag_stat.get()[5]
+        # m = mag_stat.get()[0]
+        # m_avg = mag_stat.get()[1]
+        # dynamic_r = mag_stat.get()[2]
+        # m_traj = mag_stat.get()[5]
 
         return m, m_avg, dynamic_r, m_traj, SD
 
