@@ -4,6 +4,7 @@ import cmtj
 import numpy as np
 from pymag.engine.utils import butter_lowpass_filter, cos_between_arrays, normalize
 import multiprocessing
+from sys import platform
 
 
 class Solver:
@@ -160,7 +161,22 @@ class Solver:
             m_init.append(normalize(H_sweep[0, :]))
         return m_init
 
-    def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
+    def serial_run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time,
+                          LLG_steps):
+
+        SD = []
+        m, m_avg, dynamic_r, _, _, m_traj, _, _ = Solver.calc_trajectoryRK45(
+            layers, m, Hval, 0, 0, LLG_time, LLG_steps)
+        for f in freqs:
+            _, _, _, _, SD_voltage_after_bias, _, _, _ = Solver.calc_trajectoryRK45(
+                layers, m, Hval, f, 20000, LLG_time, LLG_steps)
+            SD.append(SD_voltage_after_bias)
+
+        return m, m_avg, dynamic_r, m_traj, SD
+
+    def parallel_run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time,
+                            LLG_steps):
+
         pool = multiprocessing.Pool(8)
         results = []
         mag_stat = (pool.apply_async(Solver.calc_trajectoryRK45,
@@ -179,6 +195,19 @@ class Solver:
         m_avg = mag_stat.get()[1]
         dynamic_r = mag_stat.get()[2]
         m_traj = mag_stat.get()[5]
+
+        return m, m_avg, dynamic_r, m_traj, SD
+
+    def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
+
+        if platform == "linux" or platform == "linux2":
+            # linux
+            m, m_avg, dynamic_r, m_traj, SD = Solver.parallel_run_H_step(
+                m, Hval, freqs, layers, LLG_time, LLG_steps)
+        else:
+            # OSX or Windows
+            m, m_avg, dynamic_r, m_traj, SD = Solver.serial_run_H_step(
+                m, Hval, freqs, layers, LLG_time, LLG_steps)
 
         Rx0 = [l.Rx0 for l in layers]
         Ry0 = [l.Ry0 for l in layers]

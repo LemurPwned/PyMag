@@ -1,12 +1,12 @@
 import os
 import pickle
+
 from pymag.gui.simulation_manager import Simulation, SimulationManager
-from typing import Any
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 
 class Exporter:
-    def __init__(self, simulation_manager: 'UIMainWindow',
+    def __init__(self, simulation_manager: SimulationManager,
                  parent: QWidget) -> None:
         self.parent: QWidget = parent
         self.simulation_manager: SimulationManager = simulation_manager

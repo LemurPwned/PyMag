@@ -116,7 +116,7 @@ class UIMainWindow(QMainWindow):
 
     def load_defaults(self):
         """
-            Load default parameters: Simulus and Layer Structure
+        Load default parameters: Simulus and Layer Structure
         """
         self.StimulusParameters = pd.read_csv(self.defaultStimulusFile,
                                               delimiter='\t')

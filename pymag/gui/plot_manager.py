@@ -64,7 +64,6 @@ class PlotManager:
         if not result_holder:
             return
         lim = result_holder.update_count
-        print(lim)
         if lim == 1:
             return
 
