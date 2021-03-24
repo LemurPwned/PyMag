@@ -144,10 +144,7 @@ class Layer(GenericHolder):
 
 class Stimulus():
     def __init__(self, data):
-        # self.theta = np.array(data["HTheta"].values[0], dtype=np.float32)
         self.back = np.array(data["Hback"].values[0], dtype=np.int)
-        # self.phi = np.array(data["HPhi"].values[0], dtype=np.float32)
-
         if data["H"].values[1] != "-" and data["HPhi"].values[
                 1] == "-" and data["HTheta"].values[1] == "-":
             self.mode = "H"

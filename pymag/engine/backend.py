@@ -54,16 +54,17 @@ class SolverTask(QtCore.QThread):
                 progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
 
                 yf = abs(fft(PIMM))
-                partial_result = ResultHolder(
-                    mode=stimulus.mode,
-                    H_mag=stimulus.Hmag,
-                    PIMM_delta_f=stimulus.PIMM_delta_f,
-                    SD_freqs=stimulus.SD_freqs,
-                    PIMM=yf[0:(len(yf) // 2)],
-                    **{
-                        key: Hstep_result[key]
-                        for key in ('Rx', 'Ry', 'Rz', 'SD', 'm_avg', 'm_traj')
-                    })
+                partial_result = ResultHolder(mode=stimulus.mode,
+                                              H_mag=stimulus.Hmag,
+                                              PIMM_delta_f=stimulus.PIMM_freqs,
+                                              SD_freqs=stimulus.SD_freqs,
+                                              PIMM=yf[0:(len(yf) // 2)],
+                                              **{
+                                                  key: Hstep_result[key]
+                                                  for key in ('Rx', 'Ry', 'Rz',
+                                                              'SD', 'm_avg',
+                                                              'm_traj')
+                                              })
 
                 self.queue.put((sim_index, partial_result))
                 self.progress.emit(progr)

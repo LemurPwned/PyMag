@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import butter, lfilter
 from numpy.linalg import norm
+
 PyMagVersion = "PyMag v. 2.1"
 PyMagDate = "28 Oct 2020"
 H_unit = "A/m"

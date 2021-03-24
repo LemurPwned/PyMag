@@ -161,7 +161,7 @@ class Solver:
         return m_init
 
     def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
-        pool = multiprocessing.Pool(4)
+        pool = multiprocessing.Pool(8)
         results = []
         mag_stat = (pool.apply_async(Solver.calc_trajectoryRK45,
                                      args=(layers, m, Hval, 0, 0, LLG_time,
