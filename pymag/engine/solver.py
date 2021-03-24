@@ -179,15 +179,16 @@ class Solver:
 
         pool = multiprocessing.Pool(8)
         results = []
-        mag_stat = (pool.apply_async(Solver.calc_trajectoryRK45,
-                                     args=(layers, m, Hval, 0, 0, LLG_time,
-                                           LLG_steps)))
-        for f in freqs:
-            results.append(
-                pool.apply_async(Solver.calc_trajectoryRK45,
-                                 args=(layers, m, Hval, f, 20000, LLG_time,
-                                       LLG_steps)))
-
+        mag_stat = Solver.calc_trajectoryRK45(layers, m, Hval, 0, 0, LLG_time,
+                                              LLG_steps)
+        # for f in freqs:
+        #     results.append(
+        #         pool.apply_async(Solver.calc_trajectoryRK45,
+        #                          args=(layers, m, Hval, f, 20000, LLG_time,
+        #    LLG_steps)))
+        results = pool.starmap(Solver.calc_trajectoryRK45,
+                               iterable=((layers, m, Hval, f, 20000, LLG_time,
+                                          LLG_steps) for f in freqs))
         SD = list(zip(*[r.get() for r in results]))[4]
         pool.close()
         pool.join()
@@ -200,7 +201,7 @@ class Solver:
 
     def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
 
-        if platform == "linux" or platform == "linux2":
+        if platform == "linux" or platform == "linux2" or True:
             # linux
             m, m_avg, dynamic_r, m_traj, SD = Solver.parallel_run_H_step(
                 m, Hval, freqs, layers, LLG_time, LLG_steps)
