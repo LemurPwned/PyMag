@@ -12,6 +12,12 @@ mu0_x_gamma = gamma * mu0
 Am_to_Oe = 79.57
 
 
+class SimulationStatus:
+    KILLED = -1 
+    DONE = 1 
+    IN_PROGRESS = 0
+
+
 def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
                  mode):
 

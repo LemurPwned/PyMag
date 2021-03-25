@@ -9,7 +9,7 @@ import logging
 import pandas as pd
 import pyqtgraph as pg
 import multiprocessing as mp
-from pymag.engine.utils import PyMagVersion
+from pymag.engine.utils import PyMagVersion, SimulationStatus
 from pymag.gui.core import AddMenuBar, SimulationParameters, ResultsTable
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from PyQt5.QtWidgets import QMainWindow
@@ -54,7 +54,9 @@ class UIMainWindow(QMainWindow):
         self.central_layout = AddMenuBar(parent=self)
 
         self.global_sim_manager = SimulationManager(
-            self.result_queue, self.central_layout.progress)
+            self.result_queue,
+            self.central_layout.progress,
+            kill_btn=self.central_layout.stop_btn)
         exporter = Exporter(parent=self,
                             simulation_manager=self.global_sim_manager)
         self.central_layout.set_exporter(exporter)
@@ -77,7 +79,6 @@ class UIMainWindow(QMainWindow):
             "Resistance", "SD-FMR", "Measurement management",
             "Simulation management", "Layer parameters"
         ]
-
 
         self.central_widget = self.central_layout.central_widget
         dock_contents = [
@@ -193,10 +194,21 @@ class UIMainWindow(QMainWindow):
 
     def on_simulation_data_update(self):
         try:
-            sim_indx, res = self.result_queue.get(block=False)
-            # TODO: change this
-            self.global_sim_manager.update_simulation_data(sim_indx, res)
-            self.plot_manager.plot_result(
-                self.global_sim_manager.get_simulation_result(sim_indx))
+            sim_indx, res, status = self.result_queue.get(block=False)
+            if status == SimulationStatus.DONE:
+                self.global_sim_manager.mark_as_done(sim_indx)
+                return
+            elif status == SimulationStatus.KILLED:
+                # now sim_indx is a list of the sim indices that were in the
+                # compute backend
+                for indx in sim_indx:
+                    self.global_sim_manager.reset_simulation_output(indx)
+                self.plot_manager.clear_all_plots()
+            elif status == SimulationStatus.IN_PROGRESS:
+                self.global_sim_manager.update_simulation_data(sim_indx, res)
+                self.plot_manager.plot_result(
+                    self.global_sim_manager.get_simulation_result(sim_indx))
+            else:
+                raise ValueError("Unknown simulation status received!")
         except queue.Empty:
             logging.debug("Queue emptied!")

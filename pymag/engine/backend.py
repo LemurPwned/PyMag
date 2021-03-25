@@ -1,8 +1,9 @@
+from pymag.engine.utils import SimulationStatus
 from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
 from typing import List
-from scipy.fft import fft
 from pymag.engine.solver import Solver
 from PyQt5 import QtCore
+import time
 
 
 class SolverTask(QtCore.QThread):
@@ -13,6 +14,14 @@ class SolverTask(QtCore.QThread):
         self.queue = queue
         self.simulation_indices = simulation_indices
         self.simulations = simulations
+        self.is_paused = False
+        self.is_killed = False
+
+    def kill(self):
+        self.is_killed = True
+
+    def pause(self):
+        self.is_paused = True
 
     def run(self):
         all_H_sweep_vals = sum([
@@ -36,14 +45,13 @@ class SolverTask(QtCore.QThread):
                 LLG_time=stimulus.LLG_time,
                 LLG_steps=stimulus.LLG_steps)
             for Hval in stimulus.H_sweep:
-                m, _, _, _, _, _, _, PIMM = Solver.calc_trajectoryRK45(
-                    layers=layers,
-                    m_init=m,
-                    Hext=Hval,
-                    f=0,
-                    I_amp=0,
-                    LLG_time=stimulus.LLG_time,
-                    LLG_steps=stimulus.LLG_steps)
+                if self.is_killed:
+                    self.queue.put((self.simulation_indices, ...,
+                                    SimulationStatus.KILLED))
+                    self.progress.emit(0)
+                    return
+                while self.is_paused:
+                    time.sleep(0.1)
                 Hstep_result = Solver.run_H_step(m=m,
                                                  Hval=Hval,
                                                  freqs=stimulus.SD_freqs,
@@ -52,19 +60,21 @@ class SolverTask(QtCore.QThread):
                                                  LLG_steps=stimulus.LLG_steps)
                 all_H_indx += 1
                 progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
+                m = Hstep_result["m"]
 
-                yf = abs(fft(PIMM))
                 partial_result = ResultHolder(mode=stimulus.mode,
                                               H_mag=stimulus.Hmag,
                                               PIMM_delta_f=stimulus.PIMM_freqs,
                                               SD_freqs=stimulus.SD_freqs,
-                                              PIMM=yf[0:(len(yf) // 2)],
                                               **{
                                                   key: Hstep_result[key]
                                                   for key in ('Rx', 'Ry', 'Rz',
                                                               'SD', 'm_avg',
-                                                              'm_traj')
+                                                              'PIMM', 'm_traj')
                                               })
 
-                self.queue.put((sim_index, partial_result))
+                self.queue.put(
+                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS))
                 self.progress.emit(progr)
+
+            self.queue.put((sim_index, ..., SimulationStatus.DONE))

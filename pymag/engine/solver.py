@@ -5,6 +5,8 @@ import numpy as np
 from pymag.engine.utils import butter_lowpass_filter, cos_between_arrays, normalize
 import multiprocessing
 from sys import platform
+from scipy.fft import fft
+import numba
 
 
 class Solver:
@@ -129,26 +131,26 @@ class Solver:
             DynamicR), Cdt, SD_voltage_after_bias, m_traj, M_full, PIMM_
 
     @staticmethod
+    @numba.jit(nopython=True, parallel=True)
     def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l,
                              w):
         R_P = Rx0[0]
         R_AP = Ry0[0]
 
-        SxAll = []
-        SyAll = []
+        SxAll = np.zeros((number_of_layers, ))
+        SyAll = np.zeros((number_of_layers, ))
         w_l = w[0] / l[0]
         for i in range(0, number_of_layers):
-            SxAll.append(1 / (Rx0[i] + Rx0[i] * AMR[i] * m[i, 0]**2 +
-                              Rx0[i] * SMR[i] * m[i, 1]**2))
-            SyAll.append(1 / (Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (w_l) *
-                              (AMR[i] + SMR[i]) * m[i, 0] * m[i, 1]))
+            SxAll[i] = 1 / (Rx0[i] + Rx0[i] * AMR[i] * m[i, 0]**2 +
+                            Rx0[i] * SMR[i] * m[i, 1]**2)
+            SyAll[i] = 1 / (Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (w_l) *
+                            (AMR[i] + SMR[i]) * m[i, 0] * m[i, 1])
 
-        Rx = 1 / sum(SxAll)
-        Ry = 1 / sum(SyAll)
+        Rx = 1 / np.sum(SxAll)
+        Ry = 1 / np.sum(SyAll)
 
         if number_of_layers > 1:
-            Rz = R_P + (R_AP -
-                        R_P) / 2 * (1 - cos_between_arrays(m[0, :], m[1, :]))
+            Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :]))
         else:
             Rz = 0
 
@@ -165,21 +167,21 @@ class Solver:
                           LLG_steps):
 
         SD = []
-        m, m_avg, dynamic_r, _, _, m_traj, _, _ = Solver.calc_trajectoryRK45(
+        m, m_avg, dynamic_r, _, _, m_traj, _, PIMM = Solver.calc_trajectoryRK45(
             layers, m, Hval, 0, 0, LLG_time, LLG_steps)
         for f in freqs:
             _, _, _, _, SD_voltage_after_bias, _, _, _ = Solver.calc_trajectoryRK45(
                 layers, m, Hval, f, 20000, LLG_time, LLG_steps)
             SD.append(SD_voltage_after_bias)
 
-        return m, m_avg, dynamic_r, m_traj, SD
+        return m, m_avg, dynamic_r, m_traj, SD, PIMM
 
     def parallel_run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time,
                             LLG_steps):
 
         pool = multiprocessing.Pool(2)
         results = []
-        m, m_avg, dynamic_r, _, _, m_traj, _, _ = Solver.calc_trajectoryRK45(
+        m, m_avg, dynamic_r, _, _, m_traj, _, PIMM = Solver.calc_trajectoryRK45(
             layers, m, Hval, 0, 0, LLG_time, LLG_steps)
         results = pool.starmap(Solver.calc_trajectoryRK45,
                                iterable=((layers, m, Hval, f, 20000, LLG_time,
@@ -188,39 +190,39 @@ class Solver:
         pool.close()
         pool.join()
 
-        return m, m_avg, dynamic_r, m_traj, SD
+        return m, m_avg, dynamic_r, m_traj, SD, PIMM
 
     def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
 
         if platform == "linux" or platform == "linux2" or True:
             # linux
-            m, m_avg, dynamic_r, m_traj, SD = Solver.parallel_run_H_step(
+            m, m_avg, dynamic_r, m_traj, SD, PIMM = Solver.parallel_run_H_step(
                 m, Hval, freqs, layers, LLG_time, LLG_steps)
         else:
             # OSX or Windows
-            m, m_avg, dynamic_r, m_traj, SD = Solver.serial_run_H_step(
+            m, m_avg, dynamic_r, m_traj, SD, PIMM = Solver.serial_run_H_step(
                 m, Hval, freqs, layers, LLG_time, LLG_steps)
 
-        Rx0 = [l.Rx0 for l in layers]
-        Ry0 = [l.Ry0 for l in layers]
-        SMR = [l.SMR for l in layers]
-        AMR = [l.AMR for l in layers]
-        AHE = [l.AHE for l in layers]
-        w = [l.w for l in layers]
-        l = [l.l for l in layers]
+        Rx0 = np.asarray([l.Rx0 for l in layers])
+        Ry0 = np.asarray([l.Ry0 for l in layers])
+        SMR = np.asarray([l.SMR for l in layers])
+        AMR = np.asarray([l.AMR for l in layers])
+        AHE = np.asarray([l.AHE for l in layers])
+        w = np.asarray([l.w for l in layers])
+        l = np.asarray([l.l for l in layers])
         no_layers = len(layers)
 
         Rx, Ry, Rz = Solver.calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m,
                                                  no_layers, l, w)
 
+        yf = abs(fft(PIMM))
         return {
             "SD": SD,
             "m": m,
             "m_avg": m_avg,
             "m_traj": m_traj,
             "dynamic_r": dynamic_r,
-            # "PIMM": PIMM_,
-            # "yf": yf,
+            "PIMM": yf[0:(len(yf) // 2)],
             "Rx": Rx,
             "Ry": Ry,
             "Rz": Rz

@@ -1,3 +1,4 @@
+from queue import Queue
 from pymag.engine.backend import SolverTask
 from typing import Any, Dict, List
 from PyQt5 import QtCore
@@ -7,13 +8,13 @@ from pymag.engine.data_holders import (GenericHolder, ResultHolder,
 
 class Simulation(GenericHolder):
     def __init__(self,
-                 simulation_input,
-                 simulation_result=None,
-                 simulation_name="SimName") -> None:
+                 simulation_input: SimulationInput,
+                 simulation_result: ResultHolder = None,
+                 simulation_name: str = "SimName") -> None:
         self.simulated: bool = False
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
-        self.simulation_name = simulation_name
+        self.simulation_name: str = simulation_name
 
     def set_simulation_input(self, sinput: SimulationInput):
         self.simulation_input = sinput
@@ -36,10 +37,10 @@ class Simulation(GenericHolder):
 
 
 class SimulationManager():
-    def __init__(self, queue, progress_bar) -> None:
+    def __init__(self, queue: Queue, progress_bar, kill_btn=None) -> None:
         self.simulations: List[Simulation] = []
         self.selected_simulation_indices = []
-        self.backend = Backend(queue, progress_bar)
+        self.backend = Backend(queue, progress_bar, kill_btn=kill_btn)
 
     def add_simulation(self, simulation: Simulation):
         self.simulations.append(simulation)
@@ -49,6 +50,17 @@ class SimulationManager():
         self.selected_simulation_indices.append(simulation_index)
         self.selected_simulation_indices = sorted(
             self.selected_simulation_indices)
+
+    def reset_simulation_output(self, index):
+        self.simulations[index].simulation_result = None
+
+    def reset_selected_simulations_output(self):
+        """
+        Nullify the output of the simulation if the simulation
+        has been 
+        """
+        for indx in self.selected_simulation_indices:
+            self.reset_simulation_output(indx)
 
     def remove_from_selected(self, simulation_index):
         if simulation_index in self.selected_simulation_indices:
@@ -78,6 +90,9 @@ class SimulationManager():
     def get_simulation_result(self, indx) -> ResultHolder:
         return self.simulations[indx].get_simulation_result()
 
+    def mark_as_done(self, indx: int):
+        self.simulations[indx].simulated = True
+
     def simulate_selected(self):
         self.backend.start_simulations(self.selected_simulation_indices,
                                        self.get_selected_simulations())
@@ -97,11 +112,12 @@ class SimulationManager():
 class Backend(QtCore.QObject):
     changed = QtCore.pyqtSignal(int)
 
-    def __init__(self, queue, progress_unit):
+    def __init__(self, queue, progress_unit, kill_btn=None):
         super().__init__()
         self._num = 0
         self.queue = queue
         self.progress_bar = progress_unit
+        self.kill_btn = kill_btn
 
     @QtCore.pyqtProperty(int, notify=changed)
     def num(self):
@@ -123,6 +139,7 @@ class Backend(QtCore.QObject):
                                  simulation_indices=simulation_indices,
                                  parent=self)
         self.thread.progress.connect(self.set_progress)
+        self.kill_btn.clicked.connect(self.thread.kill)
         # self.thread.stop_signal.connect(self.stop_signal)
         # self.thread.terminate()
         self.thread.start()
