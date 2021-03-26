@@ -1,14 +1,16 @@
 import json
+import os
 
 from pyqtgraph.metaarray.MetaArray import axis
 from pymag.engine.utils import get_stimulus
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 import numpy as np
+import pandas as pd
 
 
 class GenericHolder:
     def __init__(self) -> None:
-        pass
+        ...
 
     def to_json(self, json_file) -> None:
         json.dump(self.to_dict(), open(json_file, "w"))
@@ -25,8 +27,22 @@ class GenericHolder:
         cls(**dict_)
 
 
+class ExperimentData(GenericHolder):
+    def __init__(self, name: str, H: Union[List[float], np.ndarray],
+                 f: Union[List[float], np.ndarray]) -> None:
+        self.H = H
+        self.f = f
+        self.name = name
+
+    @classmethod
+    def from_csv(cls, filename):
+        bsn = os.path.basename(filename)
+        df = pd.read_csv(filename, sep='\t')
+        return cls(name=bsn, H=df['H'], f=df['f'])
+
+
 class ResultHolder(GenericHolder):
-    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_delta_f, SD,
+    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs, SD,
                  SD_freqs, Rx, Ry, Rz) -> None:
         self.mode = mode
         self.H_mag = H_mag
@@ -39,22 +55,9 @@ class ResultHolder(GenericHolder):
         self.SD = np.asarray(SD).reshape(-1, len(SD_freqs))
         self.SD_freqs = SD_freqs
         self.PIMM = np.asarray(PIMM).reshape(1, -1)
-        self.PIMM_delta_f = PIMM_delta_f
+        self.PIMM_freqs = PIMM_freqs
         self.m_traj = m_traj
         self.update_count = 1
-
-    def merge_partial_result(self, partial_result: Dict[str, Any]):
-        self.SD = np.concatenate((self.SD, np.asarray(partial_result['SD'])),
-                                 axis=0)
-        self.PIMM = np.concatenate(
-            (self.SD, np.asarray(partial_result['PIMM'])), axis=0)
-        self.m_avg = np.concatenate(
-            (self.m_avg, np.asarray(partial_result['m_avg'])), axis=0)
-        for key in ["Rx", "Ry", "Rz"]:
-            getattr(self, key).append(partial_result[key])
-
-        self.PIMM_freqs = partial_result['PIMM_freqs']
-        self.SD_freqs = partial_result['SD_freqs']
 
     def merge_result(self, result: 'ResultHolder'):
         self.SD = np.concatenate((self.SD, np.asarray(result.SD)), axis=0)
@@ -68,6 +71,36 @@ class ResultHolder(GenericHolder):
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
         self.update_count += result.update_count
+
+    def to_csv(self, filename) -> None:
+        """
+        :param filename
+        Save results:
+        Dynamics
+        Spin Diode
+        PIMM 
+        to a file
+        """
+        dynamics = pd.DataFrame.from_dict({
+            "mx": self.m_avg[:, 0],
+            "my": self.m_avg[:, 0],
+            "mz": self.m_avg[:, 0],
+            "Rx": self.Rx,
+            "Ry": self.Ry,
+            "Rz": self.Rz,
+            "H": self.H_mag
+        })
+        dynamics.to_csv(filename + "_dynamics.csv", index=False)
+
+        spin_diode = pd.DataFrame(data=self.SD,
+                                  columns=self.SD_freqs,
+                                  index=self.H_mag)
+        spin_diode.to_csv(filename + "_SD.csv", index=False)
+
+        pimm = pd.DataFrame(data=self.PIMM,
+                            columns=self.PIMM_freqs,
+                            index=self.H_mag)
+        pimm.to_csv(filename + "_PIMM.csv", index=False)
 
 
 class Layer(GenericHolder):

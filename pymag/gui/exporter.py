@@ -1,58 +1,98 @@
 import os
 import pickle
+from pymag.engine.data_holders import ExperimentData
+from typing import List, Tuple
 
-from pymag.gui.simulation_manager import Simulation, SimulationManager
+from pymag.gui.simulation_manager import ExperimentManager, Simulation, SimulationManager
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 
 class Exporter:
     def __init__(self, simulation_manager: SimulationManager,
-                 parent: QWidget) -> None:
+                 experiment_manager: ExperimentData, parent: QWidget) -> None:
         self.parent: QWidget = parent
         self.simulation_manager: SimulationManager = simulation_manager
+        self.experiment_manager: ExperimentManager = experiment_manager
 
-    def open_directory_dialog(self, msg: str) -> str:
-        return QFileDialog.getExistingDirectory(self.parent, msg, "")
+    def open_directory_dialog(self, msg: str) -> Tuple[str, str]:
+        return QFileDialog.getExistingDirectory(self.parent, msg)
 
-    def export_workspace_binary(self):
+    def open_file_dialog(self, msg: str) -> Tuple[str, str]:
+        return QFileDialog.getSaveFileName(self.parent, msg)
+
+    def open_multiple_file_dialog(self, msg: str) -> Tuple[List[str], str]:
+        return QFileDialog.getOpenFileNames(
+            self.parent,
+            msg,
+            "",
+            filter="Dat files (*.dat);;CSV files (*.csv)")
+
+    def export_current_stimulus(self):
+        ...
+        # if auto == 0:
+        #     fileName = self.save_file_dialog()
+        # else:
+        #     curr_dir = os.path.dirname(os.path.realpath(__file__))
+        #     fileName = curr_dir + "/" + "previous_params.csv"
+        # if fileName:
+        #     df_generated_data = self.get_df_from_table(
+        #         self.widget_layer_params.table_layer_params)
+        #     df_generated_data.to_csv(fileName,
+        #                              encoding='utf-8',
+        #                              index=False,
+        #                              sep='\t')
+    def load_experimental_data(self):
+        """
+        Adds experiment data to experiment manager 
+        and updates the plots
+        """
+        file_paths, file_types = self.open_multiple_file_dialog(
+            "Open experiment files")
+        for fn in file_paths:
+            self.experiment_manager.add_experiment(ExperimentData.from_csv(fn))
+
+        self.parent.measurement_manager.update()
+
+    def export_simulations_csv(self):
+        folder_location, _ = self.open_directory_dialog(
+            "Export active simulations to csv")
+        selected_sims = self.simulation_manager.get_selected_simulations()
+        for simulation in selected_sims:
+            save_path = os.path.join(folder_location, simulation.name)
+            simulation.get_simulation_result().to_csv(save_path)
+
+        # TODO a spin bar if it takes too long
+
+    def save_workspace_binary(self):
         """
         Export active simulations to binary files
         """
         # pick up location
-        location: str = self.open_directory_dialog(msg="Export workspace")
-        if not location:
+        directory, _ = self.open_file_dialog(msg="Save workspace")
+        if not directory:
             return
-        assert os.path.isdir(location)
-        simulation: Simulation
         selected_sims = self.simulation_manager.get_selected_simulations()
         if not len(selected_sims):
+            # TODO popup
             print("No active simulations to save!")
             return
-        for simulation in selected_sims:
-            # get simulation
-            full_sim_path = os.path.join(location, simulation.simulation_name)
-            pickle.dump(simulation, open(full_sim_path + ".pkl", "wb"))
+
+        pickle.dump(selected_sims, open(directory + ".pkl", "wb"))
 
     def load_workspace_binary(self) -> None:
         """
         Adds simulations to a simulation manager
         """
-        location = self.open_directory_dialog(msg="Load workspace")
+        location, _ = self.open_file_dialog(msg="Load workspace")
         if not location:
             return
-        assert os.path.isdir(location)
+        assert os.path.isfile(location)
+        assert location.endswith(".pkl")
         # read every sim in that location
-        for sim_fn in os.listdir(location):
-            if not sim_fn.endswith(".pkl"):
-                return
-            sim_loc = os.path.join(location, sim_fn)
-            simulation: Simulation = pickle.load(open(sim_loc, "rb"))
-            if isinstance(simulation, Simulation):
+        with open(location, "rb") as f:
+            simulations = pickle.load(f)
+            simulation: Simulation
+            for simulation in simulations:
                 self.simulation_manager.add_simulation(simulation)
-            else:
-                print(
-                    f"Object found in [{location}] was not a simulation object"
-                )
-
         # TOOD: make this more elegant
         self.parent.simulation_manager.update()

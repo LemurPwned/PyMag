@@ -1,9 +1,9 @@
 from pymag.gui.trajectory import TrajectoryPlot
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
-from pymag.engine.data_holders import ResultHolder
+from pymag.engine.data_holders import ExperimentData, ResultHolder
 from pymag.gui.simulation_manager import Simulation
 import queue
-from typing import List
+from typing import List, Union
 
 
 class PlotManager:
@@ -11,8 +11,7 @@ class PlotManager:
     Plot Manager manages all plot updates in the dock
     """
     def __init__(self, magnetisation_plot: MultiplePlot,
-                 resistance_plot: MultiplePlot, 
-                 SD_plot: SpectrogramPlot,
+                 resistance_plot: MultiplePlot, SD_plot: SpectrogramPlot,
                  PIMM_plot: SpectrogramPlot) -> None:
         """
         :param magnetisation_plot
@@ -45,16 +44,31 @@ class PlotManager:
         self.PIMM_plot.clear_plots()
         self.SD_plot.clear_plots()
 
-    def plot_active_results(self, simulation_list: List[Simulation]):
+    def plot_active_results(self, obj_list: List[Union[Simulation,
+                                                       ExperimentData]]):
         """
         :param simulation_list
             Plot active simulations 
         """
         self.clear_all_plots()
-        for simulation in simulation_list:
-            self.plot_result(simulation.simulation_result)
+        for plotable_obj in obj_list:
+            self.plot_result(plotable_obj)
 
-    def plot_result(self, result_holder: ResultHolder):
+    def plot_result(self, plot_input: Union[Simulation, ExperimentData]):
+        """
+        Delegates plotting depending on the item type
+        :param plot_input Union[Simulation, ExperimentData]
+            item to be plotted
+        """
+        if isinstance(plot_input, ExperimentData):
+            self.plot_experiment(plot_input)
+        else:
+            self.plot_simulation(plot_input.get_simulation_result())
+
+    def plot_experiment(self, data: ExperimentData):
+        self.SD_plot.update_plot(data.H, data.f)
+
+    def plot_simulation(self, result_holder: ResultHolder):
         """
         :param result_holder
             Holds partial result of the simulation
@@ -67,13 +81,13 @@ class PlotManager:
         if lim == 1:
             return
 
-        self.magnetisation_plot.set_plots(
-            result_holder.H_mag[:lim], 
-            [result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],result_holder.m_avg[:, 2]],
-             [[255, 0, 0], [0, 255, 0], [0, 0, 255]], 
-             ["Mx", "My", "Mz"],["norm.", "norm.", "norm."],
-            str(result_holder.mode),
-            self.units[str(result_holder.mode)])
+        self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
+            result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
+            result_holder.m_avg[:, 2]
+        ], [[255, 0, 0], [0, 255, 0], [0, 0, 255]], ["Mx", "My", "Mz"],
+                                          ["norm.", "norm.", "norm."],
+                                          str(result_holder.mode),
+                                          self.units[str(result_holder.mode)])
 
         self.resistance_plot.set_plots(
             result_holder.H_mag[:lim],
@@ -89,16 +103,16 @@ class PlotManager:
                                 self.SD_plot.detrend_f_axis(result_holder.SD))
 
             self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
-                                        left_units="Hz",
-                                        bottom_caption=str(result_holder.mode),
-                                        bottom_units=self.units[str(result_holder.mode)])
+                                     left_units="Hz",
+                                     bottom_caption=str(result_holder.mode),
+                                     bottom_units=self.units[str(
+                                         result_holder.mode)])
 
             self.PIMM_plot.update(result_holder.H_mag[:lim],
-                                    result_holder.PIMM_delta_f,
-                                    result_holder.PIMM)
+                                  result_holder.PIMM_freqs, result_holder.PIMM)
 
             self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
-                                        left_units="Hz",
-                                        bottom_caption=str(result_holder.mode),
-                                        bottom_units=self.units[str(
-                                            result_holder.mode)])
+                                       left_units="Hz",
+                                       bottom_caption=str(result_holder.mode),
+                                       bottom_units=self.units[str(
+                                           result_holder.mode)])

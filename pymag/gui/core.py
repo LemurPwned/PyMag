@@ -1,3 +1,4 @@
+from pymag.gui.simulation_manager import GeneralManager
 from pymag.gui.exporter import Exporter
 import pyqtgraph as pg
 from pymag.engine.utils import *
@@ -61,10 +62,10 @@ class ResultsTable():
     """
     To be changed & renamed -- must use Simulation Manager
     """
-    def __init__(self, global_sim_manager, plot_manager):
+    def __init__(self, manager: GeneralManager, plot_manager):
 
         self.plot_manager = plot_manager
-        self.global_sim_manager = global_sim_manager
+        self.manager = manager
         self.results_table = pg.TableWidget(editable=False, sortable=False)
         self.remove_btn = QtWidgets.QPushButton()
         self.remove_btn.setText("Remove selected result")
@@ -81,26 +82,25 @@ class ResultsTable():
         self.results_table.cellDoubleClicked.connect(self.clicked2x)
 
     def remove_layer(self):
-        self.global_sim_manager.remove_selected()
+        self.manager.remove_selected()
         self.update()
 
     def export_selected(self):
         self.replot_results(self.active_highlighted, save=1)
 
     def clicked2x(self, row_number: int, column_number: int):
-        self.global_sim_manager.swap_simulation_status(row_number)
+        self.manager.swap_item_status(row_number)
         self.update()
 
     def update(self):
-        results_to_plot = self.global_sim_manager.get_selected_simulations()
-        self.plot_manager.plot_active_results(results_to_plot)
         self.print_and_color_table()
+        results_to_plot = self.manager.get_selected_items()
+        self.plot_manager.plot_active_results(results_to_plot)
 
     def print_and_color_table(self):
-        active = self.global_sim_manager.selected_simulation_indices
-        num_of_sim = len(self.global_sim_manager.simulations)
-        self.results_table.setData(
-            self.global_sim_manager.get_simulation_names())
+        active = self.manager.selected_indices
+        num_of_sim = len(self.manager.items)
+        self.results_table.setData(self.manager.get_item_names())
 
         for i in range(0, num_of_sim):
             if i in active:
@@ -177,10 +177,15 @@ class AddMenuBar():
         self.exporter = exporter
         self.file_menu = self.menubar.addMenu("File")
 
+        self.file_menu.addAction("Add experiment data").triggered.connect(
+            self.exporter.load_experimental_data)
         self.file_menu.addAction("Save workspace").triggered.connect(
-            self.exporter.export_workspace_binary)
+            self.exporter.save_workspace_binary)
         self.file_menu.addAction("Load workspace").triggered.connect(
             self.exporter.load_workspace_binary)
+        self.file_menu.addAction(
+            "Export active simulations to csv").triggered.connect(
+                self.exporter.export_simulations_csv)
         self.file_menu.addSeparator()
         self.exit_btn = self.file_menu.addAction("Exit").triggered.connect(
             self.parent.end_program)

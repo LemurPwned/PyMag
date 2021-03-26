@@ -1,9 +1,11 @@
 from queue import Queue
+
+from pyqtgraph.Qt import setResizeMode
 from pymag.engine.backend import SolverTask
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from PyQt5 import QtCore
-from pymag.engine.data_holders import (GenericHolder, ResultHolder,
-                                       SimulationInput)
+from pymag.engine.data_holders import (ExperimentData, GenericHolder,
+                                       ResultHolder, SimulationInput)
 
 
 class Simulation(GenericHolder):
@@ -14,7 +16,7 @@ class Simulation(GenericHolder):
         self.simulated: bool = False
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
-        self.simulation_name: str = simulation_name
+        self.name: str = simulation_name
 
     def set_simulation_input(self, sinput: SimulationInput):
         self.simulation_input = sinput
@@ -36,77 +38,97 @@ class Simulation(GenericHolder):
         return self.simulation_result
 
 
-class SimulationManager():
+class GeneralManager():
+    def __init__(self) -> None:
+        self.selected_indices: List[int] = []
+        self.items: Union[List[Simulation], List[ExperimentData]] = []
+
+    def add_to_selected(self, indx) -> None:
+        self.selected_indices.append(indx)
+        self.selected_indices = sorted(self.selected_indices)
+
+    def add_item(self, item: Union[Simulation, ExperimentData]):
+        self.items.append(item)
+        self.add_to_selected(len(self.items) - 1)
+
+    def get_selected_items(
+            self) -> Union[List[Simulation], List[ExperimentData]]:
+        return [self.items[indx] for indx in self.selected_indices]
+
+    def get_item(self, indx) -> Union[Simulation, ExperimentData]:
+        return self.items[indx]
+
+    def swap_item_status(self, index):
+        if index in self.selected_indices:
+            self.selected_indices.remove(index)
+        else:
+            self.selected_indices.append(index)
+
+    def remove_selected(self) -> None:
+        """
+        Remove the simulations that were active
+        """
+        for indx in sorted(self.selected_indices, reverse=True):
+            del self.items[indx]
+
+    def get_item_names(self) -> List[str]:
+        return [self.items[i].name for i in range(len(self.items))]
+
+
+class ExperimentManager(GeneralManager):
+    def __init__(self) -> None:
+        super().__init__()
+        self.items: List[ExperimentData] = []
+
+    def add_experiment(self, experiment: ExperimentData):
+        self.add_item(experiment)
+
+    def get_selected_experiments(self) -> List[ExperimentData]:
+        return self.get_selected_items()
+
+    def get_experiment(self, indx: int) -> ExperimentData:
+        return self.get_item(indx)
+
+
+class SimulationManager(GeneralManager):
     def __init__(self, queue: Queue, progress_bar, kill_btn=None) -> None:
-        self.simulations: List[Simulation] = []
-        self.selected_simulation_indices = []
+        super().__init__()
+        self.items: List[Simulation] = []
         self.backend = Backend(queue, progress_bar, kill_btn=kill_btn)
 
     def add_simulation(self, simulation: Simulation):
-        self.simulations.append(simulation)
-        self.add_to_selected(len(self.simulations) - 1)
-
-    def add_to_selected(self, simulation_index):
-        self.selected_simulation_indices.append(simulation_index)
-        self.selected_simulation_indices = sorted(
-            self.selected_simulation_indices)
+        self.add_item(simulation)
 
     def reset_simulation_output(self, index):
-        self.simulations[index].simulation_result = None
+        self.items[index].simulation_result = None
 
     def reset_selected_simulations_output(self):
         """
         Nullify the output of the simulation if the simulation
         has been 
         """
-        for indx in self.selected_simulation_indices:
+        for indx in self.selected_indices:
             self.reset_simulation_output(indx)
 
-    def remove_from_selected(self, simulation_index):
-        if simulation_index in self.selected_simulation_indices:
-            self.selected_simulation_indices.remove(simulation_index)
-
-    def remove_selected(self):
-        """
-        Remove the simulations that were active
-        """
-        for index in sorted(self.selected_simulation_indices, reverse=True):
-            del self.simulations[index]
-
-    def swap_simulation_status(self, index):
-        if index in self.selected_simulation_indices:
-            self.selected_simulation_indices.remove(index)
-        else:
-            self.selected_simulation_indices.append(index)
-
     def get_selected_simulations(self) -> List[Simulation]:
-        return [
-            self.simulations[indx] for indx in self.selected_simulation_indices
-        ]
+        return self.get_selected_items()
 
-    def get_simulation(self, indx) -> Simulation:
-        return self.simulations[indx]
+    def get_simulation(self, indx: int) -> Simulation:
+        return self.get_item(indx)
 
     def get_simulation_result(self, indx) -> ResultHolder:
-        return self.simulations[indx].get_simulation_result()
+        return self.items[indx].get_simulation_result()
 
     def mark_as_done(self, indx: int):
-        self.simulations[indx].simulated = True
+        self.items[indx].simulated = True
 
     def simulate_selected(self):
-        self.backend.start_simulations(self.selected_simulation_indices,
+        self.backend.start_simulations(self.selected_indices,
                                        self.get_selected_simulations())
 
     def update_simulation_data(self, simulation_index: int,
                                partial_result: ResultHolder):
-        self.simulations[simulation_index].update_simulation_result(
-            partial_result)
-
-    def get_simulation_names(self):
-        return [
-            self.simulations[i].simulation_name
-            for i in range(len(self.simulations))
-        ]
+        self.items[simulation_index].update_simulation_result(partial_result)
 
 
 class Backend(QtCore.QObject):
@@ -140,6 +162,4 @@ class Backend(QtCore.QObject):
                                  parent=self)
         self.thread.progress.connect(self.set_progress)
         self.kill_btn.clicked.connect(self.thread.kill)
-        # self.thread.stop_signal.connect(self.stop_signal)
-        # self.thread.terminate()
         self.thread.start()

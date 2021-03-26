@@ -64,7 +64,7 @@ class SolverTask(QtCore.QThread):
 
                 partial_result = ResultHolder(mode=stimulus.mode,
                                               H_mag=stimulus.Hmag,
-                                              PIMM_delta_f=stimulus.PIMM_freqs,
+                                              PIMM_freqs=stimulus.PIMM_freqs,
                                               SD_freqs=stimulus.SD_freqs,
                                               **{
                                                   key: Hstep_result[key]

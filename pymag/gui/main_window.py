@@ -1,7 +1,7 @@
 import os
 from pymag.gui.exporter import Exporter
 
-from pymag.gui.simulation_manager import Simulation, SimulationManager
+from pymag.gui.simulation_manager import ExperimentManager, Simulation, SimulationManager
 from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
 from pymag.gui.plot_manager import PlotManager
 import queue
@@ -19,7 +19,7 @@ from pyqtgraph.dockarea import Dock, DockArea
 class UIMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.setObjectName("PyMag")
         # load defaults
         self.defaultStimulusFile = os.path.join("pymag", "presets",
                                                 "defaultStimulus.csv")
@@ -53,17 +53,20 @@ class UIMainWindow(QMainWindow):
         self.result_queue = mp.Queue()
         self.central_layout = AddMenuBar(parent=self)
 
+        self.global_experiment_manager = ExperimentManager()
         self.global_sim_manager = SimulationManager(
             self.result_queue,
             self.central_layout.progress,
             kill_btn=self.central_layout.stop_btn)
+
         exporter = Exporter(parent=self,
-                            simulation_manager=self.global_sim_manager)
+                            simulation_manager=self.global_sim_manager,
+                            experiment_manager=self.global_experiment_manager)
         self.central_layout.set_exporter(exporter)
 
         self.simulation_manager = ResultsTable(self.global_sim_manager,
                                                self.plot_manager)
-        self.measurement_manager = ResultsTable(self.global_sim_manager,
+        self.measurement_manager = ResultsTable(self.global_experiment_manager,
                                                 self.plot_manager)
 
         self.widget_layer_params = SimulationParameters(
@@ -143,19 +146,7 @@ class UIMainWindow(QMainWindow):
         os._exit(0)
 
     def save_params(self, auto=0):
-        pass
-        # if auto == 0:
-        #     fileName = self.save_file_dialog()
-        # else:
-        #     curr_dir = os.path.dirname(os.path.realpath(__file__))
-        #     fileName = curr_dir + "/" + "previous_params.csv"
-        # if fileName:
-        #     df_generated_data = self.get_df_from_table(
-        #         self.widget_layer_params.table_layer_params)
-        #     df_generated_data.to_csv(fileName,
-        #                              encoding='utf-8',
-        #                              index=False,
-        #                              sep='\t')
+        ...
 
     def add_to_simulation_list(self):
         df = self.get_df_from_table(
@@ -207,7 +198,7 @@ class UIMainWindow(QMainWindow):
             elif status == SimulationStatus.IN_PROGRESS:
                 self.global_sim_manager.update_simulation_data(sim_indx, res)
                 self.plot_manager.plot_result(
-                    self.global_sim_manager.get_simulation_result(sim_indx))
+                    self.global_sim_manager.get_simulation(sim_indx))
             else:
                 raise ValueError("Unknown simulation status received!")
         except queue.Empty:

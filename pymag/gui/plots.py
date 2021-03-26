@@ -41,7 +41,7 @@ class SpectrogramPlot():
     def __init__(self):
         self.plot_view = pg.GraphicsLayoutWidget()
         self.plot_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
-        self.plot_image = self.plot_view.addPlot()
+        self.plot_image: pg.PlotItem = self.plot_view.addPlot()
         self.image = pg.ImageView()
         self.plot_view.setBackground('w')
         self.image_spectrum = self.image.getImageItem()
@@ -72,12 +72,15 @@ class SpectrogramPlot():
         self.image_spectrum.setImage(values, autoLevels=False)
         self.image.updateImage()
 
+    def update_plot(self, x, y):
+        self.plot_image.plot(x, y)
+
     def detrend_f_axis(self, values):
         values2 = np.empty(values.shape)
         for f in range(0, values.shape[1]):
             values2[:, f] = values[:, f] - np.median(values[:, f])
         return values2
-    
+
     def clear_plots(self):
         self.image_spectrum.clear()
         # self.plot_image.clear()

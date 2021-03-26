@@ -131,7 +131,7 @@ class Solver:
             DynamicR), Cdt, SD_voltage_after_bias, m_traj, M_full, PIMM_
 
     @staticmethod
-    @numba.jit(nopython=True, parallel=True)
+    @numba.jit(nopython=True, parallel=False)
     def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l,
                              w):
         R_P = Rx0[0]
