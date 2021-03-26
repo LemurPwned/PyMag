@@ -1,12 +1,15 @@
+from os import cpu_count
 from pymag.engine.data_holders import Layer
 from typing import List
 import cmtj
 import numpy as np
-from pymag.engine.utils import butter_lowpass_filter, cos_between_arrays, normalize
+from pymag.engine.utils import butter_lowpass_filter, normalize
 import multiprocessing
 from sys import platform
 from scipy.fft import fft
 import numba
+
+cpu_count = multiprocessing.cpu_count()
 
 
 class Solver:
@@ -52,7 +55,7 @@ class Solver:
         CHOe_null = cmtj.CVector(0, 0, 0)
 
         DynamicR = np.zeros(len(t))
-        PIMM_ = []
+        PIMM_ = np.zeros(len(t))
         # for i in range(len(t)):
         #     CHOe = CHOe_null
         #     if I_amp == 0 and i == 0:
@@ -76,7 +79,6 @@ class Solver:
         #                                       CNdemag)
 
         for i in range(0, len(t)):
-
             CHOe = CHOe_null
             if I_amp == 0 and i == 0:
                 CHOe = CHOe_pulse
@@ -110,7 +112,7 @@ class Solver:
 
                 DynamicR[i] = cmtj.SpinDiode2Layers(CIdir, Cm_all[0],
                                                     Cm_all[1], 100, 0.1)
-            PIMM_.append(np.sum([m.z for m in Cm_all]))
+            PIMM_[i] = np.sum([m.z for m in Cm_all])
 
         if I_amp == 0:
             SD_voltage_after_bias = 0
@@ -165,7 +167,6 @@ class Solver:
 
     def serial_run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time,
                           LLG_steps):
-
         SD = []
         m, m_avg, dynamic_r, _, _, m_traj, _, PIMM = Solver.calc_trajectoryRK45(
             layers, m, Hval, 0, 0, LLG_time, LLG_steps)
@@ -178,8 +179,7 @@ class Solver:
 
     def parallel_run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time,
                             LLG_steps):
-
-        pool = multiprocessing.Pool(2)
+        pool = multiprocessing.Pool(cpu_count - 1)
         results = []
         m, m_avg, dynamic_r, _, _, m_traj, _, PIMM = Solver.calc_trajectoryRK45(
             layers, m, Hval, 0, 0, LLG_time, LLG_steps)
@@ -193,7 +193,7 @@ class Solver:
         return m, m_avg, dynamic_r, m_traj, SD, PIMM
 
     def run_H_step(m, Hval, freqs, layers: List[Layer], LLG_time, LLG_steps):
-
+        # TODO change this to more viable speed on macs
         if platform == "linux" or platform == "linux2" or True:
             # linux
             m, m_avg, dynamic_r, m_traj, SD, PIMM = Solver.parallel_run_H_step(

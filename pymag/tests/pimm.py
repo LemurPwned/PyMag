@@ -1,12 +1,86 @@
-from pymag.engine.data_holders import Layer
-from pymag.engine.utils import get_stimulus
-from typing import final
-import matplotlib.pyplot as plt
-from pymag.engine.solver import Solver
-import numpy as np
-from scipy.fft import fft
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+import cProfile
+import io
+import pstats
 import time as tm
+
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from pymag.engine.data_holders import Layer
+from pymag.engine.solver import Solver
+from pymag.engine.utils import get_stimulus
+from scipy.fft import fft
+
+l1 = Layer(0,
+           alpha=0.01,
+           Ku=305e3,
+           Kdir=[0, -0.0871557, 0.996195],
+           N=[0, 0, 1],
+           th=1e-9,
+           Ms=1.07,
+           J=4e-5,
+           AMR=0,
+           SMR=0,
+           AHE=0,
+           Rx0=0,
+           Ry0=0,
+           w=0,
+           l=0)
+
+l2 = Layer(1,
+           alpha=0.01,
+           Ku=728e3,
+           Kdir=[0.34071865, -0.08715574, 0.936116],
+           N=[0, 0, 1],
+           th=1e-9,
+           Ms=1.07,
+           J=0,
+           AMR=0,
+           SMR=0,
+           AHE=0,
+           Rx0=0,
+           Ry0=0,
+           w=0,
+           l=0)
+
+layers = [l1, l2]
+Hmin = -800e3
+Hmax = 800e3
+hsteps = 100
+frequency = 0
+LLG_steps = 2000
+LLG_time = 8e-9
+theta = 89.9
+phi = 45
+H, _ = get_stimulus(Hmin=Hmin,
+                    Hmax=Hmax,
+                    ThetaMin=theta,
+                    ThetaMax=theta,
+                    PhiMin=phi,
+                    PhiMax=phi,
+                    STEPS=hsteps,
+                    back=False,
+                    mode="H")
+
+
+def profile_PIMM():
+    pr = cProfile.Profile()
+    pr.enable()
+    for Hval in reversed(H):
+        _, _, _, _, _, _, _, _ = Solver.calc_trajectoryRK45(
+            layers=layers,
+            m_init=[[1, 1, 0], [1, 1, 0]],
+            Hext=Hval,
+            f=frequency,
+            I_amp=0,
+            LLG_time=LLG_time,
+            LLG_steps=LLG_steps)
+    pr.disable()
+    s = io.StringIO()
+    sortby = pstats.SortKey.CUMULATIVE
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())
 
 
 def run_PIMM():
@@ -23,57 +97,6 @@ def run_PIMM():
         "number_of_layers": 2
     }
 
-    l1 = Layer(0,
-               alpha=0.01,
-               Ku=305e3,
-               Kdir=[0, -0.0871557, 0.996195],
-               N=[0, 0, 1],
-               th=1e-9,
-               Ms=1.07,
-               J=4e-5,
-               AMR=0,
-               SMR=0,
-               AHE=0,
-               Rx0=0,
-               Ry0=0,
-               w=0,
-               l=0)
-
-    l2 = Layer(1,
-               alpha=0.01,
-               Ku=728e3,
-               Kdir=[0.34071865, -0.08715574, 0.936116],
-               N=[0, 0, 1],
-               th=1e-9,
-               Ms=1.07,
-               J=0,
-               AMR=0,
-               SMR=0,
-               AHE=0,
-               Rx0=0,
-               Ry0=0,
-               w=0,
-               l=0)
-
-    layers = [l1, l2]
-
-    Hmin = -800e3
-    Hmax = 800e3
-    hsteps = 100
-    frequency = 0
-    LLG_steps = 2000
-    LLG_time = 8e-9
-    theta = 89.9
-    phi = 45
-    H, _ = get_stimulus(Hmin=Hmin,
-                        Hmax=Hmax,
-                        ThetaMin=theta,
-                        ThetaMax=theta,
-                        PhiMin=phi,
-                        PhiMax=phi,
-                        STEPS=hsteps,
-                        back=False,
-                        mode="H")
     final_PIMM = []
     m = None
     start = tm.time()
