@@ -120,8 +120,6 @@ class AddMenuBar():
         self.menubar = QtWidgets.QMenuBar()
         self.window_about = About()
         self.window_menu = self.menubar.addMenu("Window")
-        self.window_menu.addAction(
-            "Switch full/normal screen").triggered.connect(self.full_screen)
 
         self.help_menu = self.menubar.addMenu("Help")
         self.help_menu.addAction("About").triggered.connect(self.about)
@@ -192,16 +190,6 @@ class AddMenuBar():
 
     def about(self):
         self.window_about.show()
-
-    def full_screen(self):
-        """
-        Switch between normal and full screen mode
-        """
-        if self.isFullScreen():
-            self.showNormal()
-        else:
-            self.showFullScreen()
-
 
 class About(QtGui.QDialog):
     def __init__(self):
