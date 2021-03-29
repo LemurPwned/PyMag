@@ -100,11 +100,12 @@ def run_PIMM():
     final_PIMM = []
     m = None
     start = tm.time()
+    H = np.linspace(-800e3, 800e3, hsteps)
     for Hval in reversed(H):
         m, _, _, _, _, _, _, PIMM_ = Solver.calc_trajectoryRK45(
             layers=layers,
             m_init=m if m is not None else [[1, 1, 0], [1, 1, 0]],
-            Hext=Hval,
+            Hext=[Hval * np.sqrt(2) / 2, Hval * np.sqrt(2) / 2, 0],
             f=frequency,
             I_amp=0,
             LLG_time=LLG_time,
