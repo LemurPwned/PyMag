@@ -134,21 +134,17 @@ public:
 
         CVector Heff, noise, dm, Pprod, Hprod;
 
-        //Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + mTop * (Ju[layer - 1] / (Ms[layer] * th[layer])) + mBottom * (Ju[layer] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);;
-
+        Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+        
         if (layer == 0)
         {
-            Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (mBottom - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+             Heff = Heff + (mBottom - mag) * (Ju[0] / (Ms[layer] * th[layer]));
         }
-        if (layer == 1)
+        else if (layer == 1)
         {
-            Heff = Hext + HOe + Kdir[layer] * ((2 * Ku[layer] / Ms[layer]) * c_dot(mag, Kdir[layer])) + (mTop - mag) * (Ju[0] / (Ms[layer] * th[layer])) - calculate_tensor_interaction(mag, demag, -1) * (Ms[layer] / MAGNETIC_PERMEABILITY);
+             Heff = Heff + (mTop - mag) * (Ju[0] / (Ms[layer] * th[layer]));
         }
 
-        //	std::cout<<"\nlayer: "<<layer<<" Ku: "<<Ku[layer]<<" th: "<<th[layer]<<" mTopx: "<<mTop.x<<" mBottomx: "<<mBottom.x<<" kdirx: "<<Kdir[layer].x << " "<<Kdir[layer].y<< " "<<Kdir[layer].z<<" Ju_bottom: "<<Ju[layer]<<" Ju_top: "<<Ju[layer - 1];
-
-        // noise
-        // Pprod = c_cross(mag, p);
         Hprod = c_cross(mag, Heff);
         dm = Hprod * -PERGYR + c_cross(mag, Hprod) * alpha[layer] * -PERGYR;
 

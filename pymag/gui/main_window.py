@@ -84,6 +84,7 @@ class UIMainWindow(QMainWindow):
         ]
 
         self.central_widget = self.central_layout.central_widget
+        
         dock_contents = [
             self.central_widget, self.PIMM_plot.plot_view,
             self.mag_plot.plot_area, self.table_results,
