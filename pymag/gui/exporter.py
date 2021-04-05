@@ -14,7 +14,7 @@ class Exporter:
         self.simulation_manager: SimulationManager = simulation_manager
         self.experiment_manager: ExperimentManager = experiment_manager
 
-    def open_directory_dialog(self, msg: str) -> Tuple[str, str]:
+    def open_directory_dialog(self, msg: str) -> str:
         return QFileDialog.getExistingDirectory(self.parent, msg)
 
     def open_file_dialog(self, msg: str) -> Tuple[str, str]:
@@ -54,8 +54,9 @@ class Exporter:
         self.parent.measurement_manager.update()
 
     def export_simulations_csv(self):
-        folder_location, _ = self.open_directory_dialog(
+        folder_location = self.open_directory_dialog(
             "Export active simulations to csv")
+        print(folder_location)
         selected_sims = self.simulation_manager.get_selected_simulations()
         for simulation in selected_sims:
             save_path = os.path.join(folder_location, simulation.name)

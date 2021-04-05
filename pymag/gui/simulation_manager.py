@@ -69,6 +69,9 @@ class GeneralManager():
         """
         for indx in sorted(self.selected_indices, reverse=True):
             del self.items[indx]
+            # also remove the selection :) 
+            if indx in self.selected_indices:
+                self.selected_indices.remove(indx)
 
     def get_item_names(self) -> List[str]:
         return [self.items[i].name for i in range(len(self.items))]

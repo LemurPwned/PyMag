@@ -81,26 +81,35 @@ class ResultHolder(GenericHolder):
         PIMM 
         to a file
         """
-        dynamics = pd.DataFrame.from_dict({
-            "mx": self.m_avg[:, 0],
-            "my": self.m_avg[:, 0],
-            "mz": self.m_avg[:, 0],
-            "Rx": self.Rx,
-            "Ry": self.Ry,
-            "Rz": self.Rz,
-            "H": self.H_mag
-        })
-        dynamics.to_csv(filename + "_dynamics.csv", index=False)
+        print(self.PIMM.shape, len(self.PIMM_freqs[:]))
+        try:
+            dynamics = pd.DataFrame.from_dict({
+                "mx": self.m_avg[:, 0],
+                "my": self.m_avg[:, 0],
+                "mz": self.m_avg[:, 0],
+                "Rx": self.Rx,
+                "Ry": self.Ry,
+                "Rz": self.Rz,
+                "H": self.H_mag
+            })
+            dynamics.to_csv(filename + "_dynamics.csv", index=False)
+        except Exception as e:
+            print(f"Failed to export dynamics: {e}")
 
-        spin_diode = pd.DataFrame(data=self.SD,
-                                  columns=self.SD_freqs,
-                                  index=self.H_mag)
-        spin_diode.to_csv(filename + "_SD.csv", index=False)
-
-        pimm = pd.DataFrame(data=self.PIMM,
-                            columns=self.PIMM_freqs,
-                            index=self.H_mag)
-        pimm.to_csv(filename + "_PIMM.csv", index=False)
+        try:
+            spin_diode = pd.DataFrame(data=self.SD,
+                                      columns=self.SD_freqs,
+                                      index=self.H_mag)
+            spin_diode.to_csv(filename + "_SD.csv", index=False)
+        except Exception as e:
+            print(f"Failed to export spin diode: {e}")
+        try:
+            pimm = pd.DataFrame(data=self.PIMM,
+                                columns=self.PIMM_freqs[:self.PIMM.shape[1]],
+                                index=self.H_mag)
+            pimm.to_csv(filename + "_PIMM.csv", index=False)
+        except Exception as e:
+            print(f"Failed to export PIMM: {e}")
 
 
 class Layer(GenericHolder):
