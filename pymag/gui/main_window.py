@@ -30,7 +30,7 @@ class UIMainWindow(QMainWindow):
         # main window properties
         self.setObjectName(PyMagVersion)
         self.setWindowTitle(PyMagVersion)
-        self.resize(1200, 900)
+        self.resize(1400, 900)
 
         # dock area as a central widget of GUI
         self.area = DockArea()
@@ -92,8 +92,10 @@ class UIMainWindow(QMainWindow):
             self.simulation_manager.central_widget,
             self.widget_layer_params.central_widget
         ]
-
-        for i in range(len(dock_titles)):
+        # no size here
+        self.d.append(Dock(dock_titles[0]))
+        self.d[0].addWidget(dock_contents[0])
+        for i in range(1, len(dock_titles)):
             self.d.append(Dock(dock_titles[i], size=(300, 50)))
             self.d[i].addWidget(dock_contents[i])
 
@@ -180,8 +182,6 @@ class UIMainWindow(QMainWindow):
         self.central_layout.progress.setValue(0)
         self.global_sim_manager.simulate_selected()
 
-    def stop_clk(self):
-        ...
 
     def on_simulation_data_update(self):
         try:

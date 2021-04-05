@@ -27,13 +27,6 @@ PYBIND11_MODULE(cmtj, m)
     m.def("cos_between_arrays", &cos_between_arrays);
     m.def("SpinDiode2Layers", &SpinDiode2Layers);
 
-
-    py::enum_<Axis>(m, "Axis")
-        .value("xaxis", xaxis)
-        .value("yaxis", yaxis)
-        .value("zaxis", zaxis)
-        .export_values();
-
     py::class_<CVector>(m, "CVector")
         .def(py::init<
              double, double, double>())

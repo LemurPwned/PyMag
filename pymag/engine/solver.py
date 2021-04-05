@@ -1,13 +1,14 @@
-from os import cpu_count
-from pymag.engine.data_holders import Layer
-from typing import List
-import cmtj
-import numpy as np
-from pymag.engine.utils import butter_lowpass_filter, normalize
 import multiprocessing
+from os import cpu_count
 from sys import platform
-from scipy.fft import fft
+from typing import List
+
+import cmtj
 import numba
+import numpy as np
+from pymag.engine.data_holders import Layer
+from pymag.engine.utils import butter_lowpass_filter, normalize
+from scipy.fft import fft
 
 cpu_count = multiprocessing.cpu_count()
 
@@ -109,9 +110,11 @@ class Solver:
                 Cm_all[layer] = cmtj.RK45(Cm, Cm_top, Cm_bottom, CHext, layer,
                                           Cdt, CHOe, CMs, CKu, CJu, CKdir, Cth,
                                           Calpha, CNdemag)
-
-                DynamicR[i] = cmtj.SpinDiode2Layers(CIdir, Cm_all[0],
-                                                    Cm_all[1], 100, 0.1)
+                if n_layers == 1:
+                    DynamicR[i] = 1.
+                else:
+                    DynamicR[i] = cmtj.SpinDiode2Layers(
+                        CIdir, Cm_all[0], Cm_all[1], 100, 0.1)
             PIMM_[i] = np.sum([m.z for m in Cm_all])
 
         if I_amp == 0:

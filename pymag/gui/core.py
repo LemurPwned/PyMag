@@ -1,12 +1,10 @@
-from pymag.gui.simulation_manager import GeneralManager
-from pymag.gui.exporter import Exporter
 import pyqtgraph as pg
 from pymag.engine.utils import *
+from pymag.gui.exporter import Exporter
+from pymag.gui.simulation_manager import GeneralManager
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
 from pyqtgraph.Qt import QtGui
-
-# ResultsColumns = ['H', 'Mx', 'My', 'Mz', 'Rx', 'Ry', 'Rz']
 
 
 class SimulationParameters():
@@ -16,8 +14,14 @@ class SimulationParameters():
     def __init__(self, parent, layerParameters, StimulusParameters):
 
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
+        header = self.table_layer_params.horizontalHeader()
+        # also QtWidgets.QHeaderView.Stretch is good
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.table_stimulus_params = pg.TableWidget(editable=True,
                                                     sortable=False)
+        stimulus_header = self.table_stimulus_params.horizontalHeader()
+        stimulus_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -130,10 +134,8 @@ class AddMenuBar():
         self.start_btn = QtWidgets.QPushButton()
         self.stop_btn = QtWidgets.QPushButton()
         self.start_btn.setText("Start")
-        self.stop_btn.setText("Stop")
-        self.stop_btn.setText("Stop")
+        self.stop_btn.setText("Cancel")
         self.start_btn.clicked.connect(parent.start_simulations)
-        self.stop_btn.clicked.connect(parent.stop_clk)
 
         self.multiprocessing_label = QLabel("MP")
         self.backend_select = QComboBox()
@@ -170,6 +172,7 @@ class AddMenuBar():
         self.btn_layout.addWidget(self.backend_select)
 
         self.central_layout.addLayout(self.btn_layout)
+        self.central_layout.addStretch()
 
     def set_exporter(self, exporter: 'Exporter'):
         self.exporter = exporter
@@ -190,6 +193,7 @@ class AddMenuBar():
 
     def about(self):
         self.window_about.show()
+
 
 class About(QtGui.QDialog):
     def __init__(self):

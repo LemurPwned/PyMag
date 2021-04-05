@@ -1,11 +1,10 @@
 from queue import Queue
+from typing import List, Union
 
-from pyqtgraph.Qt import setResizeMode
 from pymag.engine.backend import SolverTask
-from typing import Any, Dict, List, Union
-from PyQt5 import QtCore
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
                                        ResultHolder, SimulationInput)
+from PyQt5 import QtCore
 
 
 class Simulation(GenericHolder):

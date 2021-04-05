@@ -37,7 +37,7 @@ class PlotManager:
 
     def clear_all_plots(self):
         """
-            Clear all plots
+        Clear all plots
         """
         self.resistance_plot.clear_plots()
         self.magnetisation_plot.clear_plots()
