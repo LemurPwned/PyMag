@@ -84,7 +84,6 @@ class UIMainWindow(QMainWindow):
         ]
 
         self.central_widget = self.central_layout.central_widget
-        
         dock_contents = [
             self.central_widget, self.PIMM_plot.plot_view,
             self.mag_plot.plot_area, self.table_results,
@@ -182,7 +181,6 @@ class UIMainWindow(QMainWindow):
     def start_simulations(self):
         self.central_layout.progress.setValue(0)
         self.global_sim_manager.simulate_selected()
-
 
     def on_simulation_data_update(self):
         try:
