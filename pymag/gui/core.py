@@ -2,9 +2,11 @@ import pyqtgraph as pg
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.simulation_manager import GeneralManager
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
 from pyqtgraph.Qt import QtGui
+
+from functools import partial
 
 
 class SimulationParameters():
@@ -17,11 +19,12 @@ class SimulationParameters():
         header = self.table_layer_params.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+
         self.table_stimulus_params = pg.TableWidget(editable=True,
                                                     sortable=False)
         stimulus_header = self.table_stimulus_params.horizontalHeader()
-        stimulus_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-
+        stimulus_header.setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeToContents)
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -71,6 +74,10 @@ class ResultsTable():
         self.plot_manager = plot_manager
         self.manager = manager
         self.results_table = pg.TableWidget(editable=False, sortable=False)
+        self.results_table.setColumnCount(1)
+        header = self.results_table.horizontalHeader()
+        # also QtWidgets.QHeaderView.Stretch is good
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.remove_btn = QtWidgets.QPushButton()
         self.remove_btn.setText("Remove selected result")
         self.remove_btn.clicked.connect(self.remove_layer)
@@ -78,12 +85,12 @@ class ResultsTable():
         self.export_btn.setText("Export selected to .csv")
         self.export_btn.clicked.connect(self.export_selected)
         self.central_widget = QtGui.QWidget()
-        self.central_layout = QtGui.QGridLayout()
+        self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.results_table)
         self.central_layout.addWidget(self.remove_btn)
         self.central_layout.addWidget(self.export_btn)
-        self.results_table.cellDoubleClicked.connect(self.clicked2x)
+        # self.results_table.cellDoubleClicked.connect(self.clicked2x)
 
     def remove_layer(self):
         self.manager.remove_selected()
@@ -101,18 +108,30 @@ class ResultsTable():
         results_to_plot = self.manager.get_selected_items()
         self.plot_manager.plot_active_results(results_to_plot)
 
+    def item_checked(self, item: QtWidgets.QTableWidgetItem, name: str):
+        row = item.row()
+        if name != item.text():
+            # name was changed
+            self.manager.items[row].name = name
+            print("Name changed", row)
+        else:
+            self.manager.swap_item_status(row)
+            results_to_plot = self.manager.get_selected_items()
+            self.plot_manager.plot_active_results(results_to_plot)
+            print("Status changed", row)
+
     def print_and_color_table(self):
         active = self.manager.selected_indices
-        num_of_sim = len(self.manager.items)
-        self.results_table.setData(self.manager.get_item_names())
-
-        for i in range(0, num_of_sim):
-            if i in active:
-                self.results_table.item(i, 0).setBackground(
-                    QtGui.QColor(255, 0, 0))
-            else:
-                self.results_table.item(i, 0).setBackground(
-                    QtGui.QColor(255, 255, 255))
+        names = self.manager.get_item_names()
+        self.results_table.setRowCount(len(names))
+        for i, name in enumerate(names):
+            chbx_itm = QtWidgets.QTableWidgetItem(name)
+            # chbx_itm.setFlags(QtCore.Qt.ItemIsUserCheckable
+            #   | QtCore.Qt.ItemIsEnabled)
+            chbx_itm.setCheckState(QtCore.Qt.Unchecked)
+            # for some reason there's an attrubute error
+            chbx_itm.itemChanged = partial(self.item_checked, chbx_itm, name)
+            self.results_table.setItem(i, 0, chbx_itm)
 
 
 class AddMenuBar():
@@ -120,7 +139,7 @@ class AddMenuBar():
         """
         still to do: remove parent
         """
-        self.parent = parent
+        self.parent: 'UIMainWindow' = parent
         self.menubar = QtWidgets.QMenuBar()
         self.window_about = About()
         self.window_menu = self.menubar.addMenu("Window")
@@ -131,11 +150,11 @@ class AddMenuBar():
         self.simulation_name_label = QLabel("Simulation\nName:")
         self.simulation_name = QtWidgets.QLineEdit()
 
-        self.start_btn = QtWidgets.QPushButton()
-        self.stop_btn = QtWidgets.QPushButton()
-        self.start_btn.setText("Start")
-        self.stop_btn.setText("Cancel")
-        self.start_btn.clicked.connect(parent.start_simulations)
+        self.start_btn = QtWidgets.QPushButton("Start")
+        self.start_btn.setCheckable(True)
+        self.start_btn.setStyleSheet("background-color : lightgreen")
+        self.kill_fn = lambda:...  # empty function
+        self.start_btn.clicked.connect(self.btn_toggle)
 
         self.multiprocessing_label = QLabel("MP")
         self.backend_select = QComboBox()
@@ -164,8 +183,6 @@ class AddMenuBar():
         self.btn_layout.addWidget(self.simulation_name_label)
         self.btn_layout.addWidget(self.simulation_name)
 
-        self.btn_layout.addWidget(self.stop_btn)
-        # self.btn_layout.addWidget(self.clear_plotsButton)
         self.btn_layout.addWidget(self.multiprocessing_label)
         self.btn_layout.addWidget(self.multiprocessing_select)
         self.btn_layout.addWidget(self.back_end_label)
@@ -193,6 +210,20 @@ class AddMenuBar():
 
     def about(self):
         self.window_about.show()
+
+    def btn_toggle(self):
+        if self.start_btn.isChecked():
+            # refresh the clicked if there were sims before
+            self.start_btn.disconnect()
+            self.start_btn.clicked.connect(self.btn_toggle)
+            self.start_btn.setStyleSheet("background-color : red")
+            self.start_btn.setText("Cancel")
+            # the simulation is running
+            self.parent.start_simulations()
+        else:
+            # reconnect
+            self.start_btn.setText("Start")
+            self.start_btn.setStyleSheet("background-color : lightgreen")
 
 
 class About(QtGui.QDialog):

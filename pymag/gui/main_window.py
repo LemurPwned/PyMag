@@ -57,7 +57,7 @@ class UIMainWindow(QMainWindow):
         self.global_sim_manager = SimulationManager(
             self.result_queue,
             self.central_layout.progress,
-            kill_btn=self.central_layout.stop_btn)
+            kill_btn=self.central_layout.start_btn)
 
         exporter = Exporter(parent=self,
                             simulation_manager=self.global_sim_manager,
@@ -163,7 +163,7 @@ class UIMainWindow(QMainWindow):
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=Stimulus(df_stimulus))))
-        self.simulation_manager.update()
+        self.simulation_manager.print_and_color_table()
 
     def get_df_from_table(self, table):
         number_of_rows = table.rowCount()

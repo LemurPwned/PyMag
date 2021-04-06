@@ -69,7 +69,7 @@ class GeneralManager():
         """
         for indx in sorted(self.selected_indices, reverse=True):
             del self.items[indx]
-            # also remove the selection :) 
+            # also remove the selection :)
             if indx in self.selected_indices:
                 self.selected_indices.remove(indx)
 
@@ -93,7 +93,7 @@ class ExperimentManager(GeneralManager):
 
 
 class SimulationManager(GeneralManager):
-    def __init__(self, queue: Queue, progress_bar, kill_btn=None) -> None:
+    def __init__(self, queue: Queue, progress_bar, kill_btn) -> None:
         super().__init__()
         self.items: List[Simulation] = []
         self.backend = Backend(queue, progress_bar, kill_btn=kill_btn)
@@ -136,7 +136,7 @@ class SimulationManager(GeneralManager):
 class Backend(QtCore.QObject):
     changed = QtCore.pyqtSignal(int)
 
-    def __init__(self, queue, progress_unit, kill_btn=None):
+    def __init__(self, queue, progress_unit, kill_btn):
         super().__init__()
         self._num = 0
         self.queue = queue
