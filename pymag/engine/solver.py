@@ -51,6 +51,7 @@ class Solver:
         Calpha = [l.alpha for l in layers]
 
         CIdir = cmtj.CVector(1, 0, 0)
+        Idir = np.asarray([1., 0., 0.])
         m_null = cmtj.CVector(1, 0, 0)
         CHOe_pulse = cmtj.CVector(0, 0, 10000)
         CHOe_null = cmtj.CVector(0, 0, 0)
@@ -111,13 +112,13 @@ class Solver:
                                           Cdt, CHOe, CMs, CKu, CJu, CKdir, Cth,
                                           Calpha, CNdemag)
                 if n_layers == 1:
-                    DynamicR[i] = 1.
+                    Carr = np.asarray(
+                        [Cm_all[layer].x, Cm_all[layer].y, Cm_all[layer].z])
+                    DynamicR[i] = 100 + np.sum(Idir * Carr) * 0.1
                 else:
                     DynamicR[i] = cmtj.SpinDiode2Layers(
                         CIdir, Cm_all[0], Cm_all[1], 100, 0.1)
             PIMM_[i] = np.sum([m.z for m in Cm_all])
-
-
 
         if I_amp == 0:
             SD_voltage_after_bias = 0
