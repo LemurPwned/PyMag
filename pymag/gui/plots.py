@@ -57,6 +57,24 @@ class SpectrogramPlot():
         cmap = pg.ColorMap(pos=np.linspace(0.0, 1.0, 9), color=colors)
         self.image.setColorMap(cmap)
         self.histogram_scale.gradient.setColorMap(cm=cmap)
+        self.inf_line = pg.InfiniteLine(movable=True,
+                                        angle=0,
+                                        label='x={value:0.2f}',
+                                        pos=[0, 1e9],
+                                        bounds=[0, 100e9],
+                                        labelOpts={
+                                            'position': 5e9,
+                                            'color': (200, 200, 100),
+                                            'fill': (200, 200, 200, 50),
+                                            'movable': True
+                                        })
+        self.plot_image.addItem(self.inf_line)
+
+        self.plot_view.nextRow()
+        self.cross_section = self.plot_view.addPlot(title="SD/STO vs H")
+        self.cross_section.setLabel('bottom', "Field", units="A/m")
+        self.cross_section.setLabel('left', "Udc")
+        self.cross_section.showGrid(x=True, y=True, alpha=0.6)
 
     def update_axis(self, left_caption, left_units, bottom_caption,
                     bottom_units):
@@ -83,5 +101,5 @@ class SpectrogramPlot():
 
     def clear_plots(self):
         self.image_spectrum.clear()
-        # self.plot_image.clear()
+        self.cross_section.clear()
         return

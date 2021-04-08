@@ -5,6 +5,8 @@ from pymag.gui.simulation_manager import Simulation
 import queue
 from typing import List, Union
 
+import pyqtgraph as pg
+
 
 class PlotManager:
     """
@@ -28,12 +30,35 @@ class PlotManager:
         self.magnetisation_plot = magnetisation_plot
         self.resistance_plot = resistance_plot
         self.SD_plot = SD_plot
-        # self.SD_lines = SD_lines
+        self.SD_plot.inf_line.sigPositionChanged.connect(self.update_roi_loc)
         self.PIMM_plot = PIMM_plot
         # self.trajectory_plot = trajectory_plot
 
         units_SI = {"H": "A/m", "theta": "deg", "phi": "deg", "f": "Hz"}
         self.units = units_SI
+        self.H = None
+        self.spectrogram_SD = None
+        self.spectrogram_PIMM = None
+        self.SD_deltaf = 0
+        self.PIMM_deltaf = 0
+
+    def update_roi_loc(self):
+        if not (self.H is None):
+            self.SD_plot.cross_section.clear()
+            self.PIMM_plot.cross_section.clear()
+            self.SD_plot.cross_section.plot(
+                self.H,
+                self.spectrogram_SD[:,
+                                    int(self.SD_plot.inf_line.value() /
+                                        self.SD_deltaf)],
+                pen=pg.mkPen('b', width=5))
+
+            self.PIMM_plot.cross_section.plot(
+                self.H,
+                self.spectrogram_PIMM[:,
+                                      int(self.PIMM_plot.inf_line.value() /
+                                          self.PIMM_deltaf)],
+                pen=pg.mkPen('b', width=5))
 
     def clear_all_plots(self):
         """
@@ -81,6 +106,13 @@ class PlotManager:
         if lim == 1:
             return
 
+        # save for update ROI
+        self.H = result_holder.H_mag[:lim]
+        self.spectrogram_SD = result_holder.SD
+        self.spectrogram_PIMM = result_holder.PIMM
+        self.PIMM_deltaf = result_holder.PIMM_freqs[
+            1] - result_holder.PIMM_freqs[0]
+        self.SD_deltaf = result_holder.SD_freqs[1] - result_holder.SD_freqs[0]
         self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]
@@ -97,7 +129,6 @@ class PlotManager:
             str(result_holder.mode), self.units[str(result_holder.mode)])
 
         if lim >= 2:
-
             self.SD_plot.update(result_holder.H_mag[:lim],
                                 result_holder.SD_freqs,
                                 self.SD_plot.detrend_f_axis(result_holder.SD))
@@ -116,3 +147,5 @@ class PlotManager:
                                        bottom_caption=str(result_holder.mode),
                                        bottom_units=self.units[str(
                                            result_holder.mode)])
+
+            self.update_roi_loc()

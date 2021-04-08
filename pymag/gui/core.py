@@ -91,6 +91,10 @@ class ResultsTable():
         self.central_layout.addWidget(self.results_table)
         self.central_layout.addWidget(self.remove_btn)
         self.central_layout.addWidget(self.export_btn)
+        self.results_table.itemSelectionChanged.connect(self.on_item_selected)
+
+    def on_item_selected(self, x):
+        print(x)
 
     def remove_layer(self):
         self.manager.remove_selected()
@@ -119,7 +123,6 @@ class ResultsTable():
         active = self.manager.selected_indices
         names = self.manager.get_item_names()
         self.results_table.setRowCount(len(names))
-        self.chkbox_list.clear()
         for i, sim_name in enumerate(names):
             chbx_itm = QtWidgets.QTableWidgetItem(sim_name)
             if i in active:
@@ -131,6 +134,7 @@ class ResultsTable():
             chbx_itm.itemChanged = lambda:...
             self.results_table.setItem(i, 0, chbx_itm)
             chbx_itm.itemChanged = partial(self.item_checked, chbx_itm)
+            # chbx_itm.sele
 
 
 class AddMenuBar():
@@ -145,9 +149,6 @@ class AddMenuBar():
 
         self.help_menu = self.menubar.addMenu("Help")
         self.help_menu.addAction("About").triggered.connect(self.about)
-
-        self.simulation_name_label = QLabel("Simulation\nName:")
-        self.simulation_name = QtWidgets.QLineEdit()
 
         self.start_btn = QtWidgets.QPushButton("Start")
         self.start_btn.setCheckable(True)
@@ -179,8 +180,6 @@ class AddMenuBar():
 
         self.btn_layout = QtGui.QHBoxLayout()
         self.btn_layout.addWidget(self.start_btn)
-        self.btn_layout.addWidget(self.simulation_name_label)
-        self.btn_layout.addWidget(self.simulation_name)
 
         self.btn_layout.addWidget(self.multiprocessing_label)
         self.btn_layout.addWidget(self.multiprocessing_select)
