@@ -1,17 +1,19 @@
 from queue import Queue
-from typing import List, Union
+from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
                                        ResultHolder, SimulationInput)
 from PyQt5 import QtCore
 
+DEFAULT_SIM_NAME = "Sim"
+
 
 class Simulation(GenericHolder):
     def __init__(self,
                  simulation_input: SimulationInput,
                  simulation_result: ResultHolder = None,
-                 simulation_name: str = "SimName") -> None:
+                 simulation_name: str = DEFAULT_SIM_NAME) -> None:
         self.simulated: bool = False
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
@@ -39,16 +41,20 @@ class Simulation(GenericHolder):
 
 class GeneralManager():
     def __init__(self) -> None:
-        self.selected_indices: List[int] = []
+        self.selected_indices: Set[int] = set()
         self.items: Union[List[Simulation], List[ExperimentData]] = []
 
     def add_to_selected(self, indx) -> None:
-        self.selected_indices.append(indx)
-        self.selected_indices = sorted(self.selected_indices)
+        self.selected_indices.add(indx)
+        # self.selected_indices = sorted(list(set(self.selected_indices)))
 
     def add_item(self, item: Union[Simulation, ExperimentData]):
         self.items.append(item)
         self.add_to_selected(len(self.items) - 1)
+
+    def remove_from_selected(self, indx):
+        if indx in self.selected_indices:
+            self.selected_indices.remove(indx)
 
     def get_selected_items(
             self) -> Union[List[Simulation], List[ExperimentData]]:
@@ -61,17 +67,19 @@ class GeneralManager():
         if index in self.selected_indices:
             self.selected_indices.remove(index)
         else:
-            self.selected_indices.append(index)
+            self.selected_indices.add(index)
 
     def remove_selected(self) -> None:
         """
         Remove the simulations that were active
         """
+        print("BEFORE REMOVE", self.selected_indices, self.items)
         for indx in sorted(self.selected_indices, reverse=True):
             del self.items[indx]
             # also remove the selection :)
             if indx in self.selected_indices:
                 self.selected_indices.remove(indx)
+        print("AFTER REMOVE", self.selected_indices, self.items)
 
     def get_item_names(self) -> List[str]:
         return [self.items[i].name for i in range(len(self.items))]
@@ -95,11 +103,14 @@ class ExperimentManager(GeneralManager):
 class SimulationManager(GeneralManager):
     def __init__(self, queue: Queue, progress_bar, kill_btn) -> None:
         super().__init__()
-        self.items: List[Simulation] = []
         self.backend = Backend(queue, progress_bar, kill_btn=kill_btn)
+        self.sim_count = 0
 
     def add_simulation(self, simulation: Simulation):
+        if simulation.name == DEFAULT_SIM_NAME:
+            simulation.name += f"_{self.sim_count}"
         self.add_item(simulation)
+        self.sim_count += 1
 
     def reset_simulation_output(self, index):
         self.items[index].simulation_result = None

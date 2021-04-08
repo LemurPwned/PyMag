@@ -187,6 +187,7 @@ class UIMainWindow(QMainWindow):
             sim_indx, res, status = self.result_queue.get(block=False)
             if status == SimulationStatus.DONE:
                 self.global_sim_manager.mark_as_done(sim_indx)
+                self.central_layout.set_btn_start_position()
                 return
             elif status == SimulationStatus.KILLED:
                 # now sim_indx is a list of the sim indices that were in the

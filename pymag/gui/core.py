@@ -1,4 +1,5 @@
 import pyqtgraph as pg
+from scipy.signal.spectral import check_COLA
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.simulation_manager import GeneralManager
@@ -90,7 +91,6 @@ class ResultsTable():
         self.central_layout.addWidget(self.results_table)
         self.central_layout.addWidget(self.remove_btn)
         self.central_layout.addWidget(self.export_btn)
-        # self.results_table.cellDoubleClicked.connect(self.clicked2x)
 
     def remove_layer(self):
         self.manager.remove_selected()
@@ -99,39 +99,38 @@ class ResultsTable():
     def export_selected(self):
         self.replot_results(self.active_highlighted, save=1)
 
-    def clicked2x(self, row_number: int, column_number: int):
-        self.manager.swap_item_status(row_number)
-        self.update()
-
     def update(self):
         self.print_and_color_table()
         results_to_plot = self.manager.get_selected_items()
         self.plot_manager.plot_active_results(results_to_plot)
 
-    def item_checked(self, item: QtWidgets.QTableWidgetItem, name: str):
+    def item_checked(self, item: QtWidgets.QTableWidgetItem):
         row = item.row()
-        if name != item.text():
-            # name was changed
-            self.manager.items[row].name = name
-            print("Name changed", row)
-        else:
-            self.manager.swap_item_status(row)
+        # name was changed
+        self.manager.items[row].name = item.text()
+        if item.checkState() == QtCore.Qt.Checked:
+            self.manager.add_to_selected(row)
             results_to_plot = self.manager.get_selected_items()
             self.plot_manager.plot_active_results(results_to_plot)
-            print("Status changed", row)
+        else:
+            self.manager.remove_from_selected(row)
 
     def print_and_color_table(self):
         active = self.manager.selected_indices
         names = self.manager.get_item_names()
         self.results_table.setRowCount(len(names))
-        for i, name in enumerate(names):
-            chbx_itm = QtWidgets.QTableWidgetItem(name)
-            # chbx_itm.setFlags(QtCore.Qt.ItemIsUserCheckable
-            #   | QtCore.Qt.ItemIsEnabled)
-            chbx_itm.setCheckState(QtCore.Qt.Unchecked)
+        self.chkbox_list.clear()
+        for i, sim_name in enumerate(names):
+            chbx_itm = QtWidgets.QTableWidgetItem(sim_name)
+            if i in active:
+                chbx_itm.setCheckState(QtCore.Qt.Checked)
+            else:
+                chbx_itm.setCheckState(QtCore.Qt.Unchecked)
             # for some reason there's an attrubute error
-            chbx_itm.itemChanged = partial(self.item_checked, chbx_itm, name)
+            # we don't want to trigger on first add
+            chbx_itm.itemChanged = lambda:...
             self.results_table.setItem(i, 0, chbx_itm)
+            chbx_itm.itemChanged = partial(self.item_checked, chbx_itm)
 
 
 class AddMenuBar():
@@ -213,17 +212,26 @@ class AddMenuBar():
 
     def btn_toggle(self):
         if self.start_btn.isChecked():
+            if not len(self.parent.global_sim_manager.get_selected_items()):
+                self.start_btn.toggle()
+                return
             # refresh the clicked if there were sims before
-            self.start_btn.disconnect()
-            self.start_btn.clicked.connect(self.btn_toggle)
-            self.start_btn.setStyleSheet("background-color : red")
-            self.start_btn.setText("Cancel")
+            self.set_btn_simulation_position()
             # the simulation is running
             self.parent.start_simulations()
         else:
             # reconnect
-            self.start_btn.setText("Start")
-            self.start_btn.setStyleSheet("background-color : lightgreen")
+            self.set_btn_start_position()
+
+    def set_btn_simulation_position(self):
+        self.start_btn.disconnect()
+        self.start_btn.clicked.connect(self.btn_toggle)
+        self.start_btn.setStyleSheet("background-color : red")
+        self.start_btn.setText("Cancel")
+
+    def set_btn_start_position(self):
+        self.start_btn.setText("Start")
+        self.start_btn.setStyleSheet("background-color : lightgreen")
 
 
 class About(QtGui.QDialog):
