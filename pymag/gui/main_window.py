@@ -163,7 +163,7 @@ class UIMainWindow(QMainWindow):
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=Stimulus(df_stimulus))))
-        self.simulation_manager.print_and_color_table()
+        self.simulation_manager.update_list()
 
     def get_df_from_table(self, table):
         number_of_rows = table.rowCount()

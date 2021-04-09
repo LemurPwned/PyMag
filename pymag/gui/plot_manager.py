@@ -30,8 +30,12 @@ class PlotManager:
         self.magnetisation_plot = magnetisation_plot
         self.resistance_plot = resistance_plot
         self.SD_plot = SD_plot
-        self.SD_plot.inf_line.sigPositionChanged.connect(self.update_roi_loc)
+        self.SD_plot.inf_line.sigPositionChanged.connect(
+            self.SD_update_roi_loc)
+
         self.PIMM_plot = PIMM_plot
+        self.PIMM_plot.inf_line.sigPositionChanged.connect(
+            self.PIMM_update_roi_loc)
         # self.trajectory_plot = trajectory_plot
 
         units_SI = {"H": "A/m", "theta": "deg", "phi": "deg", "f": "Hz"}
@@ -42,22 +46,24 @@ class PlotManager:
         self.SD_deltaf = 0
         self.PIMM_deltaf = 0
 
-    def update_roi_loc(self):
+    def PIMM_update_roi_loc(self):
         if not (self.H is None):
-            self.SD_plot.cross_section.clear()
             self.PIMM_plot.cross_section.clear()
-            self.SD_plot.cross_section.plot(
-                self.H,
-                self.spectrogram_SD[:,
-                                    int(self.SD_plot.inf_line.value() /
-                                        self.SD_deltaf)],
-                pen=pg.mkPen('b', width=5))
-
             self.PIMM_plot.cross_section.plot(
                 self.H,
                 self.spectrogram_PIMM[:,
                                       int(self.PIMM_plot.inf_line.value() /
                                           self.PIMM_deltaf)],
+                pen=pg.mkPen('b', width=5))
+
+    def SD_update_roi_loc(self):
+        if not (self.H is None):
+            self.SD_plot.cross_section.clear()
+            self.SD_plot.cross_section.plot(
+                self.H,
+                self.spectrogram_SD[:,
+                                    int(self.SD_plot.inf_line.value() /
+                                        self.SD_deltaf)],
                 pen=pg.mkPen('b', width=5))
 
     def clear_all_plots(self):
@@ -99,7 +105,6 @@ class PlotManager:
             Holds partial result of the simulation
         Update the plots with freshly updated queue value
         """
-
         if not result_holder:
             return
         lim = result_holder.update_count
@@ -148,4 +153,5 @@ class PlotManager:
                                        bottom_units=self.units[str(
                                            result_holder.mode)])
 
-            self.update_roi_loc()
+            self.SD_update_roi_loc()
+            self.PIMM_update_roi_loc()

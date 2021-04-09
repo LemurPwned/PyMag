@@ -91,22 +91,25 @@ class ResultsTable():
         self.central_layout.addWidget(self.results_table)
         self.central_layout.addWidget(self.remove_btn)
         self.central_layout.addWidget(self.export_btn)
-        self.results_table.itemSelectionChanged.connect(self.on_item_selected)
+        self.results_table.currentItemChanged.connect(
+            self.on_item_selection_changed)
 
-    def on_item_selected(self, x):
-        print(x)
+    def on_item_selection_changed(self, current: QtWidgets.QTableWidgetItem,
+                                  previous: QtWidgets.QTableWidgetItem):
+        self.manager.set_highlighted_index(current.row())
+        results_to_plot = self.manager.get_highlighted_item()
+        if results_to_plot:
+            self.plot_manager.plot_active_results([results_to_plot])
 
     def remove_layer(self):
         self.manager.remove_selected()
         self.update()
 
     def export_selected(self):
-        self.replot_results(self.active_highlighted, save=1)
+        ...
 
     def update(self):
-        self.print_and_color_table()
-        results_to_plot = self.manager.get_selected_items()
-        self.plot_manager.plot_active_results(results_to_plot)
+        self.update_list()
 
     def item_checked(self, item: QtWidgets.QTableWidgetItem):
         row = item.row()
@@ -114,12 +117,12 @@ class ResultsTable():
         self.manager.items[row].name = item.text()
         if item.checkState() == QtCore.Qt.Checked:
             self.manager.add_to_selected(row)
-            results_to_plot = self.manager.get_selected_items()
-            self.plot_manager.plot_active_results(results_to_plot)
+            # results_to_plot = self.manager.get_selected_items()
+            # self.plot_manager.plot_active_results(results_to_plot)
         else:
             self.manager.remove_from_selected(row)
 
-    def print_and_color_table(self):
+    def update_list(self):
         active = self.manager.selected_indices
         names = self.manager.get_item_names()
         self.results_table.setRowCount(len(names))
@@ -229,6 +232,7 @@ class AddMenuBar():
         self.start_btn.setText("Cancel")
 
     def set_btn_start_position(self):
+        self.start_btn.setChecked(False)
         self.start_btn.setText("Start")
         self.start_btn.setStyleSheet("background-color : lightgreen")
 

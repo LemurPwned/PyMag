@@ -69,7 +69,6 @@ class SpectrogramPlot():
                                             'movable': True
                                         })
         self.plot_image.addItem(self.inf_line)
-
         self.plot_view.nextRow()
         self.cross_section = self.plot_view.addPlot(title="SD/STO vs H")
         self.cross_section.setLabel('bottom', "Field", units="A/m")

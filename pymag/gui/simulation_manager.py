@@ -1,4 +1,5 @@
 from queue import Queue
+import re
 from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
@@ -43,10 +44,20 @@ class GeneralManager():
     def __init__(self) -> None:
         self.selected_indices: Set[int] = set()
         self.items: Union[List[Simulation], List[ExperimentData]] = []
+        self.highlighted_item_indx: int = None
+
+    def get_highlighted_item(self) -> Union[Simulation, ExperimentData, None]:
+        if self.highlighted_item_indx is None:
+            return None
+        if (self.highlighted_item_indx < len(self.items)):
+            return self.items[self.highlighted_item_indx]
+        return None
+
+    def set_highlighted_index(self, new_indx: int):
+        self.highlighted_item_indx = new_indx
 
     def add_to_selected(self, indx) -> None:
         self.selected_indices.add(indx)
-        # self.selected_indices = sorted(list(set(self.selected_indices)))
 
     def add_item(self, item: Union[Simulation, ExperimentData]):
         self.items.append(item)
@@ -73,13 +84,11 @@ class GeneralManager():
         """
         Remove the simulations that were active
         """
-        print("BEFORE REMOVE", self.selected_indices, self.items)
         for indx in sorted(self.selected_indices, reverse=True):
             del self.items[indx]
             # also remove the selection :)
             if indx in self.selected_indices:
                 self.selected_indices.remove(indx)
-        print("AFTER REMOVE", self.selected_indices, self.items)
 
     def get_item_names(self) -> List[str]:
         return [self.items[i].name for i in range(len(self.items))]
