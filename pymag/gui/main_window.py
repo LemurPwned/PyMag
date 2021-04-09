@@ -21,11 +21,12 @@ class UIMainWindow(QMainWindow):
         super().__init__()
         self.setObjectName("PyMag")
         # load defaults
-        self.defaultStimulusFile = os.path.join("pymag", "presets",
-                                                "defaultStimulus.csv")
-        self.defaultParametersFile = os.path.join("pymag", "presets",
-                                                  "defaultParameters.csv")
-        self.load_defaults()
+        default_stimulus_file = os.path.join("pymag", "presets",
+                                             "defaultStimulus.csv")
+        default_layer_parameters_file = os.path.join("pymag", "presets",
+                                                     "defaultParameters.csv")
+        stimulus_parameters, layer_parameters = self.load_defaults(
+            default_stimulus_file, default_layer_parameters_file)
 
         # main window properties
         self.setObjectName(PyMagVersion)
@@ -70,7 +71,7 @@ class UIMainWindow(QMainWindow):
                                                 self.plot_manager)
 
         self.widget_layer_params = SimulationParameters(
-            self, self.layerParameters, self.StimulusParameters)
+            self, layer_parameters, stimulus_parameters)
 
         self.table_results = pg.TableWidget(editable=True, sortable=False)
         self.table_results.setHorizontalHeaderLabels(
@@ -120,14 +121,16 @@ class UIMainWindow(QMainWindow):
         self.timer.start(0)
         self.show()
 
-    def load_defaults(self):
+    def load_defaults(self, default_stimulus_file,
+                      default_layer_parameter_file):
         """
         Load default parameters: Simulus and Layer Structure
         """
-        self.StimulusParameters = pd.read_csv(self.defaultStimulusFile,
-                                              delimiter='\t')
-        self.layerParameters = pd.read_csv(self.defaultParametersFile,
-                                           delimiter='\t')
+        stimulus_parameters = pd.read_csv(default_stimulus_file,
+                                          delimiter='\t')
+        layer_parameters = pd.read_csv(default_layer_parameter_file,
+                                       delimiter='\t')
+        return stimulus_parameters, layer_parameters
 
     def end_program(self):
         """

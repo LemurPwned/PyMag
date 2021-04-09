@@ -9,14 +9,14 @@ import pandas as pd
 
 
 class GenericHolder:
-    def __init__(self) -> None:
-        ...
-
     def to_json(self, json_file) -> None:
         json.dump(self.to_dict(), open(json_file, "w"))
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
+
+    def to_numpy(self) -> np.ndarray:
+        return np.array(self.to_dict().values())
 
     @classmethod
     def from_json(cls, json_file):
@@ -184,7 +184,7 @@ class Layer(GenericHolder):
         return actual_list
 
 
-class Stimulus():
+class Stimulus(GenericHolder):
     def __init__(self, data):
         self.back = np.array(data["Hback"].values[0], dtype=np.int)
         if data["H"].values[1] != "-" and data["HPhi"].values[
@@ -246,7 +246,7 @@ class Stimulus():
                                     step=self.PIMM_delta_f)
         self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             # "f": self.
             "H_sweep": self.H_sweep,

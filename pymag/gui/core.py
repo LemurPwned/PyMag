@@ -1,8 +1,9 @@
+from pymag.engine.data_holders import Stimulus
 import pyqtgraph as pg
 from scipy.signal.spectral import check_COLA
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
-from pymag.gui.simulation_manager import GeneralManager
+from pymag.gui.simulation_manager import GeneralManager, Simulation
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
 from pyqtgraph.Qt import QtGui
@@ -14,7 +15,7 @@ class SimulationParameters():
     """
     Don't pass parent -- pass Layer & Stimulus
     """
-    def __init__(self, parent, layerParameters, StimulusParameters):
+    def __init__(self, parent, layer_parameters, stimulus_parameters):
 
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         header = self.table_layer_params.horizontalHeader()
@@ -39,12 +40,12 @@ class SimulationParameters():
             parent.add_to_simulation_list
         )  #zastanawiam się jak zrobić to najbardziej elegancko
 
-        self.table_layer_params.setData(layerParameters.to_numpy())
+        self.table_layer_params.setData(layer_parameters.to_numpy())
         self.table_layer_params.setHorizontalHeaderLabels(
-            layerParameters.columns)
-        self.table_stimulus_params.setData(StimulusParameters.to_numpy())
+            layer_parameters.columns)
+        self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
         self.table_stimulus_params.setHorizontalHeaderLabels(
-            StimulusParameters.columns)
+            stimulus_parameters.columns)
         self.central_widget = QtGui.QWidget()
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
@@ -64,6 +65,13 @@ class SimulationParameters():
 
     def remove_layer(self):
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
+
+    def update_simulation_input_table(self, simulation: Simulation):
+        sim_input = simulation.get_simulation_input()
+        layer_params = [layer.to_numpy() for layer in sim_input.layers]
+        stimulus_params = sim_input.stimulus.to_numpy()
+        self.table_layer_params.setData(layer_params)
+        self.table_stimulus_params.setData(stimulus_params)
 
 
 class ResultsTable():
@@ -137,7 +145,6 @@ class ResultsTable():
             chbx_itm.itemChanged = lambda:...
             self.results_table.setItem(i, 0, chbx_itm)
             chbx_itm.itemChanged = partial(self.item_checked, chbx_itm)
-            # chbx_itm.sele
 
 
 class AddMenuBar():
