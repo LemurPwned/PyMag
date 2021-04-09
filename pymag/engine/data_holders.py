@@ -1,5 +1,6 @@
 import json
 import os
+from re import sub
 
 from pyqtgraph.metaarray.MetaArray import axis
 from pymag.engine.utils import get_stimulus
@@ -14,6 +15,15 @@ class GenericHolder:
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
+
+    def to_list(self) -> List:
+        asm_list = []
+        for el in self.to_dict().values():
+            if isinstance(el, np.ndarray):
+                asm_list.append(el.tolist())
+            else:
+                asm_list.append(el)
+        return asm_list
 
     def to_numpy(self) -> np.ndarray:
         return np.array(self.to_dict().values())
@@ -140,7 +150,7 @@ class Layer(GenericHolder):
         self.J = float(J)
         self.Ms = float(Ms)
         self.th = float(th)
-        self.N = N
+        self.N = np.asarray(N)
         self.dipole = dipole
         self.alpha = float(alpha)
         self.AMR = float(AMR)
@@ -175,17 +185,45 @@ class Layer(GenericHolder):
         return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
                    SMR, AHE, Rx0, Ry0, w, l, mag, dipole)
 
+    def to_gui(self):
+        headers = [
+            "layer",
+            "alpha",
+            "Kdir",
+            "Ku",
+            "Ms",
+            "J",
+            "N",
+            "th",
+            "AMR",
+            "SMR",
+            "AHE",
+            "Rx0",
+            "Ry0",
+            "w",
+            "l",
+        ]
+        res = {}
+        for itm in headers:
+            _itm = getattr(self, itm)
+            if isinstance(_itm, np.ndarray):
+                res[itm] = _itm.tolist()
+            else:
+                res[itm] = _itm
+        return res
+
     @staticmethod
     def parse_list(str_list: str):
         actual_list = [
-            float(i)
-            for i in str_list.replace("[", "").replace("]", "").split(" ")
+            float(i) for i in str_list.strip().replace("[", "").replace(
+                "]", "").replace(",", "").split(" ")
         ]
         return actual_list
 
 
 class Stimulus(GenericHolder):
     def __init__(self, data):
+        self.org_data = data
         self.back = np.array(data["Hback"].values[0], dtype=np.int)
         if data["H"].values[1] != "-" and data["HPhi"].values[
                 1] == "-" and data["HTheta"].values[1] == "-":
@@ -258,6 +296,9 @@ class Stimulus(GenericHolder):
             "spectrum_len": self.spectrum_len,
             "mode": self.mode
         }
+
+    def to_gui(self) -> List:
+        return self.org_data.to_dict(orient="records")
 
 
 class SimulationInput(GenericHolder):

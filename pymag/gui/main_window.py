@@ -25,7 +25,7 @@ class UIMainWindow(QMainWindow):
                                              "defaultStimulus.csv")
         default_layer_parameters_file = os.path.join("pymag", "presets",
                                                      "defaultParameters.csv")
-        stimulus_parameters, layer_parameters = self.load_defaults(
+        self.stimulus_parameters, self.layer_parameters = self.load_defaults(
             default_stimulus_file, default_layer_parameters_file)
 
         # main window properties
@@ -65,13 +65,17 @@ class UIMainWindow(QMainWindow):
                             experiment_manager=self.global_experiment_manager)
         self.central_layout.set_exporter(exporter)
 
-        self.simulation_manager = ResultsTable(self.global_sim_manager,
-                                               self.plot_manager)
-        self.measurement_manager = ResultsTable(self.global_experiment_manager,
-                                                self.plot_manager)
-
         self.widget_layer_params = SimulationParameters(
-            self, layer_parameters, stimulus_parameters)
+            self, self.layer_parameters, self.stimulus_parameters)
+
+        self.simulation_manager = ResultsTable(self.global_sim_manager,
+                                               self.plot_manager,
+                                               self.widget_layer_params,
+                                               exporter)
+        self.measurement_manager = ResultsTable(self.global_experiment_manager,
+                                                self.plot_manager,
+                                                self.widget_layer_params,
+                                                exporter)
 
         self.table_results = pg.TableWidget(editable=True, sortable=False)
         self.table_results.setHorizontalHeaderLabels(
@@ -112,9 +116,6 @@ class UIMainWindow(QMainWindow):
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])
 
-        # MAIN OBJECTS
-        # REPLOTTTER == "PLOT MANAGER"
-
         self.ports = []
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.on_simulation_data_update)
@@ -134,20 +135,17 @@ class UIMainWindow(QMainWindow):
 
     def end_program(self):
         """
-            stimulus and layer params are saved when exit
+        Stimulus and layer params at shutdown
         """
         self.get_df_from_table(
             self.widget_layer_params.table_stimulus_params).to_csv(
-                self.defaultStimulusFile,
+                self.stimulus_parameters,
                 encoding='utf-8',
                 index=False,
                 sep='\t')
         self.get_df_from_table(
             self.widget_layer_params.table_layer_params).to_csv(
-                self.defaultParametersFile,
-                encoding='utf-8',
-                index=False,
-                sep='\t')
+                self.layer_parameters, encoding='utf-8', index=False, sep='\t')
         os._exit(0)
 
     def save_params(self, auto=0):

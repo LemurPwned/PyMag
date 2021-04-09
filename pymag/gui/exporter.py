@@ -56,12 +56,13 @@ class Exporter:
     def export_simulations_csv(self):
         folder_location = self.open_directory_dialog(
             "Export active simulations to csv")
-        print(folder_location)
         selected_sims = self.simulation_manager.get_selected_simulations()
         for simulation in selected_sims:
             save_path = os.path.join(folder_location, simulation.name)
-            simulation.get_simulation_result().to_csv(save_path)
-
+            result = simulation.get_simulation_result()
+            if result:
+                result.to_csv(save_path)
+        # TODO inform if the simulation cannot be exported since it's empty
         # TODO a spin bar if it takes too long
 
     def save_workspace_binary(self):

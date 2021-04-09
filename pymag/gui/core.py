@@ -1,14 +1,14 @@
-from pymag.engine.data_holders import Stimulus
+from pymag.gui.plot_manager import PlotManager
 import pyqtgraph as pg
-from scipy.signal.spectral import check_COLA
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.simulation_manager import GeneralManager, Simulation
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
-from pyqtgraph.Qt import QtGui
+# from pyqtgraph.Qt import QtGui
 
 from functools import partial
+import pandas as pd
 
 
 class SimulationParameters():
@@ -57,6 +57,19 @@ class SimulationParameters():
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
 
+    def get_table_data(self, table: pg.TableWidget):
+        number_of_rows = table.rowCount()
+        number_of_columns = table.columnCount()
+        tmp_df = pd.DataFrame()
+        tmp_col_name = []
+        for i in range(number_of_columns):
+            tmp_col_name.append(table.takeHorizontalHeaderItem(i).text())
+            for j in range(number_of_rows):
+                tmp_df.loc[j, i] = table.item(j, i).text()
+        table.setHorizontalHeaderLabels(tmp_col_name)
+        tmp_df.columns = tmp_col_name
+        return tmp_df
+
     def add_layer(self):
         self.table_layer_params.addRow([
             1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
@@ -68,8 +81,8 @@ class SimulationParameters():
 
     def update_simulation_input_table(self, simulation: Simulation):
         sim_input = simulation.get_simulation_input()
-        layer_params = [layer.to_numpy() for layer in sim_input.layers]
-        stimulus_params = sim_input.stimulus.to_numpy()
+        layer_params = [layer.to_gui() for layer in sim_input.layers]
+        stimulus_params = sim_input.stimulus.to_gui()
         self.table_layer_params.setData(layer_params)
         self.table_stimulus_params.setData(stimulus_params)
 
@@ -78,17 +91,20 @@ class ResultsTable():
     """
     To be changed & renamed -- must use Simulation Manager
     """
-    def __init__(self, manager: GeneralManager, plot_manager):
+    def __init__(self, manager: GeneralManager, plot_manager: PlotManager,
+                 param_table: SimulationParameters, exporter: Exporter):
 
         self.plot_manager = plot_manager
         self.manager = manager
+        self.parameter_table = param_table
+        self.exporter = exporter
         self.results_table = pg.TableWidget(editable=False, sortable=False)
         self.results_table.setColumnCount(1)
         header = self.results_table.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.remove_btn = QtWidgets.QPushButton()
-        self.remove_btn.setText("Remove selected result")
+        self.remove_btn.setText("Remove selected")
         self.remove_btn.clicked.connect(self.remove_layer)
         self.export_btn = QtWidgets.QPushButton()
         self.export_btn.setText("Export selected to .csv")
@@ -103,18 +119,23 @@ class ResultsTable():
             self.on_item_selection_changed)
 
     def on_item_selection_changed(self, current: QtWidgets.QTableWidgetItem,
-                                  previous: QtWidgets.QTableWidgetItem):
+                                  _: QtWidgets.QTableWidgetItem):
+
+        if current is None:
+            # everything was deselected
+            return
         self.manager.set_highlighted_index(current.row())
-        results_to_plot = self.manager.get_highlighted_item()
-        if results_to_plot:
-            self.plot_manager.plot_active_results([results_to_plot])
+        highlighted = self.manager.get_highlighted_item()
+        self.plot_manager.plot_active_results([highlighted])
+        if isinstance(highlighted, Simulation):
+            self.parameter_table.update_simulation_input_table(highlighted)
 
     def remove_layer(self):
         self.manager.remove_selected()
         self.update()
 
     def export_selected(self):
-        ...
+        self.exporter.export_simulations_csv()
 
     def update(self):
         self.update_list()
