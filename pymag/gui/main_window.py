@@ -137,47 +137,30 @@ class UIMainWindow(QMainWindow):
         """
         Stimulus and layer params at shutdown
         """
-        self.get_df_from_table(
-            self.widget_layer_params.table_stimulus_params).to_csv(
-                self.stimulus_parameters,
-                encoding='utf-8',
-                index=False,
-                sep='\t')
-        self.get_df_from_table(
-            self.widget_layer_params.table_layer_params).to_csv(
-                self.layer_parameters, encoding='utf-8', index=False, sep='\t')
+        df_stimulus, df_layers = self.widget_layer_params.get_all_data()
+        df_stimulus.to_csv(self.stimulus_parameters,
+                           encoding='utf-8',
+                           index=False,
+                           sep='\t')
+        df_layers.to_csv(self.layer_parameters,
+                         encoding='utf-8',
+                         index=False,
+                         sep='\t')
         os._exit(0)
 
     def save_params(self, auto=0):
         ...
 
     def add_to_simulation_list(self):
-        df = self.get_df_from_table(
-            self.widget_layer_params.table_layer_params)
-        df_stimulus = self.get_df_from_table(
-            self.widget_layer_params.table_stimulus_params)
-
+        df_stimulus, df_layers = self.widget_layer_params.get_all_data()
         sim_layers = [
-            Layer.create_layer_from_gui(**df_dict)
-            for df_dict in df.to_dict(orient="records")
+            Layer.from_gui(**df_dict)
+            for df_dict in df_layers.to_dict(orient="records")
         ]
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=Stimulus(df_stimulus))))
         self.simulation_manager.update_list()
-
-    def get_df_from_table(self, table):
-        number_of_rows = table.rowCount()
-        number_of_columns = table.columnCount()
-        tmp_df = pd.DataFrame()
-        tmp_col_name = []
-        for i in range(number_of_columns):
-            tmp_col_name.append(table.takeHorizontalHeaderItem(i).text())
-            for j in range(number_of_rows):
-                tmp_df.loc[j, i] = table.item(j, i).text()
-        table.setHorizontalHeaderLabels(tmp_col_name)
-        tmp_df.columns = tmp_col_name
-        return tmp_df
 
     def start_simulations(self):
         self.central_layout.progress.setValue(0)

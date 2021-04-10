@@ -48,16 +48,23 @@ class PlotManager:
 
     def PIMM_update_roi_loc(self):
         if not (self.H is None):
+            cross_section = int(self.PIMM_plot.inf_line.value() /
+                                self.PIMM_deltaf)
+            if cross_section >= self.spectrogram_PIMM.shape[
+                    1] or cross_section < 0:
+                return
             self.PIMM_plot.cross_section.clear()
             self.PIMM_plot.cross_section.plot(
                 self.H,
-                self.spectrogram_PIMM[:,
-                                      int(self.PIMM_plot.inf_line.value() /
-                                          self.PIMM_deltaf)],
+                self.spectrogram_PIMM[:, cross_section],
                 pen=pg.mkPen('b', width=5))
 
     def SD_update_roi_loc(self):
         if not (self.H is None):
+            cross_section = int(self.SD_plot.inf_line.value() / self.SD_deltaf)
+            if cross_section >= self.spectrogram_SD.shape[
+                    1] or cross_section < 0:
+                return
             self.SD_plot.cross_section.clear()
             self.SD_plot.cross_section.plot(
                 self.H,

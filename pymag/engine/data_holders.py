@@ -1,12 +1,24 @@
 import json
 import os
-from re import sub
+from re import M
 
-from pyqtgraph.metaarray.MetaArray import axis
 from pymag.engine.utils import get_stimulus
 from typing import Any, Dict, List, Union
 import numpy as np
 import pandas as pd
+
+from abc import ABC, abstractclassmethod, abstractmethod
+import cmtj
+
+
+class GUIObject(ABC):
+    @abstractclassmethod
+    def from_gui(cls, **kwargs):
+        ...
+
+    @abstractmethod
+    def to_gui(self):
+        ...
 
 
 class GenericHolder:
@@ -122,7 +134,7 @@ class ResultHolder(GenericHolder):
             print(f"Failed to export PIMM: {e}")
 
 
-class Layer(GenericHolder):
+class Layer(GenericHolder, GUIObject):
     def __init__(self,
                  layer,
                  alpha,
@@ -161,25 +173,47 @@ class Layer(GenericHolder):
         self.w = float(w)
         self.l = float(l)
 
+    def to_cmtj(self) -> cmtj.Layer:
+        N = [
+            cmtj.CVector(self.N[0], 0, 0),
+            cmtj.CVector(0, self.N[1], 0),
+            cmtj.CVector(0, 0, self.N[2])
+        ]
+        clayer = cmtj.Layer(
+            id=str(self.layer),
+            mag=cmtj.CVector(*self.mag),
+            anis=cmtj.CVector(*self.Kdir.tolist()),
+            Ms=self.Ms,
+            thickness=self.th,
+            cellSurface=0,
+            temperature=0,
+            dipoleTensor=[cmtj.CVector(*self.dipole[i]) for i in range(3)],
+            demagTensor=N,
+            includeSTT=0,
+            damping=self.alpha)
+        clayer.setAnisotropyDriver(cmtj.ScalarDriver.getConstantDriver(
+            self.Ku))
+        return clayer
+
     @classmethod
-    def create_layer_from_gui(cls,
-                              layer,
-                              alpha,
-                              Kdir,
-                              Ku,
-                              Ms,
-                              J,
-                              N,
-                              th,
-                              AMR,
-                              SMR,
-                              AHE,
-                              Rx0,
-                              Ry0,
-                              w,
-                              l,
-                              mag=[0, 0, 1],
-                              dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
+    def from_gui(cls,
+                 layer,
+                 alpha,
+                 Kdir,
+                 Ku,
+                 Ms,
+                 J,
+                 N,
+                 th,
+                 AMR,
+                 SMR,
+                 AHE,
+                 Rx0,
+                 Ry0,
+                 w,
+                 l,
+                 mag=[0, 0, 1],
+                 dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
         parsed_Kdir = Layer.parse_list(Kdir)
         parsed_N = Layer.parse_list(N)
         return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
@@ -221,7 +255,7 @@ class Layer(GenericHolder):
         return actual_list
 
 
-class Stimulus(GenericHolder):
+class Stimulus(GenericHolder, GUIObject):
     def __init__(self, data):
         self.org_data = data
         self.back = np.array(data["Hback"].values[0], dtype=np.int)
@@ -299,6 +333,10 @@ class Stimulus(GenericHolder):
 
     def to_gui(self) -> List:
         return self.org_data.to_dict(orient="records")
+
+    @classmethod
+    def from_gui(cls, **kwargs):
+        return super().from_gui(**kwargs)
 
 
 class SimulationInput(GenericHolder):

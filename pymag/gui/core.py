@@ -5,7 +5,6 @@ from pymag.gui.exporter import Exporter
 from pymag.gui.simulation_manager import GeneralManager, Simulation
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
-# from pyqtgraph.Qt import QtGui
 
 from functools import partial
 import pandas as pd
@@ -56,6 +55,11 @@ class SimulationParameters():
         self.btn_layout.addWidget(self.add_simulation)
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
+
+    def get_all_data(self):
+        return self.get_table_data(
+            self.table_stimulus_params), self.get_table_data(
+                self.table_layer_params)
 
     def get_table_data(self, table: pg.TableWidget):
         number_of_rows = table.rowCount()

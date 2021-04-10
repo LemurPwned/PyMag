@@ -1,7 +1,15 @@
 .eggs/
 build/
-*.egg-info/
+.egg/
 var/
+*.callgrind.*
+*.sh 
+*.py
+*.ipynb
+*.npy
+*.png
+*.egg-info/
+var/*
 __pycache__/
 .DS_Store
 .vscode
