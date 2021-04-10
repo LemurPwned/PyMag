@@ -12,7 +12,6 @@ import numpy as np
 from scipy.fft import fft
 
 
-# @numba.jit(nopython=True)
 def compute_vsd(stime, m_xs, frequency, integration_step):
     I_amp = 20000
     Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
@@ -89,8 +88,10 @@ class SolverTask(QtCore.QThread):
         ]
         layers = [layer.to_cmtj() for layer in org_layers]
         junction = cmtj.Junction(filename="", layers=layers)
-        junction.setIECDriver("1", "2",
-                              cmtj.ScalarDriver.getConstantDriver(4e-5))
+        for i in range(no_org_layers - 1):
+            junction.setIECDriver(
+                org_layer_strs[i], org_layer_strs[i + 1],
+                cmtj.ScalarDriver.getConstantDriver(org_layers[i].J))
         m_init_PIMM = [
             cmtj.CVector(*(stimulus.H_sweep[0] /
                            np.linalg.norm(stimulus.H_sweep[0])))
