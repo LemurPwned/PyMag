@@ -90,7 +90,7 @@ class SpectrogramPlot():
         self.image.updateImage()
 
     def update_plot(self, x, y):
-        self.plot_image.plot(x, y)
+        self.plot_image.plot(x, y, pen=pg.mkPen('b', width=3))
 
     def detrend_f_axis(self, values):
         values2 = np.empty(values.shape)
@@ -101,4 +101,5 @@ class SpectrogramPlot():
     def clear_plots(self):
         self.image_spectrum.clear()
         self.cross_section.clear()
+        self.plot_image.clear()
         return

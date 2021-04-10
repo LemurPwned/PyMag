@@ -104,12 +104,14 @@ class PlotManager:
             self.plot_simulation(plot_input.get_simulation_result())
 
     def plot_experiment(self, data: ExperimentData):
-        self.SD_plot.update_plot(data.H, data.f)
+        # sort
+        H, f = zip(*sorted(zip(data.H, data.f)))
+        self.SD_plot.update_plot(H, f)
 
     def plot_simulation(self, result_holder: ResultHolder):
         """
         :param result_holder
-            Holds partial result of the simulation
+            Holds partial result of the simulations
         Update the plots with freshly updated queue value
         """
         if not result_holder:
