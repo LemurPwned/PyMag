@@ -148,9 +148,6 @@ class UIMainWindow(QMainWindow):
                          sep='\t')
         os._exit(0)
 
-    def save_params(self, auto=0):
-        ...
-
     def add_to_simulation_list(self):
         df_stimulus, df_layers = self.widget_layer_params.get_all_data()
         sim_layers = [
@@ -178,12 +175,13 @@ class UIMainWindow(QMainWindow):
                 # compute backend
                 for indx in sim_indx:
                     self.global_sim_manager.reset_simulation_output(indx)
-                self.plot_manager.clear_all_plots()
+                self.plot_manager.clear_simulation_plots()
             elif status == SimulationStatus.IN_PROGRESS:
                 self.global_sim_manager.update_simulation_data(sim_indx, res)
                 self.plot_manager.plot_result(
                     self.global_sim_manager.get_simulation(sim_indx))
             else:
                 raise ValueError("Unknown simulation status received!")
+            self.simulation_manager.update_row(sim_indx)
         except queue.Empty:
             logging.debug("Queue emptied!")

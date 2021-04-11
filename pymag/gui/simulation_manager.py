@@ -1,10 +1,12 @@
+from os import stat
+from pymag.engine.utils import SimulationStatus
 from queue import Queue
 import re
 from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
-                                       ResultHolder, SimulationInput)
+                                       ResultHolder, SimulationInput, Stimulus)
 from PyQt5 import QtCore
 
 DEFAULT_SIM_NAME = "Sim"
@@ -19,6 +21,7 @@ class Simulation(GenericHolder):
         self.simulation_input: SimulationInput = simulation_input
         self.simulation_result: ResultHolder = simulation_result
         self.name: str = simulation_name
+        self.status = SimulationStatus.NOT_STARTED
 
     def set_simulation_input(self, sinput: SimulationInput):
         self.simulation_input = sinput
@@ -71,8 +74,13 @@ class GeneralManager():
             self) -> Union[List[Simulation], List[ExperimentData]]:
         return [self.items[indx] for indx in self.selected_indices]
 
-    def get_item(self, indx) -> Union[Simulation, ExperimentData]:
-        return self.items[indx]
+    def get_item(self, indx: int) -> Union[Simulation, ExperimentData]:
+        if indx < len(self.items):
+            return self.items[indx]
+        return None
+
+    def get_items(self) -> Union[List[Simulation], List[ExperimentData]]:
+        return self.items
 
     def swap_item_status(self, index):
         if index in self.selected_indices:
@@ -121,13 +129,19 @@ class SimulationManager(GeneralManager):
         self.add_item(simulation)
         self.sim_count += 1
 
+    def update_status(self, indx: int, status: SimulationStatus):
+        itm = self.get_item(indx)
+        if itm:
+            itm.status = status
+
     def reset_simulation_output(self, index):
         self.items[index].simulation_result = None
+        self.items[index].status = SimulationStatus.KILLED
 
     def reset_selected_simulations_output(self):
         """
         Nullify the output of the simulation if the simulation
-        has been 
+        has been reset/canceled
         """
         for indx in self.selected_indices:
             self.reset_simulation_output(indx)
@@ -143,6 +157,7 @@ class SimulationManager(GeneralManager):
 
     def mark_as_done(self, indx: int):
         self.items[indx].simulated = True
+        self.update_status(indx, SimulationStatus.DONE)
 
     def simulate_selected(self):
         self.backend.start_simulations(self.selected_indices,
@@ -150,6 +165,7 @@ class SimulationManager(GeneralManager):
 
     def update_simulation_data(self, simulation_index: int,
                                partial_result: ResultHolder):
+        self.update_status(simulation_index, SimulationStatus.IN_PROGRESS)
         self.items[simulation_index].update_simulation_result(partial_result)
 
 

@@ -13,9 +13,10 @@ Am_to_Oe = 79.57
 
 
 class SimulationStatus:
-    KILLED = -1 
-    DONE = 1 
-    IN_PROGRESS = 0
+    KILLED = "KILLED"
+    IN_PROGRESS = "IN PROGRESS"
+    DONE = "DONE"
+    NOT_STARTED = "NOT STARTED"
 
 
 def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,

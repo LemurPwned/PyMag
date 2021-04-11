@@ -1,7 +1,6 @@
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 import numpy as np
-import pandas as pd
 
 
 class MultiplePlot():
@@ -96,7 +95,10 @@ class SpectrogramPlot():
         self.image.updateImage()
 
     def update_plot(self, x, y):
-        self.plot_image.scatterPlot(x, y, pen=pg.mkPen('r', width=1.2), alpha=0.6)
+        self.plot_image.scatterPlot(x,
+                                    y,
+                                    pen=pg.mkPen('r', width=1.2),
+                                    alpha=0.6)
 
     def detrend_f_axis(self, values):
         values2 = np.empty(values.shape)

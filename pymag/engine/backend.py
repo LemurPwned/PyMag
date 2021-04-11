@@ -103,7 +103,8 @@ class SolverTask(QtCore.QThread):
             for i in range(len(layers))
         ]
         for Hval in stimulus.H_sweep:
-            self.handle_signals()
+            if not self.handle_signals():
+                return
             SD_results = []
             HDriver = cmtj.AxialDriver(
                 cmtj.ScalarDriver.getConstantDriver(Hval[0]),
@@ -143,6 +144,8 @@ class SolverTask(QtCore.QThread):
             m_avg = np.mean(m, axis=0)
 
             for frequency in stimulus.SD_freqs:
+                if not self.handle_signals():
+                    return
                 junction.clearLog()
                 for i in range(no_org_layers):
                     junction.setLayerMagnetisation(org_layer_strs[i],
@@ -168,6 +171,8 @@ class SolverTask(QtCore.QThread):
                                    integration_step=int_step)
                 SD_results.append(vmix)
             # run PIMM
+            if not self.handle_signals():
+                return
             partial_result = ResultHolder(mode=stimulus.mode,
                                           H_mag=stimulus.Hmag,
                                           PIMM_freqs=stimulus.PIMM_freqs,
@@ -186,9 +191,10 @@ class SolverTask(QtCore.QThread):
             self.queue.put(
                 (self.simulation_indices, ..., SimulationStatus.KILLED))
             self.progress.emit(0)
-            return
+            return 0
         while self.is_paused:
             time.sleep(0.1)
+        return 1
 
     def run(self):
         all_H_sweep_vals = sum([

@@ -1,8 +1,9 @@
+from typing import List, Tuple, Union
 from pymag.gui.plot_manager import PlotManager
 import pyqtgraph as pg
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
-from pymag.gui.simulation_manager import GeneralManager, Simulation
+from pymag.gui.simulation_manager import ExperimentManager, GeneralManager, Simulation
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
 
@@ -103,7 +104,13 @@ class ResultsTable():
         self.parameter_table = param_table
         self.exporter = exporter
         self.results_table = pg.TableWidget(editable=False, sortable=False)
-        self.results_table.setColumnCount(1)
+
+        if isinstance(manager, ExperimentManager):
+            self.results_table.setColumnCount(1)
+            self.results_table.setHorizontalHeaderLabels(["Name"])
+        else:
+            self.results_table.setColumnCount(2)
+            self.results_table.setHorizontalHeaderLabels(["Name", "Status"])
         header = self.results_table.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -121,6 +128,9 @@ class ResultsTable():
         self.central_layout.addWidget(self.export_btn)
         self.results_table.currentItemChanged.connect(
             self.on_item_selection_changed)
+
+        self.results_table_itms: List[Tuple[QtWidgets.QTableWidgetItem,
+                                            QtWidgets.QTableWidgetItem]] = []
 
     def on_item_selection_changed(self, current: QtWidgets.QTableWidgetItem,
                                   _: QtWidgets.QTableWidgetItem):
@@ -144,22 +154,33 @@ class ResultsTable():
     def update(self):
         self.update_list()
 
-    def item_checked(self, item: QtWidgets.QTableWidgetItem):
+    def item_checked(self, item: QtWidgets.QTableWidgetItem,
+                     status_item: QtWidgets.QTableWidgetItem):
         row = item.row()
         # name was changed
         self.manager.items[row].name = item.text()
+        status_item.setText(self.manager.items[row].status)
         if item.checkState() == QtCore.Qt.Checked:
             self.manager.add_to_selected(row)
-            # results_to_plot = self.manager.get_selected_items()
-            # self.plot_manager.plot_active_results(results_to_plot)
         else:
             self.manager.remove_from_selected(row)
 
+    def update_row(self, indx: Union[int, List[int]]):
+        if isinstance(indx, int):
+            indx = [indx]
+        for sindex in indx:
+            sim = self.manager.get_item(sindex)
+            _, status_itm = self.results_table_itms[sindex]
+            status_itm.setText(sim.status)
+
     def update_list(self):
         active = self.manager.selected_indices
-        names = self.manager.get_item_names()
-        self.results_table.setRowCount(len(names))
-        for i, sim_name in enumerate(names):
+        items = self.manager.get_items()
+        self.results_table.setRowCount(len(items))
+        self.results_table_itms.clear()
+        for i, sim in enumerate(items):
+            # main item
+            sim_name = sim.name
             chbx_itm = QtWidgets.QTableWidgetItem(sim_name)
             if i in active:
                 chbx_itm.setCheckState(QtCore.Qt.Checked)
@@ -169,7 +190,20 @@ class ResultsTable():
             # we don't want to trigger on first add
             chbx_itm.itemChanged = lambda:...
             self.results_table.setItem(i, 0, chbx_itm)
-            chbx_itm.itemChanged = partial(self.item_checked, chbx_itm)
+
+            status_itm = None
+            if isinstance(sim, Simulation):
+                # status item
+                status_itm = QtWidgets.QTableWidgetItem(sim.status)
+                status_itm.itemChanged = lambda:...
+                status_itm.setFlags(status_itm.flags()
+                                    & ~QtCore.Qt.ItemIsEditable
+                                    & ~QtCore.Qt.ItemIsSelectable)
+                self.results_table.setItem(i, 1, status_itm)
+
+            chbx_itm.itemChanged = partial(self.item_checked, chbx_itm,
+                                           status_itm)
+            self.results_table_itms.append((chbx_itm, status_itm))
 
 
 class AddMenuBar():
