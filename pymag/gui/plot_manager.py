@@ -1,3 +1,4 @@
+import numpy as np
 from pymag.gui.trajectory import TrajectoryPlot
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.engine.data_holders import ExperimentData, ResultHolder
@@ -53,7 +54,7 @@ class PlotManager:
             if cross_section >= self.spectrogram_PIMM.shape[
                     1] or cross_section < 0:
                 return
-            self.PIMM_plot.cross_section.clear()
+            # self.PIMM_plot.cross_section.clear()
             self.PIMM_plot.cross_section.plot(
                 self.H,
                 self.spectrogram_PIMM[:, cross_section],
@@ -73,10 +74,7 @@ class PlotManager:
                                         self.SD_deltaf)],
                 pen=pg.mkPen('b', width=5))
 
-    def clear_all_plots(self):
-        """
-        Clear all plots
-        """
+    def clear_simulation_plots(self):
         self.resistance_plot.clear_plots()
         self.magnetisation_plot.clear_plots()
         self.PIMM_plot.clear_plots()
@@ -88,7 +86,6 @@ class PlotManager:
         :param simulation_list
             Plot active simulations 
         """
-        self.clear_all_plots()
         for plotable_obj in obj_list:
             self.plot_result(plotable_obj)
 
@@ -99,14 +96,16 @@ class PlotManager:
             item to be plotted
         """
         if isinstance(plot_input, ExperimentData):
+            self.SD_plot.plot_image.clearPlots()
             self.plot_experiment(plot_input)
         else:
+            self.clear_simulation_plots()
             self.plot_simulation(plot_input.get_simulation_result())
 
     def plot_experiment(self, data: ExperimentData):
         # sort
         H, f = zip(*sorted(zip(data.H, data.f)))
-        self.SD_plot.update_plot(H, f)
+        self.SD_plot.update_plot(np.asarray(H), np.asarray(f))
 
     def plot_simulation(self, result_holder: ResultHolder):
         """

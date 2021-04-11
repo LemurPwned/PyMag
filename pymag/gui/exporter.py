@@ -29,25 +29,13 @@ class Exporter:
 
     def export_current_stimulus(self):
         ...
-        # if auto == 0:
-        #     fileName = self.save_file_dialog()
-        # else:
-        #     curr_dir = os.path.dirname(os.path.realpath(__file__))
-        #     fileName = curr_dir + "/" + "previous_params.csv"
-        # if fileName:
-        #     df_generated_data = self.get_df_from_table(
-        #         self.widget_layer_params.table_layer_params)
-        #     df_generated_data.to_csv(fileName,
-        #                              encoding='utf-8',
-        #                              index=False,
-        #                              sep='\t')
+
     def load_experimental_data(self):
         """
         Adds experiment data to experiment manager 
         and updates the plots
         """
-        file_paths, file_types = self.open_multiple_file_dialog(
-            "Open experiment files")
+        file_paths, _ = self.open_multiple_file_dialog("Open experiment files")
         for fn in file_paths:
             self.experiment_manager.add_experiment(ExperimentData.from_csv(fn))
 

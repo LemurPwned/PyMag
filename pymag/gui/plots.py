@@ -45,6 +45,7 @@ class SpectrogramPlot():
         self.image = pg.ImageView()
         self.plot_view.setBackground('w')
         self.image_spectrum = self.image.getImageItem()
+
         self.plot_image.addItem(self.image_spectrum)
         self.plot_image.showGrid(x=True, y=True, alpha=0.6)
         self.image_spectrum.resetTransform()
@@ -69,6 +70,11 @@ class SpectrogramPlot():
                                             'movable': True
                                         })
         self.plot_image.addItem(self.inf_line)
+
+        self.experimental_overlay = pg.PlotCurveItem()
+        # self.plot_image.addItem(self.experimental_overlay)
+        self.image.addItem(self.experimental_overlay)
+
         self.plot_view.nextRow()
         self.cross_section = self.plot_view.addPlot(title="SD/STO vs H")
         self.cross_section.setLabel('bottom', "Field", units="A/m")
@@ -90,7 +96,7 @@ class SpectrogramPlot():
         self.image.updateImage()
 
     def update_plot(self, x, y):
-        self.plot_image.plot(x, y, pen=pg.mkPen('b', width=3))
+        self.plot_image.scatterPlot(x, y, pen=pg.mkPen('r', width=1.2), alpha=0.6)
 
     def detrend_f_axis(self, values):
         values2 = np.empty(values.shape)
@@ -101,5 +107,5 @@ class SpectrogramPlot():
     def clear_plots(self):
         self.image_spectrum.clear()
         self.cross_section.clear()
-        self.plot_image.clear()
+        # self.plot_image.clear()
         return
