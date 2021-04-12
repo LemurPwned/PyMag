@@ -116,7 +116,7 @@ class ResultsTable():
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.remove_btn = QtWidgets.QPushButton()
         self.remove_btn.setText("Remove selected")
-        self.remove_btn.clicked.connect(self.remove_layer)
+        self.remove_btn.clicked.connect(self.remove_selected)
         self.export_btn = QtWidgets.QPushButton()
         self.export_btn.setText("Export selected to .csv")
         self.export_btn.clicked.connect(self.export_selected)
@@ -144,7 +144,14 @@ class ResultsTable():
         if isinstance(highlighted, Simulation):
             self.parameter_table.update_simulation_input_table(highlighted)
 
-    def remove_layer(self):
+    def remove_selected(self):
+        highlighted = self.manager.get_highlighted_item()
+        if highlighted in self.manager.get_selected_items():
+            self.plot_manager.clear_simulation_plots()
+            if isinstance(highlighted, Simulation):
+                self.plot_manager.clear_simulation_plots()
+            else:
+                self.plot_manager.clear_experiment_plots()
         self.manager.remove_selected()
         self.update()
 
@@ -159,7 +166,9 @@ class ResultsTable():
         row = item.row()
         # name was changed
         self.manager.items[row].name = item.text()
-        status_item.setText(self.manager.items[row].status)
+        itm = self.manager.get_item(row)
+        if status_item:
+            status_item.setText(itm.status)
         if item.checkState() == QtCore.Qt.Checked:
             self.manager.add_to_selected(row)
         else:

@@ -17,6 +17,7 @@ class SimulationStatus:
     IN_PROGRESS = "IN PROGRESS"
     DONE = "DONE"
     NOT_STARTED = "NOT STARTED"
+    ALL_DONE = "ALL_DONE"
 
 
 def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,

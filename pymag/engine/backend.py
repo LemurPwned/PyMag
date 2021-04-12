@@ -32,8 +32,8 @@ def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
 
     SxAll = np.zeros((number_of_layers, ))
     SyAll = np.zeros((number_of_layers, ))
-    w_l = w[0] / l[0]
     for i in range(0, number_of_layers):
+        w_l = w[i] / l[i]
         SxAll[i] = 1 / (Rx0[i] + Rx0[i] * AMR[i] * m[i, 0]**2 +
                         Rx0[i] * SMR[i] * m[i, 1]**2)
         SyAll[i] = 1 / (Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (w_l) *
@@ -213,3 +213,4 @@ class SolverTask(QtCore.QThread):
                 self.progress.emit(progr)
                 final_PIMM.append(partial_result.PIMM.tolist()[0])
             self.queue.put((sim_index, ..., SimulationStatus.DONE))
+        self.queue.put(({},..., SimulationStatus.ALL_DONE))

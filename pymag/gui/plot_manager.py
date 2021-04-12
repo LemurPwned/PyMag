@@ -80,6 +80,10 @@ class PlotManager:
         self.PIMM_plot.clear_plots()
         self.SD_plot.clear_plots()
 
+    def clear_experiment_plots(self):
+        self.SD_plot.plot_image.clearPlots()
+        self.PIMM_plot.plot_image.clearPlots()
+
     def plot_active_results(self, obj_list: List[Union[Simulation,
                                                        ExperimentData]]):
         """
@@ -96,7 +100,7 @@ class PlotManager:
             item to be plotted
         """
         if isinstance(plot_input, ExperimentData):
-            self.SD_plot.plot_image.clearPlots()
+            self.clear_experiment_plots()
             self.plot_experiment(plot_input)
         else:
             self.clear_simulation_plots()

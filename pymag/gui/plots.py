@@ -71,7 +71,6 @@ class SpectrogramPlot():
         self.plot_image.addItem(self.inf_line)
 
         self.experimental_overlay = pg.PlotCurveItem()
-        # self.plot_image.addItem(self.experimental_overlay)
         self.image.addItem(self.experimental_overlay)
 
         self.plot_view.nextRow()
