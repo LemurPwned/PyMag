@@ -222,11 +222,11 @@ class Layer(GenericHolder, GUIObject):
     def to_gui(self):
         headers = [
             "layer",
-            "alpha",
-            "Kdir",
-            "Ku",
             "Ms",
+            "Ku",
+            "Kdir",
             "J",
+            "alpha",
             "N",
             "th",
             "AMR",
