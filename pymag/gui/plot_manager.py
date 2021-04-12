@@ -54,7 +54,7 @@ class PlotManager:
             if cross_section >= self.spectrogram_PIMM.shape[
                     1] or cross_section < 0:
                 return
-            # self.PIMM_plot.cross_section.clear()
+            self.PIMM_plot.cross_section.clear()
             self.PIMM_plot.cross_section.plot(
                 self.H,
                 self.spectrogram_PIMM[:, cross_section],
