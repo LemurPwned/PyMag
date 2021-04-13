@@ -29,15 +29,13 @@ def compute_vsd(stime, m_xs, frequency, integration_step):
 def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     R_P = Rx0[0]
     R_AP = Ry0[0]
-
     SxAll = np.zeros((number_of_layers, ))
     SyAll = np.zeros((number_of_layers, ))
     for i in range(0, number_of_layers):
         w_l = w[i] / l[i]
-        SxAll[i] = 1 / (Rx0[i] + Rx0[i] * AMR[i] * m[i, 0]**2 +
-                        Rx0[i] * SMR[i] * m[i, 1]**2)
-        SyAll[i] = 1 / (Ry0[i] + AHE[i] * m[i, 2] + Rx0[i] * (w_l) *
-                        (AMR[i] + SMR[i]) * m[i, 0] * m[i, 1])
+        SxAll[i] = 1 / (Rx0[i] + (AMR[i] * m[i, 0]**2 + SMR[i] * m[i, 1]**2))
+        SyAll[i] = 1 / (Ry0[i] + 0.5 * AHE[i] * m[i, 2] + (w_l) *
+                        (SMR[i] - AMR[i]) * m[i, 0] * m[i, 1])
 
     Rx = 1 / np.sum(SxAll)
     Ry = 1 / np.sum(SyAll)
@@ -46,7 +44,6 @@ def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
         Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :]))
     else:
         Rz = 0
-
     return Rx, Ry, Rz
 
 
@@ -213,4 +210,4 @@ class SolverTask(QtCore.QThread):
                 self.progress.emit(progr)
                 final_PIMM.append(partial_result.PIMM.tolist()[0])
             self.queue.put((sim_index, ..., SimulationStatus.DONE))
-        self.queue.put(({},..., SimulationStatus.ALL_DONE))
+        self.queue.put(({}, ..., SimulationStatus.ALL_DONE))

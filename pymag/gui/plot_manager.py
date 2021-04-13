@@ -83,6 +83,8 @@ class PlotManager:
     def clear_experiment_plots(self):
         self.SD_plot.plot_image.clearPlots()
         self.PIMM_plot.plot_image.clearPlots()
+        self.resistance_plot.clear_experimental()
+        self.magnetisation_plot.clear_experimental()
 
     def plot_active_results(self, obj_list: List[Union[Simulation,
                                                        ExperimentData]]):
@@ -107,9 +109,25 @@ class PlotManager:
             self.plot_simulation(plot_input.get_simulation_result())
 
     def plot_experiment(self, data: ExperimentData):
-        # sort
-        H, f = zip(*sorted(zip(data.H, data.f)))
-        self.SD_plot.update_plot(np.asarray(H), np.asarray(f))
+        """
+        Plot the experimental data if it exists
+        """
+        x, f = data.get_pimm_series()
+        if f:
+            self.PIMM_plot.update_plot(np.asarray(x), np.asarray(f))
+        x, vmix = data.get_vsd_series()
+        if vmix:
+            self.SD_plot.update_plot(np.asarray(x), np.asarray(vmix))
+
+        x, Rx, Ry, Rz = data.get_r_series()
+        for i, R in enumerate((Rx, Ry, Rz)):
+            if R:
+                self.resistance_plot.set_experimental(i, x, R)
+
+        x, Mx, My, Mz = data.get_r_series()
+        for i, M in enumerate((Mx, My, Mz)):
+            if M:
+                self.magnetisation_plot.set_experimental(i, x, M)
 
     def plot_simulation(self, result_holder: ResultHolder):
         """

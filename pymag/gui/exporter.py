@@ -25,7 +25,7 @@ class Exporter:
             self.parent,
             msg,
             "",
-            filter="Dat files (*.dat);;CSV files (*.csv)")
+            filter="Dat files (*.dat *.csv *.txt);;CSV files (*.csv);;TXT (*.txt)")
 
     def export_current_stimulus(self):
         ...

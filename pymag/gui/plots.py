@@ -1,6 +1,8 @@
+from typing import List
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 import numpy as np
+from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
 
 
 class MultiplePlot():
@@ -10,7 +12,8 @@ class MultiplePlot():
         self.plot_area.setGeometry(QtCore.QRect(0, 0, 600, 300))
         self.plot_area.nextRow()
         self.plot_area.setBackground('w')
-        self.plots = []
+        self.plots: List[pg.PlotItem] = []
+        self.experimental_plots: List[pg.PlotDataItem] = []
 
         for i in range(0, number_of_plots):
             self.plots.append(self.plot_area.addPlot())
@@ -33,7 +36,20 @@ class MultiplePlot():
         self.plots[i].setLabel('bottom', bottom_caption, units=bottom_units)
 
     def set_plot(self, n, X, Y):
-        self.plots[n].plot(np.array(X), np.array(Y))
+        self.plots[n].plot(np.asarray(X), np.asarray(Y))
+
+    def set_experimental(self, n, X, Y):
+        pointer = self.plots[n].scatterPlot(np.asarray(X),
+                                            np.asarray(Y),
+                                            pen=pg.mkPen('r', width=1.2),
+                                            alpha=0.6)
+        self.experimental_plots.append(pointer)
+
+    def clear_experimental(self):
+        exp_plot: PlotDataItem
+        for i, exp_plot in enumerate(self.experimental_plots):
+            self.plots[i].removeItem(exp_plot)
+        self.experimental_plots.clear()
 
 
 class SpectrogramPlot():

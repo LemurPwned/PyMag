@@ -1,9 +1,11 @@
 import json
 import os
 from re import M
+import re
 
 from pymag.engine.utils import get_stimulus
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
+from pydantic import BaseModel
 import numpy as np
 import pandas as pd
 
@@ -49,18 +51,51 @@ class GenericHolder:
         cls(**dict_)
 
 
-class ExperimentData(GenericHolder):
-    def __init__(self, name: str, H: Union[List[float], np.ndarray],
-                 f: Union[List[float], np.ndarray]) -> None:
-        self.H = H
-        self.f = f
-        self.name = name
+class ExperimentData(GenericHolder, BaseModel):
+    name: str
+    H: List[float] = []
+    theta: List[float] = []
+    phi: List[float] = []
+    f: List[float] = []
+    Vmix: List[float] = []
+    Rx: List[float] = []
+    Ry: List[float] = []
+    Rz: List[float] = []
+    Mx: List[float] = []
+    My: List[float] = []
+    Mz: List[float] = []
 
-    @classmethod
-    def from_csv(cls, filename):
+    x: List[float] = []
+
+    @staticmethod
+    def from_csv(filename):
         bsn = os.path.basename(filename)
-        df = pd.read_csv(filename, sep='\t')
-        return cls(name=bsn, H=df['H'], f=df['f'])
+        df: pd.DataFrame = pd.read_csv(filename, sep='\t').astype(float)
+        t = df.to_dict(orient='list')
+        expr = ExperimentData(name=bsn, **t)
+        expr.deduce_change()
+        return expr
+
+    def deduce_change(self):
+        if len(np.unique(self.H)) == 1:
+            if len(np.unique(self.phi)) != 1:
+                self.x = self.phi
+            else:
+                self.x = self.theta
+        else:
+            self.x = self.H
+
+    def get_vsd_series(self):
+        return self.x, self.Vmix
+
+    def get_m_series(self):
+        return self.x, self.Mx, self.My, self.Mz
+
+    def get_r_series(self):
+        return self.x, self.Rx, self.Ry, self.Rz
+
+    def get_pimm_series(self):
+        return self.x, self.f
 
 
 class ResultHolder(GenericHolder):
