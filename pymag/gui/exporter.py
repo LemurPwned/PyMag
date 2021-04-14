@@ -15,17 +15,17 @@ class Exporter:
         self.experiment_manager: ExperimentManager = experiment_manager
 
     def open_directory_dialog(self, msg: str) -> str:
-        return QFileDialog.getExistingDirectory(self.parent, msg)
+        return QFileDialog.getExistingDirectory(self.parent, msg, options=QFileDialog.DontUseNativeDialog)
 
     def open_file_dialog(self, msg: str) -> Tuple[str, str]:
-        return QFileDialog.getSaveFileName(self.parent, msg)
+        return QFileDialog.getSaveFileName(self.parent, msg, options=QFileDialog.DontUseNativeDialog)
 
     def open_multiple_file_dialog(self, msg: str) -> Tuple[List[str], str]:
         return QFileDialog.getOpenFileNames(
             self.parent,
             msg,
             "",
-            filter="Dat files (*.dat *.csv *.txt);;CSV files (*.csv);;TXT (*.txt)")
+            filter="Dat files (*.dat *.csv *.txt);;CSV files (*.csv);;TXT (*.txt)", options=QFileDialog.DontUseNativeDialog)
 
     def export_current_stimulus(self):
         ...
