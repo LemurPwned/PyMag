@@ -39,7 +39,7 @@ class MultiplePlot():
         self.plots[i].setLabel('bottom', bottom_caption, units=bottom_units)
 
     def set_plot(self, n, X, Y):
-        pointers = self.plots[n].plot(np.asarray(X), np.asarray(Y))
+        pointer = self.plots[n].plot(np.asarray(X), np.asarray(Y))
         self.plots_to_clear[n] = pointer
 
     def set_experimental(self, n, X, Y):
