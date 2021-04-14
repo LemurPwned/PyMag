@@ -14,6 +14,7 @@ class MultiplePlot():
         self.plot_area.setBackground('w')
         self.plots: List[pg.PlotItem] = []
         self.experimental_plots: List[pg.PlotDataItem] = []
+        self.plots_to_clear: List[pg.PlotDataItem] = []
 
         for i in range(0, number_of_plots):
             self.plots.append(self.plot_area.addPlot())
@@ -21,22 +22,25 @@ class MultiplePlot():
             self.plots[i].enableAutoRange('x', True)
             self.plots[i].showGrid(x=True, y=True, alpha=0.6)
             self.plot_area.nextRow()
+            self.plots_to_clear.append(None)
 
     def clear_plots(self):
         for i in range(0, self.number_of_plots):
-            self.plots[i].clear()
+            self.plots[i].removeItem(self.plots_to_clear[i])
 
     def set_plots(self, X: list, Y: list, colors: list, left_caption,
                   left_units, bottom_caption, bottom_units):
         for i in range(0, self.number_of_plots):
-            self.plots[i].plot(X, Y[i], pen=(colors[i]))
+            pointer = self.plots[i].plot(X, Y[i], pen=(colors[i]))
+            self.plots_to_clear[i] = pointer
             self.plots[i].setLabel('left',
                                    left_caption[i],
                                    units=left_units[i])
         self.plots[i].setLabel('bottom', bottom_caption, units=bottom_units)
 
     def set_plot(self, n, X, Y):
-        self.plots[n].plot(np.asarray(X), np.asarray(Y))
+        pointers = self.plots[n].plot(np.asarray(X), np.asarray(Y))
+        self.plots_to_clear[n] = pointer
 
     def set_experimental(self, n, X, Y):
         pointer = self.plots[n].scatterPlot(np.asarray(X),
