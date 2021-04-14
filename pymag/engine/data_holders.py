@@ -77,8 +77,8 @@ class ExperimentData(GenericHolder, BaseModel):
         return expr
 
     def deduce_change(self):
-        if len(np.unique(self.H)) == 1:
-            if len(np.unique(self.phi)) != 1:
+        if len(np.unique(self.H)) <= 1:
+            if len(np.unique(self.phi)) > 1:
                 self.x = self.phi
             else:
                 self.x = self.theta
