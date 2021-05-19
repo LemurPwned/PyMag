@@ -3,8 +3,6 @@ from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 
 import numba
-from typing import List
-from pymag.engine.solver import Solver
 from PyQt5 import QtCore
 import time
 import cmtj
