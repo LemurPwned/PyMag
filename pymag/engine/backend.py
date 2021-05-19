@@ -1,4 +1,4 @@
-# from pymag.gui.simulation_manager import Simulation
+from pymag.gui.simulation_manager import Simulation
 from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 
