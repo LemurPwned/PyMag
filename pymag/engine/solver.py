@@ -135,6 +135,7 @@ class Solver:
 
         m_avg = (np.matmul(m.T, (np.array(Cth) * np.array(CMs)))) / sum(
             np.array(Cth) * np.array(CMs))
+        #test
         return np.array(m), m_avg, np.asarray(
             DynamicR), Cdt, SD_voltage_after_bias, m_traj, M_full, PIMM_
 
