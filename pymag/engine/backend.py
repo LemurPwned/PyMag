@@ -24,26 +24,45 @@ def compute_vsd(stime, m_xs, frequency, integration_step):
                                        order=3)
     return np.mean(SD_voltage)
 
+def compute_vsd_(stime, dynamicR, frequency, integration_step):
+    I_amp = 20000
+    Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
 
-@numba.jit(nopython=True, parallel=False)
+    SD = -Isdd * dynamicR
+    SD_voltage = butter_lowpass_filter(SD,
+                                       cutoff=10e6,
+                                       fs=1. / integration_step,
+                                       order=3)
+    return np.mean(SD_voltage)
+
+
+# @numba.jit(nopython=True, parallel=False)
 def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     R_P = Rx0[0]
     R_AP = Ry0[0]
-    SxAll = np.zeros((number_of_layers, ))
-    SyAll = np.zeros((number_of_layers, ))
+    
+    if m.ndim==2:
+
+        SxAll = np.zeros((number_of_layers, ))
+        SyAll = np.zeros((number_of_layers, ))
+
+    elif m.ndim == 3:
+        SxAll = np.zeros((number_of_layers, m.shape[2]))
+        SyAll = np.zeros((number_of_layers, m.shape[2]))
+
     for i in range(0, number_of_layers):
         w_l = w[i] / l[i]
         SxAll[i] = 1 / (Rx0[i] + (AMR[i] * m[i, 0]**2 + SMR[i] * m[i, 1]**2))
-        SyAll[i] = 1 / (Ry0[i] + 0.5 * AHE[i] * m[i, 2] + (w_l) *
-                        (SMR[i] - AMR[i]) * m[i, 0] * m[i, 1])
+        SyAll[i] = 1 / (Ry0[i] + 0.5 * AHE[i] * m[i, 2] + (w_l) * (SMR[i] - AMR[i]) * m[i, 0] * m[i, 1])
 
-    Rx = 1 / np.sum(SxAll)
-    Ry = 1 / np.sum(SyAll)
+    Rx = 1 / np.sum(SxAll,axis=0)
+    Ry = 1 / np.sum(SyAll,axis=0)
 
     if number_of_layers > 1:
-        Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :]))
+        Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :],axis=0))
     else:
         Rz = 0
+
     return Rx, Ry, Rz
 
 
@@ -158,12 +177,16 @@ class SolverTask(QtCore.QThread):
                     m_init_VSD[i] = junction.getLayerMagnetisation(
                         org_layer_strs[i])
                 log = junction.getLog()
-                mxs = np.asarray([
-                    log[f'{org_layer_strs[i]}_mx']
-                    for i in range(no_org_layers)
-                ])
-                vmix = compute_vsd(stime=np.asarray(log['time']),
-                                   m_xs=mxs,
+                m = np.asarray([[
+                    log[f'{org_layer_strs[i]}_mx'],
+                    log[f'{org_layer_strs[i]}_my'],
+                    log[f'{org_layer_strs[i]}_mz']
+                ] for i in range(no_org_layers)])
+
+                dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
+
+                vmix = compute_vsd_(stime=np.asarray(log['time']),
+                                   dynamicR=dynamicR,
                                    frequency=frequency,
                                    integration_step=int_step)
                 SD_results.append(vmix)
