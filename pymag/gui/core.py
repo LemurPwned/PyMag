@@ -1,14 +1,16 @@
+from functools import partial
 from typing import List, Tuple, Union
-from pymag.gui.plot_manager import PlotManager
+
+import pandas as pd
 import pyqtgraph as pg
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
-from pymag.gui.simulation_manager import ExperimentManager, GeneralManager, Simulation
-from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel, QRadioButton, QDoubleSpinBox
-
-from functools import partial
-import pandas as pd
+from pymag.gui.plot_manager import PlotManager
+from pymag.gui.simulation_manager import (ExperimentManager, GeneralManager,
+                                          Simulation)
+from pymag.gui.utils import LabelledDoubleSpinBox
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel
 
 
 class SimulationParameters():
@@ -57,8 +59,6 @@ class SimulationParameters():
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
 
-
-
         theta_min = 0
         theta_max = 180
         phi_min = 0
@@ -73,99 +73,101 @@ class SimulationParameters():
         steps_max = 1e9
 
         H_unit = "kA/m"
-        angle_unit  = "deg"
+        angle_unit = "\u030Adeg"
         f_units = "GHz"
         I_unit = "A"
         V_unit = "V"
         time_unit = "ns"
 
-
         self.stimulus_layout = QtGui.QGridLayout()
-        self.stimulus_layout.addWidget(QLabel("H sweep mode"),0,0)
-        
+        self.stimulus_layout.addWidget(QLabel("H sweep mode"), 0, 0)
 
-        self.stimulus_labels_H = [["H start", "H steps", "H stop", "theta", "phi"],
-                                ["H mag", "theta start", "theta steps", "theta stop", "phi"],
-                                ["H mag", "theta", "phi start", "phi steps", "phi stop"]]
+        self.stimulus_labels_H = [
+            ["H start", "H steps", "H stop", "\u03B8", "\u03C6"],
+            ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
+            ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
+        ]
 
-        self.stimulus_labels_electrics = ["LLG time", "LLG steps", "RF current", "frequeny min", "frequency steps", "frequency max"]
-        self.stimulus_labels_directions = ["Voltmeter dir", "Current source dir"]
+        self.stimulus_labels_electrics = [
+            "LLG time", "LLG steps", "RF current", "frequeny min",
+            "frequency steps", "frequency max"
+        ]
+        self.stimulus_labels_directions = [
+            "Voltmeter dir", "Current source dir"
+        ]
 
-
-
-
-        self.stimulus_units_H = [[H_unit, "int", H_unit, angle_unit, angle_unit],
-                [H_unit, angle_unit, "int", angle_unit, angle_unit],
-                [H_unit, angle_unit, angle_unit, "int", angle_unit]]
+        self.stimulus_units_H = [[
+            H_unit, "int", H_unit, angle_unit, angle_unit
+        ], [H_unit, angle_unit, "int", angle_unit,
+            angle_unit], [H_unit, angle_unit, angle_unit, "int", angle_unit]]
 
         self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
-                                [H_min, theta_min, steps_min, theta_min, phi_min],
-                                [H_min, theta_min, phi_min, steps_min, phi_min]]
+                               [
+                                   H_min, theta_min, steps_min, theta_min,
+                                   phi_min
+                               ],
+                               [H_min, theta_min, phi_min, steps_min, phi_min]]
         self.stimulus_H_max = [[H_max, steps_max, H_max, theta_max, phi_max],
-                                [H_max, theta_max, steps_max, theta_max, phi_max],
-                                [H_max, theta_max, phi_max, steps_max, phi_max]]
-
+                               [
+                                   H_max, theta_max, steps_max, theta_max,
+                                   phi_max
+                               ],
+                               [H_max, theta_max, phi_max, steps_max, phi_max]]
 
         self.stimulus_spinboxes_H = []
         self.stimulus_labels__ = []
 
-
-
-
-
-
-        for i in range (0,5):
+        for i in range(0, 5):
             self.stimulus_labels__.append(QLabel())
-            self.stimulus_layout.addWidget(self.stimulus_labels__[i],i+1,0)
+            self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
             self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,
+                                           1)
 
         self.central_layout.addLayout(self.stimulus_layout)
 
-        
         self.H_sweep_mode = QComboBox()
         self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
-        stimulus_H_modes_names = ["mag", "theta", "phi"]
-        for i in range (0,len(stimulus_H_modes_names)):
+        stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
+        for i in range(0, len(stimulus_H_modes_names)):
             self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
-        self.stimulus_layout.addWidget(self.H_sweep_mode,0,1)
+        self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
         self.H_mode_changed()
-
 
         directions = ["x", "y", "z"]
         for i in range(0, len(self.stimulus_labels_directions)):
-                self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_directions[i]),i,5)
+            self.stimulus_layout.addWidget(
+                QLabel(self.stimulus_labels_directions[i]), i, 5)
 
         for i in range(0, len(self.stimulus_labels_electrics)):
-            self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_electrics[i]),i,3)
+            self.stimulus_layout.addWidget(
+                QLabel(self.stimulus_labels_electrics[i]), i, 3)
 
         # for i in range(0, len(self.stimulus_labels_directions)):
         #         self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_directions[i]),i,5)
         #         self.stimulus_spinboxes_H.append(QDoubleSpinBox())
         #         self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
-            
 
         self.voltmeter = QComboBox()
-        for i in range (0,len(directions)):
+        for i in range(0, len(directions)):
             self.voltmeter.addItem(directions[i])
-        self.stimulus_layout.addWidget(self.voltmeter,0,6)
-
+        self.stimulus_layout.addWidget(self.voltmeter, 0, 6)
 
         self.ACDC_source = QComboBox()
-        for i in range (0,len(directions)):
+        for i in range(0, len(directions)):
             self.ACDC_source.addItem(directions[i])
-        self.stimulus_layout.addWidget(self.ACDC_source,1,6)
+        self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
 
         import pyqtgraph.opengl as gl
         self.w = gl.GLViewWidget()
-        self.w.opts['distance'] = 45.0  
-        self.w.opts['fov'] = 60  
-        self.w.opts['elevation'] = 10 
-        self.w.opts['azimuth'] = 90  
+        self.w.opts['distance'] = 45.0
+        self.w.opts['fov'] = 60
+        self.w.opts['elevation'] = 10
+        self.w.opts['azimuth'] = 90
         self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
-        self.w.setGeometry(450, 700, 980, 700)  
+        self.w.setGeometry(450, 700, 980, 700)
         # self.w.show()
-                # create the background grids
+        # create the background grids
         gx = gl.GLGridItem()
         gx.rotate(90, 0, 1, 0)
         gx.translate(-10, 0, 0)
@@ -178,49 +180,41 @@ class SimulationParameters():
         gz.translate(0, 0, -10)
         self.w.addItem(gz)
 
-
-
-        verts = np.array([(-1.0, -1.0, 0.0),
-                          (1.0, -1.0, 0.0),
-                          (-1.0, 1.0, 0.0),
-                          (1.0, 1.0, 0.0),
-                          (-2, -3, -4),
-                          (-2, -3, 0.3),
-                          (-2, 3, -4),
-                          (-2, 3, 0.3),
-                          (2, -3, -4),
-                          (2, -3, 0.3),
-                          (2, 3, -4),
-                          (2, 3, 0.3),
-                          (-1.0, -1.0, 5),
-                          (1.0, -1.0, 5),
-                          (-1.0, 1.0, 5),
+        verts = np.array([(-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
+                          (-1.0, 1.0, 0.0), (1.0, 1.0, 0.0), (-2, -3, -4),
+                          (-2, -3, 0.3), (-2, 3, -4), (-2, 3, 0.3),
+                          (2, -3, -4), (2, -3, 0.3), (2, 3, -4), (2, 3, 0.3),
+                          (-1.0, -1.0, 5), (1.0, -1.0, 5), (-1.0, 1.0, 5),
                           (1.0, 1.0, 5)])
 
-        faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4),
-                          (7, 10, 6), (11, 8, 10), (9, 4, 8),
-                          (10, 4, 6), (7, 9, 11), (5, 7, 6),
-                          (7, 11, 10), (11, 9, 8), (9, 5, 4),
-                          (10, 8, 4), (7, 5, 9), (13, 14, 12),
-                          (13, 15, 14)])
+        faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4), (7, 10, 6),
+                          (11, 8, 10), (9, 4, 8), (10, 4, 6), (7, 9, 11),
+                          (5, 7, 6), (7, 11, 10), (11, 9, 8), (9, 5, 4),
+                          (10, 8, 4), (7, 5, 9), (13, 14, 12), (13, 15, 14)])
 
-        colors = np.array([[1, i/16, 1, 1] for i in range(len(faces))])
+        colors = np.array([[1, i / 16, 1, 1] for i in range(len(faces))])
 
-
-        self.object = gl.GLMeshItem(vertexes=verts, faces=faces, faceColors=colors, smooth=False, shader='shaded', glOptions='opaque')
+        self.object = gl.GLMeshItem(vertexes=verts,
+                                    faces=faces,
+                                    faceColors=colors,
+                                    smooth=False,
+                                    shader='shaded',
+                                    glOptions='opaque')
         self.w.addItem(self.object)
 
-
-        self.stimulus_layout.addWidget(self.w,2,5,5,2)
-
+        self.stimulus_layout.addWidget(self.w, 2, 5, 5, 2)
 
     def H_mode_changed(self):
         mode = self.H_sweep_mode.currentIndex()
-        for i in range (0,5):
-            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i]+" ("+(self.stimulus_units_H[mode][i]+")"))
-            self.stimulus_spinboxes_H[i].setMinimum(self.stimulus_H_min[mode][i])
-            self.stimulus_spinboxes_H[i].setMaximum(self.stimulus_H_max[mode][i])
-
+        for i in range(0, 5):
+            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i] +
+                                              " [" +
+                                              (self.stimulus_units_H[mode][i] +
+                                               "]"))
+            self.stimulus_spinboxes_H[i].setMinimum(
+                self.stimulus_H_min[mode][i])
+            self.stimulus_spinboxes_H[i].setMaximum(
+                self.stimulus_H_max[mode][i])
 
     def get_all_data(self):
         return self.get_table_data(
@@ -399,18 +393,6 @@ class AddMenuBar():
         self.kill_fn = lambda:...  # empty function
         self.start_btn.clicked.connect(self.btn_toggle)
 
-        self.multiprocessing_label = QLabel("MP")
-        self.backend_select = QComboBox()
-
-        self.backend_select.addItem("C++")
-        self.backend_select.addItem("Docker")
-        self.backend_select.addItem("Python")
-        self.back_end_label = QLabel("Backend:")
-
-        self.multiprocessing_select = QCheckBox()
-        self.multiprocessing_select.setObjectName("Multiprocessing")
-        self.multiprocessing_select.setChecked(True)
-
         self.progress = QtWidgets.QProgressBar()
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
@@ -423,11 +405,6 @@ class AddMenuBar():
 
         self.btn_layout = QtGui.QHBoxLayout()
         self.btn_layout.addWidget(self.start_btn)
-
-        self.btn_layout.addWidget(self.multiprocessing_label)
-        self.btn_layout.addWidget(self.multiprocessing_select)
-        self.btn_layout.addWidget(self.back_end_label)
-        self.btn_layout.addWidget(self.backend_select)
 
         self.central_layout.addLayout(self.btn_layout)
         self.central_layout.addStretch()
@@ -491,9 +468,13 @@ class About(QtGui.QDialog):
         self.close()
 
 
-
 class LabeledItem():
-    def __init__(self,label = "Label", minimum=0, maximum=1, value=0, mode = 'Double'):
+    def __init__(self,
+                 label="Label",
+                 minimum=0,
+                 maximum=1,
+                 value=0,
+                 mode='Double'):
         self.Label = QLabel(label)
         if mode == 'Double':
             self.Value = QtWidgets.QDoubleSpinBox()
@@ -513,13 +494,12 @@ class LabeledItem():
             self.Value.setChecked(value)
 
 
-
 class Stimulus(QtGui.QDialog):
-
     def __init__(self, parent):
         super(Stimulus, self).__init__()
 
-        self.settings = QtCore.QSettings("Stimulus_settings.ini", QtCore.QSettings.IniFormat)
+        self.settings = QtCore.QSettings("Stimulus_settings.ini",
+                                         QtCore.QSettings.IniFormat)
         # print(self.settings.fileName())
 
         self.setWindowTitle(PyMagVersion + " - New stimulus")
@@ -538,8 +518,15 @@ class Stimulus(QtGui.QDialog):
 
         self.LLGparams = QtGui.QGridLayout()
         self.LLGparamsLabel = QLabel("LLG simulation parameters:")
-        self.LLGSteps = LabeledDoubleSpinBox(label="Simulation steps of LLG", minimum=10, maximum=1e6, value=1000)
-        self.LLGTime = LabeledDoubleSpinBox(label="Simulation time of LLG [ns]", minimum=0.001, maximum=1e3, value=5)
+        self.LLGSteps = LabelledDoubleSpinBox(label="Simulation steps of LLG",
+                                              minimum=10,
+                                              maximum=1e6,
+                                              value=1000)
+        self.LLGTime = LabelledDoubleSpinBox(
+            label="Simulation time of LLG [ns]",
+            minimum=0.001,
+            maximum=1e3,
+            value=5)
         self.LLGparams.addWidget(self.LLGparamsLabel, 0, 0)
         self.LLGparams.addWidget(self.LLGTime.Label, 1, 0)
         self.LLGparams.addWidget(self.LLGTime.Value, 1, 1)
@@ -548,12 +535,30 @@ class Stimulus(QtGui.QDialog):
 
         self.FieldLayout = QtGui.QGridLayout()
         self.FieldLayoutLabel = QLabel("Field H simulation parameters:")
-        self.HMin = LabeledDoubleSpinBox(label="HMin (A/m)", minimum=-1e9, maximum=1e9, value=-1e3)
-        self.HMax = LabeledDoubleSpinBox(label="HMax (A/m)", minimum=-1e9, maximum=1e9, value=1e3)
-        self.HSteps = LabeledDoubleSpinBox(label="Steps", minimum=0, maximum=1e6, value=50)
-        self.HBack = LabeledDoubleSpinBox(label="Back", value=False, mode='Binary')
-        self.HTheta = LabeledDoubleSpinBox(label="Out of plane angle (theta)\n 0-out of plane, 90 - in plane", minimum=-360, maximum=360, value=90)
-        self.HPhi = LabeledDoubleSpinBox(label="In plane angle (phi)", minimum=-360, maximum=360, value=0.0)
+        self.HMin = LabelledDoubleSpinBox(label="HMin (A/m)",
+                                          minimum=-1e9,
+                                          maximum=1e9,
+                                          value=-1e3)
+        self.HMax = LabelledDoubleSpinBox(label="HMax (A/m)",
+                                          minimum=-1e9,
+                                          maximum=1e9,
+                                          value=1e3)
+        self.HSteps = LabelledDoubleSpinBox(label="Steps",
+                                            minimum=0,
+                                            maximum=1e6,
+                                            value=50)
+        self.HBack = LabelledDoubleSpinBox(label="Back",
+                                           value=False,
+                                           mode='Binary')
+        self.HTheta = LabelledDoubleSpinBox(
+            label="Out of plane angle \u03B8\n 0-out of plane, 90 - in plane",
+            minimum=-360,
+            maximum=360,
+            value=90)
+        self.HPhi = LabelledDoubleSpinBox(label="In plane angle (\u03C6)",
+                                          minimum=-360,
+                                          maximum=360,
+                                          value=0.0)
 
         self.FieldLayout.addWidget(self.FieldLayoutLabel, 0, 0)
         self.FieldLayout.addWidget(self.HMin.Label, 1, 0)
@@ -562,26 +567,45 @@ class Stimulus(QtGui.QDialog):
         self.FieldLayout.addWidget(self.HMax.Value, 2, 1)
         self.FieldLayout.addWidget(self.HSteps.Label, 3, 0)
         self.FieldLayout.addWidget(self.HSteps.Value, 3, 1)
-        self.FieldLayout.addWidget(self.HBack.Label, 4,  0)
-        self.FieldLayout.addWidget(self.HBack.Value, 4,  1)
+        self.FieldLayout.addWidget(self.HBack.Label, 4, 0)
+        self.FieldLayout.addWidget(self.HBack.Value, 4, 1)
         self.FieldLayout.addWidget(self.HTheta.Label, 5, 0)
         self.FieldLayout.addWidget(self.HTheta.Value, 5, 1)
-        self.FieldLayout.addWidget(self.HPhi.Label, 6,0)
-        self.FieldLayout.addWidget(self.HPhi.Value, 6,1)
+        self.FieldLayout.addWidget(self.HPhi.Label, 6, 0)
+        self.FieldLayout.addWidget(self.HPhi.Value, 6, 1)
 
         self.SpinDiodeLayout = QtGui.QGridLayout()
         self.SpinDiodeLayoutLabel = QLabel("Spin diode simulation parameters:")
-        self.IAC = LabeledDoubleSpinBox(label = "I(AC) [A]", minimum=0, maximum=1, value=0.01)
-        self.IDC = LabeledDoubleSpinBox(label="I(DC) [A]", minimum=0, maximum=1, value=0)
-        self.IACphi = LabeledDoubleSpinBox(label="Phase shift psi [deg]", minimum=0, maximum=360, value=0)
-        self.fMin = LabeledDoubleSpinBox(label="fMin [GHz]", minimum=0, maximum=100, value=0)
-        self.fMax = LabeledDoubleSpinBox(label="fMax [GHz]", minimum=0, maximum=100, value=12)
-        self.fSteps = LabeledDoubleSpinBox(label="fSteps", minimum=0, maximum=1000, value=12, mode = 'Integer')
+        self.IAC = LabelledDoubleSpinBox(label="I(AC) [A]",
+                                         minimum=0,
+                                         maximum=1,
+                                         value=0.01)
+        self.IDC = LabelledDoubleSpinBox(label="I(DC) [A]",
+                                         minimum=0,
+                                         maximum=1,
+                                         value=0)
+        self.IACphi = LabelledDoubleSpinBox(label="Phase shift psi [deg]",
+                                            minimum=0,
+                                            maximum=360,
+                                            value=0)
+        self.fMin = LabelledDoubleSpinBox(label="fMin [GHz]",
+                                          minimum=0,
+                                          maximum=100,
+                                          value=0)
+        self.fMax = LabelledDoubleSpinBox(label="fMax [GHz]",
+                                          minimum=0,
+                                          maximum=100,
+                                          value=12)
+        self.fSteps = LabelledDoubleSpinBox(label="fSteps",
+                                            minimum=0,
+                                            maximum=1000,
+                                            value=12,
+                                            mode='Integer')
 
         self.SpinDiodeLayout.addWidget(self.SpinDiodeLayoutLabel, 0, 0)
 
-        self.SpinDiodeLayout.addWidget(self.IAC.Label,1,0)
-        self.SpinDiodeLayout.addWidget(self.IAC.Value,1,1)
+        self.SpinDiodeLayout.addWidget(self.IAC.Label, 1, 0)
+        self.SpinDiodeLayout.addWidget(self.IAC.Value, 1, 1)
         self.SpinDiodeLayout.addWidget(self.IDC.Label, 2, 0)
         self.SpinDiodeLayout.addWidget(self.IDC.Value, 2, 1)
         self.SpinDiodeLayout.addWidget(self.IACphi.Label, 3, 0)
@@ -593,9 +617,7 @@ class Stimulus(QtGui.QDialog):
         self.SpinDiodeLayout.addWidget(self.fMax.Label, 6, 0)
         self.SpinDiodeLayout.addWidget(self.fMax.Value, 6, 1)
 
-
         self.btn_layout = QtWidgets.QVBoxLayout()
-
 
         self.btn_layout.addLayout(self.FieldLayout)
         self.btn_layout.addLayout(self.SpinDiodeLayout)
