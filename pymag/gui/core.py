@@ -59,6 +59,25 @@ class SimulationParameters():
 
 
 
+        theta_min = 0
+        theta_max = 180
+        phi_min = 0
+        phi_max = 360
+        H_min = -1e12
+        H_max = 1e12
+        f_min = 0
+        f_max = 1e12
+        I_RF_min = 0
+        I_RF_max = 1
+        steps_min = 1
+        steps_max = 1e9
+
+        H_unit = "A/m"
+        angle_unit  = "deg"
+        f_units = "Hz"
+        I_unit = "A"
+        V_unit = "V"
+        time_unit = "s"
 
 
         self.stimulus_layout = QtGui.QGridLayout()
@@ -68,14 +87,16 @@ class SimulationParameters():
         self.stimulus_labels_H = [["H start", "H steps", "H stop", "theta", "phi"],
                                 ["H mag", "theta start", "theta steps", "theta stop", "phi"],
                                 ["H mag", "theta", "phi start", "phi steps", "phi stop"]]
-        theta_min = 0
-        theta_max = 180
-        phi_min = 0
-        phi_max = 360
-        H_min = -1e15
-        H_max = 1e15
-        steps_min = 1
-        steps_max = 1e9
+
+        self.stimulus_labels_electrics = ["LLG time", "LLG steps", "RF current", "frequeny min", "frequency steps", "frequency max"]
+        self.stimulus_labels_directions = ["Voltmeter dir", "Current source dir"]
+
+
+
+
+        self.stimulus_units_H = [[H_unit, "int", H_unit, angle_unit, angle_unit],
+                [H_unit, angle_unit, "int", angle_unit, angle_unit],
+                [H_unit, angle_unit, angle_unit, "int", angle_unit]]
 
         self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
                                 [H_min, theta_min, steps_min, theta_min, phi_min],
@@ -95,19 +116,50 @@ class SimulationParameters():
             self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
 
         self.central_layout.addLayout(self.stimulus_layout)
+
+        
         self.H_sweep_mode = QComboBox()
         self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
-        stimulus_H_modes_names = ["Magnitude", "theta", "phi"]
+        stimulus_H_modes_names = ["mag", "theta", "phi"]
         for i in range (0,len(stimulus_H_modes_names)):
             self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
         self.stimulus_layout.addWidget(self.H_sweep_mode,0,1)
         self.H_mode_changed()
 
 
+        directions = ["x", "y", "z"]
+        for i in range(0, len(self.stimulus_labels_directions)):
+                self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_directions[i]),i,5)
+
+        for i in range(0, len(self.stimulus_labels_electrics)):
+            self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_electrics[i]),i,3)
+
+        # for i in range(0, len(self.stimulus_labels_directions)):
+        #         self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_directions[i]),i,5)
+        #         self.stimulus_spinboxes_H.append(QDoubleSpinBox())
+        #         self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
+            
+
+        self.voltmeter = QComboBox()
+        for i in range (0,len(directions)):
+            self.voltmeter.addItem(directions[i])
+        self.stimulus_layout.addWidget(self.voltmeter,0,6)
+
+
+        self.ACDC_source = QComboBox()
+        for i in range (0,len(directions)):
+            self.ACDC_source.addItem(directions[i])
+        self.stimulus_layout.addWidget(self.ACDC_source,1,6)
+
+
+
+
+
+
     def H_mode_changed(self):
         mode = self.H_sweep_mode.currentIndex()
         for i in range (0,5):
-            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i])
+            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i]+" ("+(self.stimulus_units_H[mode][i]+")"))
             self.stimulus_spinboxes_H[i].setMinimum(self.stimulus_H_min[mode][i])
             self.stimulus_spinboxes_H[i].setMaximum(self.stimulus_H_max[mode][i])
 
