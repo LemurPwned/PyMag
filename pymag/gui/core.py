@@ -5,7 +5,7 @@ from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.simulation_manager import ExperimentManager, GeneralManager, Simulation
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel
+from PyQt5.QtWidgets import QCheckBox, QComboBox, QLabel, QRadioButton, QDoubleSpinBox
 
 from functools import partial
 import pandas as pd
@@ -56,6 +56,61 @@ class SimulationParameters():
         self.btn_layout.addWidget(self.add_simulation)
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
+
+
+
+
+
+        self.stimulus_layout = QtGui.QGridLayout()
+        self.stimulus_layout.addWidget(QLabel("H sweep mode"),0,0)
+        
+
+        self.stimulus_labels_H = [["H start", "H steps", "H stop", "theta", "phi"],
+                                ["H mag", "theta start", "theta steps", "theta stop", "phi"],
+                                ["H mag", "theta", "phi start", "phi steps", "phi stop"]]
+        theta_min = 0
+        theta_max = 180
+        phi_min = 0
+        phi_max = 360
+        H_min = -1e15
+        H_max = 1e15
+        steps_min = 1
+        steps_max = 1e9
+
+        self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
+                                [H_min, theta_min, steps_min, theta_min, phi_min],
+                                [H_min, theta_min, phi_min, steps_min, phi_min]]
+        self.stimulus_H_max = [[H_max, steps_max, H_max, theta_max, phi_max],
+                                [H_max, theta_max, steps_max, theta_max, phi_max],
+                                [H_max, theta_max, phi_max, steps_max, phi_max]]
+
+
+        self.stimulus_spinboxes_H = []
+        self.stimulus_labels__ = []
+
+        for i in range (0,5):
+            self.stimulus_labels__.append(QLabel())
+            self.stimulus_layout.addWidget(self.stimulus_labels__[i],i+1,0)
+            self.stimulus_spinboxes_H.append(QDoubleSpinBox())
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
+
+        self.central_layout.addLayout(self.stimulus_layout)
+        self.H_sweep_mode = QComboBox()
+        self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
+        stimulus_H_modes_names = ["Magnitude", "theta", "phi"]
+        for i in range (0,len(stimulus_H_modes_names)):
+            self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
+        self.stimulus_layout.addWidget(self.H_sweep_mode,0,1)
+        self.H_mode_changed()
+
+
+    def H_mode_changed(self):
+        mode = self.H_sweep_mode.currentIndex()
+        for i in range (0,5):
+            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i])
+            self.stimulus_spinboxes_H[i].setMinimum(self.stimulus_H_min[mode][i])
+            self.stimulus_spinboxes_H[i].setMaximum(self.stimulus_H_max[mode][i])
+
 
     def get_all_data(self):
         return self.get_table_data(
@@ -324,3 +379,127 @@ class About(QtGui.QDialog):
         )
         self.layout.addWidget(self.about_label)
         self.close()
+
+
+
+class LabeledItem():
+    def __init__(self,label = "Label", minimum=0, maximum=1, value=0, mode = 'Double'):
+        self.Label = QLabel(label)
+        if mode == 'Double':
+            self.Value = QtWidgets.QDoubleSpinBox()
+            self.Value.setMinimum(minimum)
+            self.Value.setMaximum(maximum)
+            self.Value.setValue(value)
+            self.Value.setObjectName(label)
+        elif mode == 'Integer':
+            self.Value = QtWidgets.QSpinBox()
+            self.Value.setMinimum(minimum)
+            self.Value.setMaximum(maximum)
+            self.Value.setValue(value)
+            self.Value.setObjectName(label)
+        if mode == 'Binary':
+            self.Value = QtWidgets.QCheckBox()
+            self.Value.setObjectName(label)
+            self.Value.setChecked(value)
+
+
+
+class Stimulus(QtGui.QDialog):
+
+    def __init__(self, parent):
+        super(Stimulus, self).__init__()
+
+        self.settings = QtCore.QSettings("Stimulus_settings.ini", QtCore.QSettings.IniFormat)
+        # print(self.settings.fileName())
+
+        self.setWindowTitle(PyMagVersion + " - New stimulus")
+
+        self.setFixedSize(650, 600)
+        self.layout = QtWidgets.QHBoxLayout()
+        self.setLayout(self.layout)
+
+        self.OKButton = QtWidgets.QPushButton()
+
+        self.table_stimulus = pg.TableWidget(editable=True, sortable=False)
+        data = np.zeros((4, 1))
+        columns = ['Hext (A/m)']
+        self.table_stimulus.setData(data)
+        self.table_stimulus.setHorizontalHeaderLabels(['Hx', 'Hy', 'Hz'])
+
+        self.LLGparams = QtGui.QGridLayout()
+        self.LLGparamsLabel = QLabel("LLG simulation parameters:")
+        self.LLGSteps = LabeledDoubleSpinBox(label="Simulation steps of LLG", minimum=10, maximum=1e6, value=1000)
+        self.LLGTime = LabeledDoubleSpinBox(label="Simulation time of LLG [ns]", minimum=0.001, maximum=1e3, value=5)
+        self.LLGparams.addWidget(self.LLGparamsLabel, 0, 0)
+        self.LLGparams.addWidget(self.LLGTime.Label, 1, 0)
+        self.LLGparams.addWidget(self.LLGTime.Value, 1, 1)
+        self.LLGparams.addWidget(self.LLGSteps.Label, 2, 0)
+        self.LLGparams.addWidget(self.LLGSteps.Value, 2, 1)
+
+        self.FieldLayout = QtGui.QGridLayout()
+        self.FieldLayoutLabel = QLabel("Field H simulation parameters:")
+        self.HMin = LabeledDoubleSpinBox(label="HMin (A/m)", minimum=-1e9, maximum=1e9, value=-1e3)
+        self.HMax = LabeledDoubleSpinBox(label="HMax (A/m)", minimum=-1e9, maximum=1e9, value=1e3)
+        self.HSteps = LabeledDoubleSpinBox(label="Steps", minimum=0, maximum=1e6, value=50)
+        self.HBack = LabeledDoubleSpinBox(label="Back", value=False, mode='Binary')
+        self.HTheta = LabeledDoubleSpinBox(label="Out of plane angle (theta)\n 0-out of plane, 90 - in plane", minimum=-360, maximum=360, value=90)
+        self.HPhi = LabeledDoubleSpinBox(label="In plane angle (phi)", minimum=-360, maximum=360, value=0.0)
+
+        self.FieldLayout.addWidget(self.FieldLayoutLabel, 0, 0)
+        self.FieldLayout.addWidget(self.HMin.Label, 1, 0)
+        self.FieldLayout.addWidget(self.HMin.Value, 1, 1)
+        self.FieldLayout.addWidget(self.HMax.Label, 2, 0)
+        self.FieldLayout.addWidget(self.HMax.Value, 2, 1)
+        self.FieldLayout.addWidget(self.HSteps.Label, 3, 0)
+        self.FieldLayout.addWidget(self.HSteps.Value, 3, 1)
+        self.FieldLayout.addWidget(self.HBack.Label, 4,  0)
+        self.FieldLayout.addWidget(self.HBack.Value, 4,  1)
+        self.FieldLayout.addWidget(self.HTheta.Label, 5, 0)
+        self.FieldLayout.addWidget(self.HTheta.Value, 5, 1)
+        self.FieldLayout.addWidget(self.HPhi.Label, 6,0)
+        self.FieldLayout.addWidget(self.HPhi.Value, 6,1)
+
+        self.SpinDiodeLayout = QtGui.QGridLayout()
+        self.SpinDiodeLayoutLabel = QLabel("Spin diode simulation parameters:")
+        self.IAC = LabeledDoubleSpinBox(label = "I(AC) [A]", minimum=0, maximum=1, value=0.01)
+        self.IDC = LabeledDoubleSpinBox(label="I(DC) [A]", minimum=0, maximum=1, value=0)
+        self.IACphi = LabeledDoubleSpinBox(label="Phase shift psi [deg]", minimum=0, maximum=360, value=0)
+        self.fMin = LabeledDoubleSpinBox(label="fMin [GHz]", minimum=0, maximum=100, value=0)
+        self.fMax = LabeledDoubleSpinBox(label="fMax [GHz]", minimum=0, maximum=100, value=12)
+        self.fSteps = LabeledDoubleSpinBox(label="fSteps", minimum=0, maximum=1000, value=12, mode = 'Integer')
+
+        self.SpinDiodeLayout.addWidget(self.SpinDiodeLayoutLabel, 0, 0)
+
+        self.SpinDiodeLayout.addWidget(self.IAC.Label,1,0)
+        self.SpinDiodeLayout.addWidget(self.IAC.Value,1,1)
+        self.SpinDiodeLayout.addWidget(self.IDC.Label, 2, 0)
+        self.SpinDiodeLayout.addWidget(self.IDC.Value, 2, 1)
+        self.SpinDiodeLayout.addWidget(self.IACphi.Label, 3, 0)
+        self.SpinDiodeLayout.addWidget(self.IACphi.Value, 3, 1)
+        self.SpinDiodeLayout.addWidget(self.fMin.Label, 4, 0)
+        self.SpinDiodeLayout.addWidget(self.fMin.Value, 4, 1)
+        self.SpinDiodeLayout.addWidget(self.fSteps.Label, 5, 0)
+        self.SpinDiodeLayout.addWidget(self.fSteps.Value, 5, 1)
+        self.SpinDiodeLayout.addWidget(self.fMax.Label, 6, 0)
+        self.SpinDiodeLayout.addWidget(self.fMax.Value, 6, 1)
+
+
+        self.btn_layout = QtWidgets.QVBoxLayout()
+
+
+        self.btn_layout.addLayout(self.FieldLayout)
+        self.btn_layout.addLayout(self.SpinDiodeLayout)
+        self.btn_layout.addLayout(self.LLGparams)
+        self.layout.addLayout(self.btn_layout)
+        self.layout.addWidget(self.table_stimulus)
+        self.btn_layout.addWidget(self.OKButton)
+        self.OKButton.setText("OK")
+
+        self.OKButton.clicked.connect(self.generateStimulus)
+
+        self.HMin.Value.valueChanged.connect(self.Stimulus_update)
+        self.HMax.Value.valueChanged.connect(self.Stimulus_update)
+        self.HSteps.Value.valueChanged.connect(self.Stimulus_update)
+        self.HPhi.Value.valueChanged.connect(self.Stimulus_update)
+        self.HTheta.Value.valueChanged.connect(self.Stimulus_update)
+        self.HBack.Value.stateChanged.connect(self.Stimulus_update)
