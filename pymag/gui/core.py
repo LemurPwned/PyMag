@@ -63,21 +63,21 @@ class SimulationParameters():
         theta_max = 180
         phi_min = 0
         phi_max = 360
-        H_min = -1e12
-        H_max = 1e12
+        H_min = -1e9
+        H_max = 1e9
         f_min = 0
-        f_max = 1e12
+        f_max = 1e3
         I_RF_min = 0
         I_RF_max = 1
         steps_min = 1
         steps_max = 1e9
 
-        H_unit = "A/m"
+        H_unit = "kA/m"
         angle_unit  = "deg"
-        f_units = "Hz"
+        f_units = "GHz"
         I_unit = "A"
         V_unit = "V"
-        time_unit = "s"
+        time_unit = "ns"
 
 
         self.stimulus_layout = QtGui.QGridLayout()
@@ -108,6 +108,11 @@ class SimulationParameters():
 
         self.stimulus_spinboxes_H = []
         self.stimulus_labels__ = []
+
+
+
+
+
 
         for i in range (0,5):
             self.stimulus_labels__.append(QLabel())
@@ -151,9 +156,62 @@ class SimulationParameters():
             self.ACDC_source.addItem(directions[i])
         self.stimulus_layout.addWidget(self.ACDC_source,1,6)
 
+        import pyqtgraph.opengl as gl
+        self.w = gl.GLViewWidget()
+        self.w.opts['distance'] = 45.0  
+        self.w.opts['fov'] = 60  
+        self.w.opts['elevation'] = 10 
+        self.w.opts['azimuth'] = 90  
+        self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
+        self.w.setGeometry(450, 700, 980, 700)  
+        # self.w.show()
+                # create the background grids
+        gx = gl.GLGridItem()
+        gx.rotate(90, 0, 1, 0)
+        gx.translate(-10, 0, 0)
+        self.w.addItem(gx)
+        gy = gl.GLGridItem()
+        gy.rotate(90, 1, 0, 0)
+        gy.translate(0, -10, 0)
+        self.w.addItem(gy)
+        gz = gl.GLGridItem()
+        gz.translate(0, 0, -10)
+        self.w.addItem(gz)
 
 
 
+        verts = np.array([(-1.0, -1.0, 0.0),
+                          (1.0, -1.0, 0.0),
+                          (-1.0, 1.0, 0.0),
+                          (1.0, 1.0, 0.0),
+                          (-2, -3, -4),
+                          (-2, -3, 0.3),
+                          (-2, 3, -4),
+                          (-2, 3, 0.3),
+                          (2, -3, -4),
+                          (2, -3, 0.3),
+                          (2, 3, -4),
+                          (2, 3, 0.3),
+                          (-1.0, -1.0, 5),
+                          (1.0, -1.0, 5),
+                          (-1.0, 1.0, 5),
+                          (1.0, 1.0, 5)])
+
+        faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4),
+                          (7, 10, 6), (11, 8, 10), (9, 4, 8),
+                          (10, 4, 6), (7, 9, 11), (5, 7, 6),
+                          (7, 11, 10), (11, 9, 8), (9, 5, 4),
+                          (10, 8, 4), (7, 5, 9), (13, 14, 12),
+                          (13, 15, 14)])
+
+        colors = np.array([[1, i/16, 1, 1] for i in range(len(faces))])
+
+
+        self.object = gl.GLMeshItem(vertexes=verts, faces=faces, faceColors=colors, smooth=False, shader='shaded', glOptions='opaque')
+        self.w.addItem(self.object)
+
+
+        self.stimulus_layout.addWidget(self.w,2,5,5,2)
 
 
     def H_mode_changed(self):
