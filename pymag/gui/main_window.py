@@ -176,6 +176,8 @@ class UIMainWindow(QMainWindow):
                 # compute backend
                 for indx in sim_indx:
                     self.global_sim_manager.reset_simulation_output(indx)
+                    self.global_sim_manager.update_status(
+                        indx, SimulationStatus.KILLED)
                 self.plot_manager.clear_simulation_plots()
             elif status == SimulationStatus.IN_PROGRESS:
                 self.global_sim_manager.update_simulation_data(sim_indx, res)

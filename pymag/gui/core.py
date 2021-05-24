@@ -234,7 +234,7 @@ class SimulationParameters():
     def add_layer(self):
         self.table_layer_params.addRow([
             1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
-            0.01, 100, 120, 1
+            0.01, 100, 120, 1, [0, 0, 0], 0, 0, 0
         ])
 
     def remove_layer(self):

@@ -229,5 +229,6 @@ class SolverTask(QtCore.QThread):
                 progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
                 self.progress.emit(progr)
                 final_PIMM.append(partial_result.PIMM.tolist()[0])
-            self.queue.put((sim_index, ..., SimulationStatus.DONE))
+            if not self.is_killed:
+                self.queue.put((sim_index, ..., SimulationStatus.DONE))
         self.queue.put(({}, ..., SimulationStatus.ALL_DONE))

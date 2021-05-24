@@ -1,13 +1,8 @@
 import json
 import os
-
-from numba.core.types.containers import ListTypeIterableType
-from pymag import engine
-from re import M
-import re
-
 from pymag.engine.utils import get_stimulus
-from typing import Any, Dict, List, Optional, Union
+from pymag.gui.utils import unicode_subs
+from typing import Any, Dict, List
 from pydantic import BaseModel
 import numpy as np
 import pandas as pd
@@ -193,6 +188,7 @@ class Layer(GenericHolder, GUIObject):
                  lam,
                  beta,
                  eng,
+                 T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]) -> None:
         super().__init__()
@@ -219,6 +215,7 @@ class Layer(GenericHolder, GUIObject):
         self.lam = float(lam)
         self.beta = float(beta)
         self.eng = float(eng)
+        self.T = float(T)
 
     def to_cmtj(self) -> cmtj.Layer:
         N = [
@@ -242,7 +239,7 @@ class Layer(GenericHolder, GUIObject):
             Ms=self.Ms,
             thickness=self.th,
             cellSurface=0,
-            temperature=0,
+            temperature=self.T,
             dipoleTensor=[cmtj.CVector(*self.dipole[i]) for i in range(3)],
             demagTensor=N,
             damping=self.alpha,
@@ -273,13 +270,14 @@ class Layer(GenericHolder, GUIObject):
                  lam,
                  beta,
                  eng,
+                 T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
         parsed_Kdir = Layer.parse_list(Kdir)
         parsed_N = Layer.parse_list(N)
         parsed_p = Layer.parse_list(p)
         return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
-                   SMR, AHE, Rx0, Ry0, w, l, parsed_p, lam, beta, eng, mag,
+                   SMR, AHE, Rx0, Ry0, w, l, parsed_p, lam, beta, eng, T, mag,
                    dipole)
 
     def to_gui(self):
@@ -290,6 +288,8 @@ class Layer(GenericHolder, GUIObject):
         res = {}
         for itm in headers:
             _itm = getattr(self, itm)
+            if itm in unicode_subs:
+                itm = unicode_subs[itm]
             if isinstance(_itm, np.ndarray):
                 res[itm] = _itm.tolist()
             else:
