@@ -88,15 +88,18 @@ class SimulationParameters():
         self.stimulus_layout = QtGui.QGridLayout()
         self.stimulus_layout.addWidget(QLabel("H sweep mode"), 0, 0)
 
+
+        stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
+
         self.stimulus_labels_H = [
             ["H start", "H steps", "H stop", "\u03B8", "\u03C6"],
             ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
             ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
         ]
-        
+
         self.stimulus_labels_generals = [
-            "LLG time", "LLG steps", "DC current", "RF current", "frequeny min",
-            "frequency steps", "frequency max"
+            "LLG time", "LLG steps", "DC current", "RF current",
+            "frequency min", "frequency steps", "frequency max"
         ]
         self.stimulus_labels_directions = [
             "Voltmeter dir", "Current source dir"
@@ -120,10 +123,17 @@ class SimulationParameters():
                                ],
                                [H_max, theta_max, phi_max, steps_max, phi_max]]
 
-
-        self.stimulus_general_min = [LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min, f_min]
-        self.stimulus_general_max = [LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max, f_max]
-        self.stimulus_general_units = [time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit]
+        self.stimulus_general_min = [
+            LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min,
+            f_min
+        ]
+        self.stimulus_general_max = [
+            LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max,
+            f_max
+        ]
+        self.stimulus_general_units = [
+            time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit
+        ]
 
         self.stimulus_spinboxes_H = []
         self.stimulus_labels__ = []
@@ -132,19 +142,18 @@ class SimulationParameters():
             self.stimulus_labels__.append(QLabel())
             self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
             self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,1)
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,
+                                           1)
 
         self.central_layout.addLayout(self.stimulus_layout)
 
         self.H_sweep_mode = QComboBox()
         self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
-        stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
         for i in range(0, len(stimulus_H_modes_names)):
             self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
         self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
         self.H_mode_changed()
 
-        
         for i in range(0, len(self.stimulus_labels_directions)):
             self.stimulus_layout.addWidget(
                 QLabel(self.stimulus_labels_directions[i]), i, 5)
@@ -152,14 +161,17 @@ class SimulationParameters():
         self.stimulus_spinboxes_generals = []
 
         for i in range(0, len(self.stimulus_labels_generals)):
-            self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_generals[i]+ " ("+ self.stimulus_general_units[i] +")"), i, 3)
+            self.stimulus_layout.addWidget(
+                QLabel(self.stimulus_labels_generals[i] + " (" +
+                       self.stimulus_general_units[i] + ")"), i, 3)
 
             self.stimulus_spinboxes_generals.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i], i,4)
-            self.stimulus_spinboxes_generals[i].setMinimum(self.stimulus_general_min[i])
-            self.stimulus_spinboxes_generals[i].setMaximum(self.stimulus_general_max[i])
-
-
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i],
+                                           i, 4)
+            self.stimulus_spinboxes_generals[i].setMinimum(
+                self.stimulus_general_min[i])
+            self.stimulus_spinboxes_generals[i].setMaximum(
+                self.stimulus_general_max[i])
 
         directions = ["x", "y", "z"]
         self.voltmeter = QComboBox()
@@ -171,9 +183,6 @@ class SimulationParameters():
         for i in range(0, len(directions)):
             self.ACDC_source.addItem(directions[i])
         self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
-
-
-
 
         self.w = gl.GLViewWidget()
         self.w.opts['distance'] = 45.0
@@ -219,6 +228,16 @@ class SimulationParameters():
         self.w.addItem(self.object)
 
         self.stimulus_layout.addWidget(self.w, 2, 5, 5, 2)
+
+    @classmethod
+    def to_object(self):
+        ...
+
+
+    def deduce_H(self):
+        if self.H_sweep_mode.currentIndex() == 0: ... 
+        elif self.H_sweep_mode.currentIndex() == 1: ... # theta 
+        else: ... # phi
 
     def H_mode_changed(self):
         mode = self.H_sweep_mode.currentIndex()

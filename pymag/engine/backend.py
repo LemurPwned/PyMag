@@ -21,6 +21,7 @@ def compute_vsd(stime, m_xs, frequency, integration_step):
                                        order=3)
     return np.mean(SD_voltage)
 
+
 def compute_vsd_(stime, dynamicR, frequency, integration_step):
     I_amp = 20000
     Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
@@ -37,8 +38,8 @@ def compute_vsd_(stime, dynamicR, frequency, integration_step):
 def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     R_P = Rx0[0]
     R_AP = Ry0[0]
-    
-    if m.ndim==2:
+
+    if m.ndim == 2:
 
         SxAll = np.zeros((number_of_layers, ))
         SyAll = np.zeros((number_of_layers, ))
@@ -50,13 +51,14 @@ def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     for i in range(0, number_of_layers):
         w_l = w[i] / l[i]
         SxAll[i] = 1 / (Rx0[i] + (AMR[i] * m[i, 0]**2 + SMR[i] * m[i, 1]**2))
-        SyAll[i] = 1 / (Ry0[i] + 0.5 * AHE[i] * m[i, 2] + (w_l) * (SMR[i] - AMR[i]) * m[i, 0] * m[i, 1])
+        SyAll[i] = 1 / (Ry0[i] + 0.5 * AHE[i] * m[i, 2] + (w_l) *
+                        (SMR[i] - AMR[i]) * m[i, 0] * m[i, 1])
 
-    Rx = 1 / np.sum(SxAll,axis=0)
-    Ry = 1 / np.sum(SyAll,axis=0)
+    Rx = 1 / np.sum(SxAll, axis=0)
+    Ry = 1 / np.sum(SyAll, axis=0)
 
     if number_of_layers > 1:
-        Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :],axis=0))
+        Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :], axis=0))
     else:
         Rz = 0
 
@@ -87,6 +89,11 @@ class SolverTask(QtCore.QThread):
         s_time = stimulus.LLG_time
         int_step = s_time / stimulus.LLG_steps
         org_layers = sim_input.layers
+        
+
+
+        # Irf = stimulus
+
         Rx0 = np.asarray([l.Rx0 for l in org_layers])
         Ry0 = np.asarray([l.Ry0 for l in org_layers])
         SMR = np.asarray([l.SMR for l in org_layers])
@@ -94,6 +101,12 @@ class SolverTask(QtCore.QThread):
         AHE = np.asarray([l.AHE for l in org_layers])
         w = np.asarray([l.w for l in org_layers])
         l = np.asarray([l.l for l in org_layers])
+        
+        # Hoe is 
+        Hoes = np.asarray([l.Hoe for l in org_layers])
+
+
+
         no_org_layers = len(org_layers)
 
         org_layer_strs = [
@@ -180,12 +193,13 @@ class SolverTask(QtCore.QThread):
                     log[f'{org_layer_strs[i]}_mz']
                 ] for i in range(no_org_layers)])
 
-                dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
+                dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR,
+                                                      m, no_org_layers, l, w)
 
                 vmix = compute_vsd_(stime=np.asarray(log['time']),
-                                   dynamicR=dynamicR,
-                                   frequency=frequency,
-                                   integration_step=int_step)
+                                    dynamicR=dynamicR,
+                                    frequency=frequency,
+                                    integration_step=int_step)
                 SD_results.append(vmix)
             # run PIMM
             if not self.handle_signals():
