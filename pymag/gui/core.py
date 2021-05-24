@@ -67,15 +67,21 @@ class SimulationParameters():
         H_max = 1e9
         f_min = 0
         f_max = 1e3
+        I_dc_min = 0
+        I_dc_max = 1000
         I_RF_min = 0
-        I_RF_max = 1
+        I_RF_max = 1000
         steps_min = 1
         steps_max = 1e9
+        LLG_time_min = 1e-15
+        LLG_steps_min = 10
+        LLG_time_max = 1e-3
+        LLG_steps_max = 1e9
 
         H_unit = "kA/m"
-        angle_unit = "\u030Adeg"
-        f_units = "GHz"
-        I_unit = "A"
+        angle_unit = "deg"
+        f_unit = "GHz"
+        I_unit = "uA"
         V_unit = "V"
         time_unit = "ns"
 
@@ -87,9 +93,9 @@ class SimulationParameters():
             ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
             ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
         ]
-
-        self.stimulus_labels_electrics = [
-            "LLG time", "LLG steps", "RF current", "frequeny min",
+        
+        self.stimulus_labels_generals = [
+            "LLG time", "LLG steps", "DC current", "RF current", "frequeny min",
             "frequency steps", "frequency max"
         ]
         self.stimulus_labels_directions = [
@@ -114,6 +120,11 @@ class SimulationParameters():
                                ],
                                [H_max, theta_max, phi_max, steps_max, phi_max]]
 
+
+        self.stimulus_general_min = [LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min, f_min]
+        self.stimulus_general_max = [LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max, f_max]
+        self.stimulus_general_units = [time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit]
+
         self.stimulus_spinboxes_H = []
         self.stimulus_labels__ = []
 
@@ -121,8 +132,7 @@ class SimulationParameters():
             self.stimulus_labels__.append(QLabel())
             self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
             self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,
-                                           1)
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,1)
 
         self.central_layout.addLayout(self.stimulus_layout)
 
@@ -134,15 +144,24 @@ class SimulationParameters():
         self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
         self.H_mode_changed()
 
-        directions = ["x", "y", "z"]
+        
         for i in range(0, len(self.stimulus_labels_directions)):
             self.stimulus_layout.addWidget(
                 QLabel(self.stimulus_labels_directions[i]), i, 5)
 
-        for i in range(0, len(self.stimulus_labels_electrics)):
-            self.stimulus_layout.addWidget(
-                QLabel(self.stimulus_labels_electrics[i]), i, 3)
+        self.stimulus_spinboxes_generals = []
 
+        for i in range(0, len(self.stimulus_labels_generals)):
+            self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_generals[i]+ " ("+ self.stimulus_general_units[i] +")"), i, 3)
+
+            self.stimulus_spinboxes_generals.append(QDoubleSpinBox())
+            self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i], i,4)
+            self.stimulus_spinboxes_generals[i].setMinimum(self.stimulus_general_min[i])
+            self.stimulus_spinboxes_generals[i].setMaximum(self.stimulus_general_max[i])
+
+
+
+        directions = ["x", "y", "z"]
         self.voltmeter = QComboBox()
         for i in range(0, len(directions)):
             self.voltmeter.addItem(directions[i])
@@ -152,6 +171,9 @@ class SimulationParameters():
         for i in range(0, len(directions)):
             self.ACDC_source.addItem(directions[i])
         self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
+
+
+
 
         self.w = gl.GLViewWidget()
         self.w.opts['distance'] = 45.0
