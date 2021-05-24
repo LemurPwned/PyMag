@@ -1,5 +1,14 @@
 from PyQt5.QtWidgets import QLabel, QSpinBox, QDoubleSpinBox, QCheckBox
 
+unicode_subs = {
+    "theta": "\u03B8",
+    "phi": "\u03C6",
+    "lam": "\u03BB",
+    "beta": "\u03B2",
+    "eng": "\u014B"
+}
+inverse_subs = {v: k for k, v in unicode_subs.items()}
+
 
 class LabelledDoubleSpinBox():
     def __init__(self,

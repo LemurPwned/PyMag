@@ -9,7 +9,8 @@ import logging
 import pandas as pd
 import pyqtgraph as pg
 import multiprocessing as mp
-from pymag.engine.utils import PyMagVersion, SimulationStatus
+from pymag import __version__
+from pymag.engine.utils import SimulationStatus
 from pymag.gui.core import AddMenuBar, SimulationParameters, ResultsTable
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from PyQt5.QtWidgets import QMainWindow
@@ -29,8 +30,8 @@ class UIMainWindow(QMainWindow):
             default_stimulus_file, default_layer_parameters_file)
 
         # main window properties
-        self.setObjectName(PyMagVersion)
-        self.setWindowTitle(PyMagVersion)
+        self.setObjectName(__version__)
+        self.setWindowTitle(__version__)
         self.resize(1400, 900)
 
         # dock area as a central widget of GUI

@@ -3,14 +3,15 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 import pyqtgraph as pg
+import pyqtgraph.opengl as gl
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.plot_manager import PlotManager
 from pymag.gui.simulation_manager import (ExperimentManager, GeneralManager,
                                           Simulation)
-from pymag.gui.utils import LabelledDoubleSpinBox
+from pymag.gui.utils import LabelledDoubleSpinBox, unicode_subs, inverse_subs
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel
+from PyQt5.QtWidgets import QComboBox, QDoubleSpinBox, QLabel
 
 
 class SimulationParameters():
@@ -18,14 +19,13 @@ class SimulationParameters():
     Don't pass parent -- pass Layer & Stimulus
     """
     def __init__(self, parent, layer_parameters, stimulus_parameters):
-
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         header = self.table_layer_params.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
-        self.table_stimulus_params = pg.TableWidget(editable=True,
-                                                    sortable=False)
+        self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
+            editable=True, sortable=False)
         stimulus_header = self.table_stimulus_params.horizontalHeader()
         stimulus_header.setSectionResizeMode(
             QtWidgets.QHeaderView.ResizeToContents)
@@ -38,13 +38,13 @@ class SimulationParameters():
         self.remove_button.setText("Remove selected\n layer")
         self.remove_button.clicked.connect(self.remove_layer)
         self.add_simulation.setText("Add to \nsimulation list")
-        self.add_simulation.clicked.connect(
-            parent.add_to_simulation_list
-        )  #zastanawiam się jak zrobić to najbardziej elegancko
+        self.add_simulation.clicked.connect(parent.add_to_simulation_list)
 
         self.table_layer_params.setData(layer_parameters.to_numpy())
-        self.table_layer_params.setHorizontalHeaderLabels(
-            layer_parameters.columns)
+        self.table_layer_params.setHorizontalHeaderLabels([
+            unicode_subs[c] if c in unicode_subs else c
+            for c in layer_parameters.columns
+        ])
         self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
         self.table_stimulus_params.setHorizontalHeaderLabels(
             stimulus_parameters.columns)
@@ -143,11 +143,6 @@ class SimulationParameters():
             self.stimulus_layout.addWidget(
                 QLabel(self.stimulus_labels_electrics[i]), i, 3)
 
-        # for i in range(0, len(self.stimulus_labels_directions)):
-        #         self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_directions[i]),i,5)
-        #         self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-        #         self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i],i+1,1)
-
         self.voltmeter = QComboBox()
         for i in range(0, len(directions)):
             self.voltmeter.addItem(directions[i])
@@ -158,7 +153,6 @@ class SimulationParameters():
             self.ACDC_source.addItem(directions[i])
         self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
 
-        import pyqtgraph.opengl as gl
         self.w = gl.GLViewWidget()
         self.w.opts['distance'] = 45.0
         self.w.opts['fov'] = 60
@@ -227,7 +221,10 @@ class SimulationParameters():
         tmp_df = pd.DataFrame()
         tmp_col_name = []
         for i in range(number_of_columns):
-            tmp_col_name.append(table.takeHorizontalHeaderItem(i).text())
+            name = table.takeHorizontalHeaderItem(i).text()
+            if name in inverse_subs:
+                name = inverse_subs[name]
+            tmp_col_name.append(name)
             for j in range(number_of_rows):
                 tmp_df.loc[j, i] = table.item(j, i).text()
         table.setHorizontalHeaderLabels(tmp_col_name)

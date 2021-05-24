@@ -1,5 +1,8 @@
 import json
 import os
+
+from numba.core.types.containers import ListTypeIterableType
+from pymag import engine
 from re import M
 import re
 
@@ -186,6 +189,10 @@ class Layer(GenericHolder, GUIObject):
                  Ry0,
                  w,
                  l,
+                 p,
+                 lam,
+                 beta,
+                 eng,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]) -> None:
         super().__init__()
@@ -207,6 +214,11 @@ class Layer(GenericHolder, GUIObject):
         self.Ry0 = float(Ry0)
         self.w = float(w)
         self.l = float(l)
+        self.p = p
+        self.p = np.asarray(self.p) / np.linalg.norm(self.p)
+        self.lam = float(lam)
+        self.beta = float(beta)
+        self.eng = float(eng)
 
     def to_cmtj(self) -> cmtj.Layer:
         N = [
@@ -214,6 +226,15 @@ class Layer(GenericHolder, GUIObject):
             cmtj.CVector(0, self.N[1], 0),
             cmtj.CVector(0, 0, self.N[2])
         ]
+        if self.beta == 0 and self.eng == 0 and self.lam == 0:
+            stt_params = {'includeSTT': False}
+        else:
+            stt_params = {
+                "SlonczewskiSpacerLayerParameter": self.lam,
+                "includeSTT": True,
+                "beta": self.beta,
+                "spinPolarisation": self.eng
+            }
         clayer = cmtj.Layer(
             id=str(self.layer),
             mag=cmtj.CVector(*self.mag),
@@ -224,10 +245,11 @@ class Layer(GenericHolder, GUIObject):
             temperature=0,
             dipoleTensor=[cmtj.CVector(*self.dipole[i]) for i in range(3)],
             demagTensor=N,
-            includeSTT=0,
-            damping=self.alpha)
+            damping=self.alpha,
+            **stt_params)
         clayer.setAnisotropyDriver(cmtj.ScalarDriver.getConstantDriver(
             self.Ku))
+        clayer.setReferenceLayer(cmtj.CVector(*self.p.tolist()))
         return clayer
 
     @classmethod
@@ -247,30 +269,23 @@ class Layer(GenericHolder, GUIObject):
                  Ry0,
                  w,
                  l,
+                 p,
+                 lam,
+                 beta,
+                 eng,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
         parsed_Kdir = Layer.parse_list(Kdir)
         parsed_N = Layer.parse_list(N)
+        parsed_p = Layer.parse_list(p)
         return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
-                   SMR, AHE, Rx0, Ry0, w, l, mag, dipole)
+                   SMR, AHE, Rx0, Ry0, w, l, parsed_p, lam, beta, eng, mag,
+                   dipole)
 
     def to_gui(self):
         headers = [
-            "layer",
-            "Ms",
-            "Ku",
-            "Kdir",
-            "J",
-            "alpha",
-            "N",
-            "th",
-            "AMR",
-            "SMR",
-            "AHE",
-            "Rx0",
-            "Ry0",
-            "w",
-            "l",
+            "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
+            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng"
         ]
         res = {}
         for itm in headers:
