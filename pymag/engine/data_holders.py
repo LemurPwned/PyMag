@@ -154,14 +154,14 @@ class ResultHolder(GenericHolder):
             spin_diode = pd.DataFrame(data=self.SD,
                                       columns=self.SD_freqs,
                                       index=self.H_mag)
-            spin_diode.to_csv(filename + "_SD.csv", index=False)
+            spin_diode.to_csv(filename + "_SD.csv", index=True)
         except Exception as e:
             print(f"Failed to export spin diode: {e}")
         try:
             pimm = pd.DataFrame(data=self.PIMM,
                                 columns=self.PIMM_freqs[:self.PIMM.shape[1]],
                                 index=self.H_mag)
-            pimm.to_csv(filename + "_PIMM.csv", index=False)
+            pimm.to_csv(filename + "_PIMM.csv", index=True)
         except Exception as e:
             print(f"Failed to export PIMM: {e}")
 

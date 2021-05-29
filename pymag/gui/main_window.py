@@ -152,6 +152,7 @@ class UIMainWindow(QMainWindow):
 
     def add_to_simulation_list(self):
         df_stimulus, df_layers = self.widget_layer_params.get_all_data()
+        print(df_layers.to_dict(orient='records')[0])
         sim_layers = [
             Layer.from_gui(**df_dict)
             for df_dict in df_layers.to_dict(orient="records")
