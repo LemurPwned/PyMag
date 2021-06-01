@@ -1,18 +1,19 @@
-import os
-from pymag.gui.exporter import Exporter
-
-from pymag.gui.simulation_manager import ExperimentManager, Simulation, SimulationManager
-from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
-from pymag.gui.plot_manager import PlotManager
-import queue
 import logging
+import multiprocessing as mp
+import os
+import queue
+
 import pandas as pd
 import pyqtgraph as pg
-import multiprocessing as mp
 from pymag import __version__
+from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
 from pymag.engine.utils import SimulationStatus
-from pymag.gui.core import AddMenuBar, SimulationParameters, ResultsTable
+from pymag.gui.core import AddMenuBar, ResultsTable, SimulationParameters
+from pymag.gui.exporter import Exporter
+from pymag.gui.plot_manager import PlotManager
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
+from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
+                                          SimulationManager)
 from PyQt5.QtWidgets import QMainWindow
 from pyqtgraph.dockarea import Dock, DockArea
 
@@ -151,6 +152,7 @@ class UIMainWindow(QMainWindow):
 
     def add_to_simulation_list(self):
         df_stimulus, df_layers = self.widget_layer_params.get_all_data()
+        print(df_layers.to_dict(orient='records')[0])
         sim_layers = [
             Layer.from_gui(**df_dict)
             for df_dict in df_layers.to_dict(orient="records")

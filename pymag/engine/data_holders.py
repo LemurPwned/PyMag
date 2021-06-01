@@ -1,14 +1,14 @@
 import json
 import os
-from pymag.engine.utils import get_stimulus
-from pymag.gui.utils import unicode_subs
+from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Dict, List
-from pydantic import BaseModel
+
+import cmtj
 import numpy as np
 import pandas as pd
-
-from abc import ABC, abstractclassmethod, abstractmethod
-import cmtj
+from pydantic import BaseModel
+from pymag.engine.utils import get_stimulus
+from pymag.gui.utils import unicode_subs
 
 
 class GUIObject(ABC):
@@ -129,14 +129,13 @@ class ResultHolder(GenericHolder):
 
     def to_csv(self, filename) -> None:
         """
-        :param filename
+        :param filename:
         Save results:
         Dynamics
         Spin Diode
         PIMM 
         to a file
         """
-        print(self.PIMM.shape, len(self.PIMM_freqs[:]))
         try:
             dynamics = pd.DataFrame.from_dict({
                 "mx": self.m_avg[:, 0],
@@ -155,14 +154,14 @@ class ResultHolder(GenericHolder):
             spin_diode = pd.DataFrame(data=self.SD,
                                       columns=self.SD_freqs,
                                       index=self.H_mag)
-            spin_diode.to_csv(filename + "_SD.csv", index=False)
+            spin_diode.to_csv(filename + "_SD.csv", index=True)
         except Exception as e:
             print(f"Failed to export spin diode: {e}")
         try:
             pimm = pd.DataFrame(data=self.PIMM,
                                 columns=self.PIMM_freqs[:self.PIMM.shape[1]],
                                 index=self.H_mag)
-            pimm.to_csv(filename + "_PIMM.csv", index=False)
+            pimm.to_csv(filename + "_PIMM.csv", index=True)
         except Exception as e:
             print(f"Failed to export PIMM: {e}")
 
@@ -188,6 +187,7 @@ class Layer(GenericHolder, GUIObject):
                  lam,
                  beta,
                  eng,
+                 Hoe,
                  T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]) -> None:
@@ -216,6 +216,7 @@ class Layer(GenericHolder, GUIObject):
         self.beta = float(beta)
         self.eng = float(eng)
         self.T = float(T)
+        self.Hoe = float(Hoe)
 
     def to_cmtj(self) -> cmtj.Layer:
         N = [
@@ -270,20 +271,41 @@ class Layer(GenericHolder, GUIObject):
                  lam,
                  beta,
                  eng,
+                 Hoe,
                  T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
         parsed_Kdir = Layer.parse_list(Kdir)
         parsed_N = Layer.parse_list(N)
         parsed_p = Layer.parse_list(p)
-        return cls(layer, alpha, parsed_Kdir, Ku, Ms, J, parsed_N, th, AMR,
-                   SMR, AHE, Rx0, Ry0, w, l, parsed_p, lam, beta, eng, T, mag,
-                   dipole)
+        return cls(layer=layer,
+                   alpha=alpha,
+                   Kdir=parsed_Kdir,
+                   Ku=Ku,
+                   Ms=Ms,
+                   J=J,
+                   N=parsed_N,
+                   th=th,
+                   AMR=AMR,
+                   SMR=SMR,
+                   AHE=AHE,
+                   Rx0=Rx0,
+                   Ry0=Ry0,
+                   w=w,
+                   l=l,
+                   p=parsed_p,
+                   lam=lam,
+                   beta=beta,
+                   eng=eng,
+                   Hoe=Hoe,
+                   T=T,
+                   mag=mag,
+                   dipole=dipole)
 
     def to_gui(self):
         headers = [
             "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
-            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng"
+            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng", "Hoe"
         ]
         res = {}
         for itm in headers:
@@ -303,6 +325,19 @@ class Layer(GenericHolder, GUIObject):
                 "]", "").replace(",", "").split(" ")
         ]
         return actual_list
+
+
+class StimulusObject(BaseModel, GUIObject):
+    H_mode: str
+    H_sweep: List[List[float]]
+
+    LLG_steps: int
+    LLG_time: float
+    I_dc: float
+    I_rf: float
+    frequency_min: float
+    frequency_max: float
+    frequency_steps: int
 
 
 class Stimulus(GenericHolder, GUIObject):
@@ -370,7 +405,6 @@ class Stimulus(GenericHolder, GUIObject):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            # "f": self.
             "H_sweep": self.H_sweep,
             "SD_freqs": self.SD_freqs,
             "LLG_steps": self.LLG_steps,
