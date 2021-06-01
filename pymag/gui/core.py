@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, Tuple, Union
+from typing import ClassVar, List, Tuple, Union
 
 import pandas as pd
 import pyqtgraph as pg
@@ -12,6 +12,423 @@ from pymag.gui.simulation_manager import (ExperimentManager, GeneralManager,
 from pymag.gui.utils import LabelledDoubleSpinBox, unicode_subs, inverse_subs
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QComboBox, QDoubleSpinBox, QLabel
+
+
+
+
+        # H_unit = "kA/m"
+        # angle_unit = "deg"
+        # f_unit = "GHz"
+        # I_unit = "uA"
+        # V_unit = "V"
+        # time_unit = "ns"
+
+
+class Labeled():
+    def __init__(self,
+                 label="Label",
+                 minimum=0,
+                 maximum=1,
+                 value=0,
+                 mode='Double',
+                 item_list = ["1", "2", "3"]):
+        self.Label = QLabel(label)
+        if mode == 'Double':
+            self.Value = QtWidgets.QDoubleSpinBox()
+            self.Value.setMinimum(minimum)
+            self.Value.setMaximum(maximum)
+            self.Value.setValue(value)
+            self.Value.setObjectName(label)
+        elif mode == 'Integer':
+            self.Value = QtWidgets.QSpinBox()
+            self.Value.setMinimum(minimum)
+            self.Value.setMaximum(maximum)
+            self.Value.setValue(value)
+            self.Value.setObjectName(label)
+        if mode == 'Binary':
+            self.Value = QtWidgets.QCheckBox()
+            self.Value.setObjectName(label)
+            self.Value.setChecked(value)
+        if mode == 'Combo':
+            self.Value = QtWidgets.QComboBox()
+            self.Value.setObjectName(label)
+            for i in range(0, len(item_list)):
+                self.Value.addItem(item_list[i])
+            
+
+
+
+
+
+class StimulusGUI():
+    def __init__(self) -> None:
+        
+        
+        # theta_min = 0
+        # theta_max = 180
+        # phi_min = 0
+        # phi_max = 360
+        # H_min = -1e9
+        # H_max = 1e9
+        # f_min = 0
+        # f_max = 1e3
+        # I_dc_min = 0
+        # I_dc_max = 1000
+        # I_RF_min = 0
+        # I_RF_max = 1000
+        # steps_min = 1
+        # steps_max = 1e9
+        # LLG_time_min = 1e-15
+        # LLG_steps_min = 10
+        # LLG_time_max = 1e-3
+        # LLG_steps_max = 1e9
+
+        # H_unit = "kA/m"
+        # angle_unit = "deg"
+        # f_unit = "GHz"
+        # I_unit = "uA"
+        # V_unit = "V"
+        # time_unit = "ns"
+
+        # self.stimulus_layout = QtGui.QGridLayout()
+        # self.stimulus_layout.addWidget(QLabel("H sweep mode"), 0, 0)
+
+        # self.stimulus_labels_H = [
+        #     ["H start", "H steps", "H stop", "\u03B8", "\u03C6"],
+        #     ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
+        #     ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
+        # ]
+        
+        # self.stimulus_labels_generals = [
+        #     "LLG time", "LLG steps", "DC current", "RF current", "frequeny min",
+        #     "frequency steps", "frequency max"
+        # ]
+        # self.stimulus_labels_directions = [
+        #     "Voltmeter dir", "Current source dir"
+        # ]
+
+        # self.stimulus_units_H = [[
+        #     H_unit, "int", H_unit, angle_unit, angle_unit
+        # ], [H_unit, angle_unit, "int", angle_unit,
+        #     angle_unit], [H_unit, angle_unit, angle_unit, "int", angle_unit]]
+
+        # self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
+        #                        [
+        #                            H_min, theta_min, steps_min, theta_min,
+        #                            phi_min
+        #                        ],
+        #                        [H_min, theta_min, phi_min, steps_min, phi_min]]
+        # self.stimulus_H_max = [[H_max, steps_max, H_max, theta_max, phi_max],
+        #                        [
+        #                            H_max, theta_max, steps_max, theta_max,
+        #                            phi_max
+        #                        ],
+        #                        [H_max, theta_max, phi_max, steps_max, phi_max]]
+
+
+        # self.stimulus_general_min = [LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min, f_min]
+        # self.stimulus_general_max = [LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max, f_max]
+        # self.stimulus_general_units = [time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit]
+
+        # self.stimulus_spinboxes_H = []
+        # self.stimulus_labels__ = []
+
+        # for i in range(0, 5):
+        #     self.stimulus_labels__.append(QLabel())
+        #     self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
+        #     self.stimulus_spinboxes_H.append(QDoubleSpinBox())
+        #     self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,1)
+
+
+
+        # self.H_sweep_mode = QComboBox()
+        # self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
+        # stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
+        # for i in range(0, len(stimulus_H_modes_names)):
+        #     self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
+        # self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
+        # self.H_mode_changed()
+
+        
+        # for i in range(0, len(self.stimulus_labels_directions)):
+        #     self.stimulus_layout.addWidget(
+        #         QLabel(self.stimulus_labels_directions[i]), i, 5)
+
+        # self.stimulus_spinboxes_generals = []
+
+        # for i in range(0, len(self.stimulus_labels_generals)):
+        #     self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_generals[i]+ " ("+ self.stimulus_general_units[i] +")"), i, 3)
+
+        #     self.stimulus_spinboxes_generals.append(QDoubleSpinBox())
+        #     self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i], i,4)
+        #     self.stimulus_spinboxes_generals[i].setMinimum(self.stimulus_general_min[i])
+        #     self.stimulus_spinboxes_generals[i].setMaximum(self.stimulus_general_max[i])
+
+
+
+        # directions = ["x", "y", "z"]
+        # self.voltmeter = QComboBox()
+        # for i in range(0, len(directions)):
+        #     self.voltmeter.addItem(directions[i])
+        # self.stimulus_layout.addWidget(self.voltmeter, 0, 6)
+
+        # self.ACDC_source = QComboBox()
+        # for i in range(0, len(directions)):
+        #     self.ACDC_source.addItem(directions[i])
+        # self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
+
+
+
+
+        # self.w = gl.GLViewWidget()
+        # self.w.opts['distance'] = 45.0
+        # self.w.opts['fov'] = 60
+        # self.w.opts['elevation'] = 10
+        # self.w.opts['azimuth'] = 90
+        # self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
+        # self.w.setGeometry(450, 700, 980, 700)
+        # # self.w.show()
+        # # create the background grids
+        # gx = gl.GLGridItem()
+        # gx.rotate(90, 0, 1, 0)
+        # gx.translate(-10, 0, 0)
+        # self.w.addItem(gx)
+        # gy = gl.GLGridItem()
+        # gy.rotate(90, 1, 0, 0)
+        # gy.translate(0, -10, 0)
+        # self.w.addItem(gy)
+        # gz = gl.GLGridItem()
+        # gz.translate(0, 0, -10)
+        # self.w.addItem(gz)
+
+        # verts = np.array([(-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
+        #                   (-1.0, 1.0, 0.0), (1.0, 1.0, 0.0), (-2, -3, -4),
+        #                   (-2, -3, 0.3), (-2, 3, -4), (-2, 3, 0.3),
+        #                   (2, -3, -4), (2, -3, 0.3), (2, 3, -4), (2, 3, 0.3),
+        #                   (-1.0, -1.0, 5), (1.0, -1.0, 5), (-1.0, 1.0, 5),
+        #                   (1.0, 1.0, 5)])
+
+        # faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4), (7, 10, 6),
+        #                   (11, 8, 10), (9, 4, 8), (10, 4, 6), (7, 9, 11),
+        #                   (5, 7, 6), (7, 11, 10), (11, 9, 8), (9, 5, 4),
+        #                   (10, 8, 4), (7, 5, 9), (13, 14, 12), (13, 15, 14)])
+
+        # colors = np.array([[1, i / 16, 1, 1] for i in range(len(faces))])
+
+        # self.object = gl.GLMeshItem(vertexes=verts,
+        #                             faces=faces,
+        #                             faceColors=colors,
+        #                             smooth=False,
+        #                             shader='shaded',
+        #                             glOptions='opaque')
+        # self.w.addItem(self.object)
+
+        # self.stimulus_layout.addWidget(self.w, 2, 5, 5, 2)
+
+        theta_min = 0
+        theta_max = 180
+        phi_min = 0
+        phi_max = 360
+        H_min = -1e9
+        H_max = 1e9
+        f_min = 0
+        f_max = 1e3
+        I_dc_min = 0
+        I_dc_max = 1000
+        I_RF_min = 0
+        I_RF_max = 1000
+        steps_min = 1
+        steps_max = 1e9
+        LLG_time_min = 1e-15
+        LLG_steps_min = 10
+        LLG_time_max = 1e-3
+        LLG_steps_max = 1e9
+
+        H_unit = "kA/m"
+        angle_unit = "deg"
+        f_unit = "GHz"
+        I_unit = "uA"
+        V_unit = "V"
+        time_unit = "ns"
+
+        self.Idc = Labeled(label="I DC",
+                                          minimum=I_dc_min,
+                                          maximum=I_dc_max,
+                                          value=0.01)
+        self.Iac = Labeled(label="I AC",
+                                          minimum=I_dc_min,
+                                          maximum=I_dc_max,
+                                          value=0.01)
+
+        self.LLGtime = Labeled(label="LLG time",
+                                          minimum=LLG_time_min,
+                                          maximum=LLG_time_max,
+                                          value=10)
+        self.LLGsteps = Labeled(label="LLG steps",
+                                          minimum=LLG_steps_min,
+                                          maximum=LLG_steps_max,
+                                          value=10)
+        self.fmin = Labeled(label="f AC",
+                                          minimum=LLG_steps_min,
+                                          maximum=LLG_steps_max,
+                                          value=10)
+        self.steps = Labeled(label="f AC steps",
+                                          minimum=LLG_steps_min,
+                                          maximum=LLG_steps_max,
+                                          value=10)
+        self.fmax = Labeled(label="fmax AC steps",
+                                          minimum=LLG_steps_min,
+                                          maximum=LLG_steps_max,
+                                          value=10)
+
+        self.HMin = Labeled(label="H",
+                                          minimum=H_min,
+                                          maximum=H_max,
+                                          value=-1e3)
+        self.HMax = Labeled(label="-",
+                                          minimum=H_min,
+                                          maximum=H_max,
+                                          value=1e3)
+        self.HSteps = Labeled(label="Steps",
+                                            minimum=steps_min,
+                                            maximum=steps_max,
+                                            value=50)
+        self.HThetaSteps = Labeled(label="Steps",
+                                            minimum=0,
+                                            maximum=1e6,
+                                            value=50)
+        self.HPhiSteps = Labeled(label="Steps",
+                                            minimum=0,
+                                            maximum=1e6,
+                                            value=50)
+        self.HBack = Labeled(label="Back",
+                                           value=False,
+                                           mode='Binary')
+        self.HPhiBack = Labeled(label="Back",
+                                           value=False,
+                                           mode='Binary')
+        self.HThetaBack = Labeled(label="Back",
+                                           value=False,
+                                           mode='Binary')
+        self.HThetaMin = Labeled(
+            label="Theta",
+            minimum=-360,
+            maximum=360,
+            value=90)
+        self.HThetaMax = Labeled(
+            label="Phi",
+            minimum=-360,
+            maximum=360,
+            value=90)
+
+        self.HPhiMin = Labeled(label="(\u03C6)",
+                                          minimum=-360,
+                                          maximum=360,
+                                          value=0.0)
+        self.HPhiMax = Labeled(label="(\u03C6)",
+                                          minimum=-360,
+                                          maximum=360,
+                                          value=0.0)
+        self.HMode = Labeled(label="Field sweep mode",mode="Combo", item_list=["H","Phi","Theta"])
+        self.Idir = Labeled(label="I source",mode="Combo", item_list=["x","y","z"])
+        self.Vdir = Labeled(label="Voltmeter",mode="Combo", item_list=["x","y","z"])
+        self.stimulus_layout = QtGui.QGridLayout()
+
+        # self.stimulus_layout.addWidget(self.HMode.Value, 0, 0)
+        self.LLGError_threshold = Labeled(label="Max dm error",
+                                          minimum=-360,
+                                          maximum=360,
+                                          value=0.0)
+
+
+        self.stimulus_objests = [[QLabel(" "),self.HMode.Label, self.HMode.Value],
+                            [QLabel(" "),     QLabel("Start"),      QLabel("Steps"),        QLabel("Stop"),       QLabel("Value")],
+                            [self.HMin.Label,      self.HMin.Value,      self.HSteps.Value,      self.HMax.Value,      self.HBack.Value],
+                            [self.HPhiMin.Label,   self.HPhiMin.Value,   self.HPhiSteps.Value,   self.HPhiMax.Value,   self.HPhiBack.Value],
+                            [self.HThetaMin.Label, self.HThetaMin.Value, self.HThetaSteps.Value, self.HThetaMax.Value, self.HThetaBack.Value],
+                            [QLabel(" "), QLabel("Electrical")],
+                            [self.fmin.Label, self.fmin.Value, self.steps.Value, self.fmax.Value],
+                            [self.Idir.Label, self.Idir.Value],
+                            [self.Vdir.Label, self.Vdir.Value],
+                            [self.Idc.Label,self.Idc.Value],
+                            [self.Iac.Label,self.Iac.Value],
+                            [QLabel(" "), QLabel("Simulation\nparameters")],
+                            [self.LLGtime.Label,self.LLGtime.Value],
+                            [self.LLGsteps.Label,self.LLGsteps.Value],
+                            [self.LLGError_threshold.Label,self.LLGError_threshold.Value]]
+
+        self.HMode.Value.currentIndexChanged.connect(self.H_mode_changed)
+
+        for i in range(0,len(self.stimulus_objests[:])):
+            for j in range(0,len(self.stimulus_objests[i])):
+                self.stimulus_layout.addWidget(self.stimulus_objests[i][j], i, j)
+
+
+        self.H_mode_changed()
+
+
+    # def get_table_data(self, table: pg.TableWidget):
+    #     number_of_rows = table.rowCount()
+    #     number_of_columns = table.columnCount()
+    #     tmp_df = pd.DataFrame()
+    #     tmp_col_name = []
+    #     for i in range(number_of_columns):
+    #         name = table.takeHorizontalHeaderItem(i).text()
+    #         if name in inverse_subs:
+    #             name = inverse_subs[name]
+    #         tmp_col_name.append(name)
+    #         for j in range(number_of_rows):
+    #             tmp_df.loc[j, i] = table.item(j, i).text()
+    #     table.setHorizontalHeaderLabels(tmp_col_name)
+    #     tmp_df.columns = tmp_col_name
+    #     # d = {'col1': [1, 2], 'col2': [3, 4]}
+    #     print(tmp_df)
+    #     return tmp_df
+
+
+    def H_mode_changed(self):
+
+        mode = self.HMode.Value.currentText()
+
+        if mode == "H":
+
+            self.HMax.Value.setEnabled(True)
+            self.HSteps.Value.setEnabled(True)
+            self.HBack.Value.setEnabled(True)
+
+            self.HPhiSteps.Value.setEnabled(False)
+            self.HPhiMax.Value.setEnabled(False)
+            self.HPhiBack.Value.setEnabled(False)
+
+            self.HThetaSteps.Value.setEnabled(False)
+            self.HThetaMax.Value.setEnabled(False)
+            self.HThetaBack.Value.setEnabled(False)
+
+        if mode == "Phi":
+            self.HMax.Value.setEnabled(False)
+            self.HSteps.Value.setEnabled(False)
+            self.HBack.Value.setEnabled(False)
+
+            self.HPhiSteps.Value.setEnabled(True)
+            self.HPhiMax.Value.setEnabled(True)
+            self.HPhiBack.Value.setEnabled(True)
+
+            self.HThetaSteps.Value.setEnabled(False)
+            self.HThetaMax.Value.setEnabled(False)
+            self.HThetaBack.Value.setEnabled(False)
+
+        if mode == "Theta":
+            self.HMax.Value.setEnabled(False)
+            self.HSteps.Value.setEnabled(False)
+            self.HBack.Value.setEnabled(False)
+
+            self.HPhiSteps.Value.setEnabled(False)
+            self.HPhiMax.Value.setEnabled(False)
+            self.HPhiBack.Value.setEnabled(False)
+
+            self.HThetaSteps.Value.setEnabled(True)
+            self.HThetaMax.Value.setEnabled(True)
+            self.HThetaBack.Value.setEnabled(True)
 
 
 class SimulationParameters():
@@ -59,183 +476,19 @@ class SimulationParameters():
         self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
 
-        theta_min = 0
-        theta_max = 180
-        phi_min = 0
-        phi_max = 360
-        H_min = -1e9
-        H_max = 1e9
-        f_min = 0
-        f_max = 1e3
-        I_dc_min = 0
-        I_dc_max = 1000
-        I_RF_min = 0
-        I_RF_max = 1000
-        steps_min = 1
-        steps_max = 1e9
-        LLG_time_min = 1e-15
-        LLG_steps_min = 10
-        LLG_time_max = 1e-3
-        LLG_steps_max = 1e9
-
-        H_unit = "kA/m"
-        angle_unit = "deg"
-        f_unit = "GHz"
-        I_unit = "uA"
-        V_unit = "V"
-        time_unit = "ns"
-
-        self.stimulus_layout = QtGui.QGridLayout()
-        self.stimulus_layout.addWidget(QLabel("H sweep mode"), 0, 0)
-
-        self.stimulus_labels_H = [
-            ["H start", "H steps", "H stop", "\u03B8", "\u03C6"],
-            ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
-            ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
-        ]
-        
-        self.stimulus_labels_generals = [
-            "LLG time", "LLG steps", "DC current", "RF current", "frequeny min",
-            "frequency steps", "frequency max"
-        ]
-        self.stimulus_labels_directions = [
-            "Voltmeter dir", "Current source dir"
-        ]
-
-        self.stimulus_units_H = [[
-            H_unit, "int", H_unit, angle_unit, angle_unit
-        ], [H_unit, angle_unit, "int", angle_unit,
-            angle_unit], [H_unit, angle_unit, angle_unit, "int", angle_unit]]
-
-        self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
-                               [
-                                   H_min, theta_min, steps_min, theta_min,
-                                   phi_min
-                               ],
-                               [H_min, theta_min, phi_min, steps_min, phi_min]]
-        self.stimulus_H_max = [[H_max, steps_max, H_max, theta_max, phi_max],
-                               [
-                                   H_max, theta_max, steps_max, theta_max,
-                                   phi_max
-                               ],
-                               [H_max, theta_max, phi_max, steps_max, phi_max]]
-
-
-        self.stimulus_general_min = [LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min, f_min]
-        self.stimulus_general_max = [LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max, f_max]
-        self.stimulus_general_units = [time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit]
-
-        self.stimulus_spinboxes_H = []
-        self.stimulus_labels__ = []
-
-        for i in range(0, 5):
-            self.stimulus_labels__.append(QLabel())
-            self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
-            self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,1)
-
-        self.central_layout.addLayout(self.stimulus_layout)
-
-        self.H_sweep_mode = QComboBox()
-        self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
-        stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
-        for i in range(0, len(stimulus_H_modes_names)):
-            self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
-        self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
-        self.H_mode_changed()
+        self.stimulus_GUI = StimulusGUI()
+        self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
 
         
-        for i in range(0, len(self.stimulus_labels_directions)):
-            self.stimulus_layout.addWidget(
-                QLabel(self.stimulus_labels_directions[i]), i, 5)
+        
 
-        self.stimulus_spinboxes_generals = []
-
-        for i in range(0, len(self.stimulus_labels_generals)):
-            self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_generals[i]+ " ("+ self.stimulus_general_units[i] +")"), i, 3)
-
-            self.stimulus_spinboxes_generals.append(QDoubleSpinBox())
-            self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i], i,4)
-            self.stimulus_spinboxes_generals[i].setMinimum(self.stimulus_general_min[i])
-            self.stimulus_spinboxes_generals[i].setMaximum(self.stimulus_general_max[i])
-
-
-
-        directions = ["x", "y", "z"]
-        self.voltmeter = QComboBox()
-        for i in range(0, len(directions)):
-            self.voltmeter.addItem(directions[i])
-        self.stimulus_layout.addWidget(self.voltmeter, 0, 6)
-
-        self.ACDC_source = QComboBox()
-        for i in range(0, len(directions)):
-            self.ACDC_source.addItem(directions[i])
-        self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
-
-
-
-
-        self.w = gl.GLViewWidget()
-        self.w.opts['distance'] = 45.0
-        self.w.opts['fov'] = 60
-        self.w.opts['elevation'] = 10
-        self.w.opts['azimuth'] = 90
-        self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
-        self.w.setGeometry(450, 700, 980, 700)
-        # self.w.show()
-        # create the background grids
-        gx = gl.GLGridItem()
-        gx.rotate(90, 0, 1, 0)
-        gx.translate(-10, 0, 0)
-        self.w.addItem(gx)
-        gy = gl.GLGridItem()
-        gy.rotate(90, 1, 0, 0)
-        gy.translate(0, -10, 0)
-        self.w.addItem(gy)
-        gz = gl.GLGridItem()
-        gz.translate(0, 0, -10)
-        self.w.addItem(gz)
-
-        verts = np.array([(-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
-                          (-1.0, 1.0, 0.0), (1.0, 1.0, 0.0), (-2, -3, -4),
-                          (-2, -3, 0.3), (-2, 3, -4), (-2, 3, 0.3),
-                          (2, -3, -4), (2, -3, 0.3), (2, 3, -4), (2, 3, 0.3),
-                          (-1.0, -1.0, 5), (1.0, -1.0, 5), (-1.0, 1.0, 5),
-                          (1.0, 1.0, 5)])
-
-        faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4), (7, 10, 6),
-                          (11, 8, 10), (9, 4, 8), (10, 4, 6), (7, 9, 11),
-                          (5, 7, 6), (7, 11, 10), (11, 9, 8), (9, 5, 4),
-                          (10, 8, 4), (7, 5, 9), (13, 14, 12), (13, 15, 14)])
-
-        colors = np.array([[1, i / 16, 1, 1] for i in range(len(faces))])
-
-        self.object = gl.GLMeshItem(vertexes=verts,
-                                    faces=faces,
-                                    faceColors=colors,
-                                    smooth=False,
-                                    shader='shaded',
-                                    glOptions='opaque')
-        self.w.addItem(self.object)
-
-        self.stimulus_layout.addWidget(self.w, 2, 5, 5, 2)
-
-    def H_mode_changed(self):
-        mode = self.H_sweep_mode.currentIndex()
-        for i in range(0, 5):
-            self.stimulus_labels__[i].setText(self.stimulus_labels_H[mode][i] +
-                                              " [" +
-                                              (self.stimulus_units_H[mode][i] +
-                                               "]"))
-            self.stimulus_spinboxes_H[i].setMinimum(
-                self.stimulus_H_min[mode][i])
-            self.stimulus_spinboxes_H[i].setMaximum(
-                self.stimulus_H_max[mode][i])
 
     def get_all_data(self):
         return self.get_table_data(
             self.table_stimulus_params), self.get_table_data(
                 self.table_layer_params)
+
+
 
     def get_table_data(self, table: pg.TableWidget):
         number_of_rows = table.rowCount()
@@ -251,6 +504,8 @@ class SimulationParameters():
                 tmp_df.loc[j, i] = table.item(j, i).text()
         table.setHorizontalHeaderLabels(tmp_col_name)
         tmp_df.columns = tmp_col_name
+        # d = {'col1': [1, 2], 'col2': [3, 4]}
+        print(tmp_df)
         return tmp_df
 
     def add_layer(self):
@@ -487,30 +742,10 @@ class About(QtGui.QDialog):
         self.close()
 
 
-class LabeledItem():
-    def __init__(self,
-                 label="Label",
-                 minimum=0,
-                 maximum=1,
-                 value=0,
-                 mode='Double'):
-        self.Label = QLabel(label)
-        if mode == 'Double':
-            self.Value = QtWidgets.QDoubleSpinBox()
-            self.Value.setMinimum(minimum)
-            self.Value.setMaximum(maximum)
-            self.Value.setValue(value)
-            self.Value.setObjectName(label)
-        elif mode == 'Integer':
-            self.Value = QtWidgets.QSpinBox()
-            self.Value.setMinimum(minimum)
-            self.Value.setMaximum(maximum)
-            self.Value.setValue(value)
-            self.Value.setObjectName(label)
-        if mode == 'Binary':
-            self.Value = QtWidgets.QCheckBox()
-            self.Value.setObjectName(label)
-            self.Value.setChecked(value)
+
+
+
+
 
 
 class Stimulus(QtGui.QDialog):
