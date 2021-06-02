@@ -86,8 +86,8 @@ class UIMainWindow(QMainWindow):
         self.d = []
         dock_titles = [
             "Control panel", "PIMM-FMR", "Magnetization", "Simulation results",
-            "Resistance", "SD-FMR", "Measurement management",
-            "Simulation management", "Layer parameters"
+            "Resistance", "SD-FMR", "Measurement manager",
+            "Simulation manager", "Simulation parameters"
         ]
 
         self.central_widget = self.central_layout.central_widget
@@ -103,17 +103,20 @@ class UIMainWindow(QMainWindow):
         self.d.append(Dock(dock_titles[0]))
         self.d[0].addWidget(dock_contents[0])
         for i in range(1, len(dock_titles)):
-            self.d.append(Dock(dock_titles[i], size=(300, 50)))
+            self.d.append(Dock(dock_titles[i], size=(200, 50)))
             self.d[i].addWidget(dock_contents[i])
 
-        dock_pos = [(self.d[0], 'left'), (self.d[1], 'right'),
-                    (self.d[2], 'bottom', self.d[0]),
+        dock_pos = [(self.d[0], 'left'), 
+                    (self.d[6], 'right', self.d[0]),
+                    (self.d[1], 'right', self.d[0]),
+                    
+                    (self.d[2], 'bottom', self.d[1]),
                     (self.d[3], 'above', self.d[2]),
                     (self.d[4], 'above', self.d[2]),
                     (self.d[5], 'above', self.d[1]),
-                    (self.d[6], 'right', self.d[1]),
+                    
                     (self.d[7], 'above', self.d[6]),
-                    (self.d[8], 'top', self.d[1])]
+                    (self.d[8], 'bottom', self.d[0])]
 
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])

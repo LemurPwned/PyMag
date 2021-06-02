@@ -233,6 +233,8 @@ class StimulusGUI():
         H_max = 1e9
         f_min = 0
         f_max = 1e3
+        f_step_min = 1
+        f_step_max = 1e9
         I_dc_min = 0
         I_dc_max = 1000
         I_RF_min = 0
@@ -265,13 +267,13 @@ class StimulusGUI():
                                           maximum=LLG_time_max,
                                           value=10)
         self.LLGsteps = Labeled(label="LLG steps",
-                                          minimum=LLG_steps_min,
-                                          maximum=LLG_steps_max,
+                                          minimum=f_step_min,
+                                          maximum=f_step_max,
                                           value=10,
                                             mode='Integer')
         self.fmin = Labeled(label="f AC",
-                                          minimum=LLG_steps_min,
-                                          maximum=LLG_steps_max,
+                                          minimum=f_min,
+                                          maximum=f_max,
                                           value=0)
         self.fsteps = Labeled(label="f AC steps",
                                           minimum=LLG_steps_min,
@@ -279,8 +281,8 @@ class StimulusGUI():
                                           value=10,
                                           mode='Integer')
         self.fmax = Labeled(label="fmax AC steps",
-                                          minimum=LLG_steps_min,
-                                          maximum=LLG_steps_max,
+                                          minimum=f_min,
+                                          maximum=f_max,
                                           value=20)
 
         self.HMin = Labeled(label="H",
@@ -376,7 +378,7 @@ class StimulusGUI():
 
 
         self.H_mode_changed()
-        # self.get_stimulus_data()
+        self.get_stimulus_data()
 
 
     def get_stimulus_data(self):
@@ -407,6 +409,7 @@ class StimulusGUI():
                 "LLGsteps": [self.LLGsteps.Value.value(), "-", "-",]}
 
         df = pd.concat([pd.DataFrame(tmp_H), pd.DataFrame(tmp)], axis=1)
+        # print("********")
         # print(df)
         return df
 
@@ -507,20 +510,20 @@ class SimulationParameters():
         
 
 
-    def get_all_data(self):
-        # print(self.stimulus_GUI.get_stimulus_data())
-        # print(self.get_table_data(self.table_stimulus_params))
-
-
-        return self.get_table_data(
-            self.table_stimulus_params), self.get_table_data(
-                self.table_layer_params)
-
-
-
-
     # def get_all_data(self):
-    #     return self.stimulus_GUI.get_stimulus_data(), self.get_table_data(self.table_layer_params)
+    #     # print(self.stimulus_GUI.get_stimulus_data())
+    #     # print(self.get_table_data(self.table_stimulus_params))
+
+
+    #     return self.get_table_data(
+    #         self.table_stimulus_params), self.get_table_data(
+    #             self.table_layer_params)
+
+
+
+
+    def get_all_data(self):
+        return self.stimulus_GUI.get_stimulus_data(), self.get_table_data(self.table_layer_params)
 
 
     def get_table_data(self, table: pg.TableWidget):
