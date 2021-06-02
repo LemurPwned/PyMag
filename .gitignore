@@ -6,7 +6,6 @@ var/
 *.sh 
 *.ipynb
 *.npy
-*.png
 *.egg-info/
 var/*
 __pycache__/

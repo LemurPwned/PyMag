@@ -401,7 +401,7 @@ class Stimulus(GenericHolder, GUIObject):
         self.PIMM_freqs = np.arange(0,
                                     self.PIMM_delta_f * self.LLG_steps,
                                     step=self.PIMM_delta_f)
-        self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
+        # self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
