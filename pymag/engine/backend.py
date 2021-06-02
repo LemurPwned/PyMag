@@ -1,7 +1,7 @@
 from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 
-import numba
+# import numba
 from PyQt5 import QtCore
 import time
 import cmtj
@@ -89,8 +89,6 @@ class SolverTask(QtCore.QThread):
         s_time = stimulus.LLG_time
         int_step = s_time / stimulus.LLG_steps
         org_layers = sim_input.layers
-        
-
 
         # Irf = stimulus
 
@@ -101,12 +99,9 @@ class SolverTask(QtCore.QThread):
         AHE = np.asarray([l.AHE for l in org_layers])
         w = np.asarray([l.w for l in org_layers])
         l = np.asarray([l.l for l in org_layers])
-        
-        # Hoe is 
+
+        # Hoe is per Ampere
         Hoes = np.asarray([l.Hoe for l in org_layers])
-
-
-
         no_org_layers = len(org_layers)
 
         org_layer_strs = [
@@ -156,7 +151,7 @@ class SolverTask(QtCore.QThread):
                 np.asarray(log[f"{org_layer_strs[i]}_mz"])
                 for i in range(no_org_layers)
             ],
-                            axis=0)
+                axis=0)
             mixed = np.squeeze(mixed)
             yf = np.abs(fft(mixed))
             # take last m step
