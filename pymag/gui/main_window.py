@@ -156,14 +156,14 @@ class UIMainWindow(QMainWindow):
         os._exit(0)
 
     def add_to_simulation_list(self):
-        df_stimulus, df_layers = self.widget_layer_params.get_all_data()
+        stimulus, df_layers = self.widget_layer_params.get_all_data()
         sim_layers = [
             Layer.from_gui(**df_dict)
             for df_dict in df_layers.to_dict(orient="records")
         ]
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
-                layers=sim_layers, stimulus=Stimulus(df_stimulus))))
+                layers=sim_layers, stimulus=stimulus)))
         self.simulation_manager.update_list()
 
     def start_simulations(self):

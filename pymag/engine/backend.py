@@ -1,4 +1,4 @@
-from pymag.engine.data_holders import Layer, ResultHolder, Stimulus
+from pymag.engine.data_holders import ResultHolder, StimulusObject
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 
 # import numba
@@ -84,7 +84,7 @@ class SolverTask(QtCore.QThread):
 
     def simulation_setup(self, simulation: 'Simulation'):
         sim_input = simulation.get_simulation_input()
-        stimulus: Stimulus = sim_input.stimulus
+        stimulus: StimulusObject = sim_input.stimulus
 
         s_time = stimulus.LLG_time
         int_step = s_time / stimulus.LLG_steps
@@ -200,7 +200,7 @@ class SolverTask(QtCore.QThread):
             if not self.handle_signals():
                 return
             partial_result = ResultHolder(mode=stimulus.mode,
-                                          H_mag=stimulus.Hmag,
+                                          H_mag=stimulus.sweep,
                                           PIMM_freqs=stimulus.PIMM_freqs,
                                           SD_freqs=stimulus.SD_freqs,
                                           SD=SD_results,
@@ -224,7 +224,7 @@ class SolverTask(QtCore.QThread):
 
     def run(self):
         all_H_sweep_vals = sum([
-            sim.get_simulation_input().stimulus.H_sweep.shape[0]
+            len(sim.get_simulation_input().stimulus.H_sweep)
             for sim in self.simulations
         ])
         all_H_indx = 0

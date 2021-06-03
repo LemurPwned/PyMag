@@ -6,7 +6,7 @@ from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
-                                       ResultHolder, SimulationInput, Stimulus)
+                                       ResultHolder, SimulationInput)
 from PyQt5 import QtCore
 
 DEFAULT_SIM_NAME = "Sim"
