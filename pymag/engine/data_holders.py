@@ -327,13 +327,18 @@ class Layer(GenericHolder, GUIObject):
         return actual_list
 
 
-class StimulusObject(BaseModel, GUIObject):
+class StimulusObject(BaseModel):
     H_mode: str
+    sweep: List[float]
     H_sweep: List[List[float]]
 
     LLG_steps: int
     LLG_time: float
+
     I_dc: float
+    I_dir: List[float]
+    V_dir: List[float]
+
     I_rf: float
     frequency_min: float
     frequency_max: float
@@ -421,94 +426,6 @@ class Stimulus(GenericHolder, GUIObject):
     @classmethod
     def from_gui(cls, **kwargs):
         return super().from_gui(**kwargs)
-
-
-
-class Stimulus_(GenericHolder, GUIObject):
-    def __init__(self, data):
-        self.org_data = data
-        self.back = np.array(data["Hback"].values[0], dtype=np.int)
-        if data["H"].values[1] != "-" and data["HPhi"].values[
-                1] == "-" and data["HTheta"].values[1] == "-":
-            self.mode = "H"
-            self.STEPS = np.array(data["H"].values[1], dtype=np.float32)
-            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
-            self.Hmax = np.array(data["H"].values[2], dtype=np.float32)
-            self.ThetaMin = np.array(data["HTheta"].values[0],
-                                     dtype=np.float32)
-            self.ThetaMax = np.array(data["HTheta"].values[0],
-                                     dtype=np.float32)
-            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
-            self.PhiMax = np.array(data["HPhi"].values[0], dtype=np.float32)
-
-        elif data["HPhi"].values[1] != "-" and data["H"].values[
-                1] == "-" and data["HTheta"].values[1] == "-":
-            self.mode = "phi"
-            self.STEPS = np.array(data["HPhi"].values[1], dtype=np.float32)
-            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
-            self.Hmax = np.array(data["H"].values[0], dtype=np.float32)
-            self.ThetaMin = np.array(data["HTheta"].values[0],
-                                     dtype=np.float32)
-            self.ThetaMax = np.array(data["HTheta"].values[0],
-                                     dtype=np.float32)
-            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
-            self.PhiMax = np.array(data["HPhi"].values[2], dtype=np.float32)
-        elif data["HTheta"].values[1] != "-" and data["H"].values[
-                1] == "-" and data["HPhi"].values[1] == "-":
-            self.mode = "theta"
-            self.STEPS = np.array(data["HTheta"].values[1], dtype=np.float32)
-            self.Hmin = np.array(data["H"].values[0], dtype=np.float32)
-            self.Hmax = np.array(data["H"].values[0], dtype=np.float32)
-            self.ThetaMin = np.array(data["HTheta"].values[0],
-                                     dtype=np.float32)
-            self.ThetaMax = np.array(data["HTheta"].values[2],
-                                     dtype=np.float32)
-            self.PhiMin = np.array(data["HPhi"].values[0], dtype=np.float32)
-            self.PhiMax = np.array(data["HPhi"].values[0], dtype=np.float32)
-        else:
-            print("Stimulus error")
-        self.H_sweep, self.Hmag = get_stimulus(self.Hmin, self.Hmax,
-                                               self.ThetaMin, self.ThetaMax,
-                                               self.PhiMin, self.PhiMax,
-                                               self.STEPS, self.back,
-                                               self.mode)
-        self.fmin = np.array(data["f"].values[0], dtype=np.float32)
-        self.fsteps = np.array(data["f"].values[1], dtype=np.int)
-        self.fmax = np.array(data["f"].values[2], dtype=np.float32)
-        self.LLG_time = np.array(data["LLGtime"].values[0], dtype=np.float32)
-        self.LLG_steps = int(
-            np.array(data["LLGsteps"].values[0], dtype=np.float32))
-        self.SD_freqs = np.linspace(self.fmin, self.fmax, self.fsteps)
-        self.spectrum_len = (self.LLG_steps) // 2
-        self.PIMM_delta_f = 1 / self.LLG_time
-
-        self.PIMM_freqs = np.arange(0,
-                                    self.PIMM_delta_f * self.LLG_steps,
-                                    step=self.PIMM_delta_f)
-        self.fphase = np.array(data["fphase"].values[0], dtype=np.float32)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            # "f": self.
-            "H_sweep": self.H_sweep,
-            "SD_freqs": self.SD_freqs,
-            "LLG_steps": self.LLG_steps,
-            "LLG_time": self.LLG_time,
-            "PIMM_delta_f": self.PIMM_delta_f,
-            "H_mag": self.Hmag,
-            "spectrum_len": self.spectrum_len,
-            "mode": self.mode
-        }
-
-    def to_gui(self) -> List:
-        return self.org_data.to_dict(orient="records")
-
-    @classmethod
-    def from_gui(cls, **kwargs):
-        return super().from_gui(**kwargs)
-
-
-
 
 
 class SimulationInput(GenericHolder):

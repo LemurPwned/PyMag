@@ -23,9 +23,11 @@ class UIMainWindow(QMainWindow):
         super().__init__()
         self.setObjectName("PyMag")
         # load defaults
-        default_stimulus_file = os.path.join("pymag", "presets",
+        preset_dir = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'presets'))
+        default_stimulus_file = os.path.join(preset_dir,
                                              "defaultStimulus.csv")
-        default_layer_parameters_file = os.path.join("pymag", "presets",
+        default_layer_parameters_file = os.path.join(preset_dir,
                                                      "defaultParameters.csv")
         self.stimulus_parameters, self.layer_parameters = self.load_defaults(
             default_stimulus_file, default_layer_parameters_file)
@@ -106,15 +108,15 @@ class UIMainWindow(QMainWindow):
             self.d.append(Dock(dock_titles[i], size=(200, 50)))
             self.d[i].addWidget(dock_contents[i])
 
-        dock_pos = [(self.d[0], 'left'), 
+        dock_pos = [(self.d[0], 'left'),
                     (self.d[6], 'right', self.d[0]),
                     (self.d[1], 'right', self.d[0]),
-                    
+
                     (self.d[2], 'bottom', self.d[1]),
                     (self.d[3], 'above', self.d[2]),
                     (self.d[4], 'above', self.d[2]),
                     (self.d[5], 'above', self.d[1]),
-                    
+
                     (self.d[7], 'above', self.d[6]),
                     (self.d[8], 'bottom', self.d[0])]
 
@@ -155,7 +157,6 @@ class UIMainWindow(QMainWindow):
 
     def add_to_simulation_list(self):
         df_stimulus, df_layers = self.widget_layer_params.get_all_data()
-        print(df_layers.to_dict(orient='records')[0])
         sim_layers = [
             Layer.from_gui(**df_dict)
             for df_dict in df_layers.to_dict(orient="records")
