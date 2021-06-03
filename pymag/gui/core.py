@@ -63,188 +63,26 @@ class Labeled():
 class StimulusGUI():
     def __init__(self) -> None:
         
-        
-        # theta_min = 0
-        # theta_max = 180
-        # phi_min = 0
-        # phi_max = 360
-        # H_min = -1e9
-        # H_max = 1e9
-        # f_min = 0
-        # f_max = 1e3
-        # I_dc_min = 0
-        # I_dc_max = 1000
-        # I_RF_min = 0
-        # I_RF_max = 1000
-        # steps_min = 1
-        # steps_max = 1e9
-        # LLG_time_min = 1e-15
-        # LLG_steps_min = 10
-        # LLG_time_max = 1e-3
-        # LLG_steps_max = 1e9
-
-        # H_unit = "kA/m"
-        # angle_unit = "deg"
-        # f_unit = "GHz"
-        # I_unit = "uA"
-        # V_unit = "V"
-        # time_unit = "ns"
-
-        # self.stimulus_layout = QtGui.QGridLayout()
-        # self.stimulus_layout.addWidget(QLabel("H sweep mode"), 0, 0)
-
-        # self.stimulus_labels_H = [
-        #     ["H start", "H steps", "H stop", "\u03B8", "\u03C6"],
-        #     ["H mag", "\u03B8 start", "\u03B8 steps", "\u03B8 stop", "\u03C6"],
-        #     ["H mag", "\u03B8", "\u03C6 start", "\u03C6 steps", "\u03C6 stop"]
-        # ]
-        
-        # self.stimulus_labels_generals = [
-        #     "LLG time", "LLG steps", "DC current", "RF current", "frequeny min",
-        #     "frequency steps", "frequency max"
-        # ]
-        # self.stimulus_labels_directions = [
-        #     "Voltmeter dir", "Current source dir"
-        # ]
-
-        # self.stimulus_units_H = [[
-        #     H_unit, "int", H_unit, angle_unit, angle_unit
-        # ], [H_unit, angle_unit, "int", angle_unit,
-        #     angle_unit], [H_unit, angle_unit, angle_unit, "int", angle_unit]]
-
-        # self.stimulus_H_min = [[H_min, steps_min, H_min, theta_min, phi_min],
-        #                        [
-        #                            H_min, theta_min, steps_min, theta_min,
-        #                            phi_min
-        #                        ],
-        #                        [H_min, theta_min, phi_min, steps_min, phi_min]]
-        # self.stimulus_H_max = [[H_max, steps_max, H_max, theta_max, phi_max],
-        #                        [
-        #                            H_max, theta_max, steps_max, theta_max,
-        #                            phi_max
-        #                        ],
-        #                        [H_max, theta_max, phi_max, steps_max, phi_max]]
-
-
-        # self.stimulus_general_min = [LLG_time_min, LLG_steps_min, I_dc_min, I_RF_min, f_min, steps_min, f_min]
-        # self.stimulus_general_max = [LLG_time_max, LLG_steps_max, I_dc_max, I_RF_max, f_max, steps_max, f_max]
-        # self.stimulus_general_units = [time_unit, "int", I_unit, I_unit, f_unit, "int", f_unit]
-
-        # self.stimulus_spinboxes_H = []
-        # self.stimulus_labels__ = []
-
-        # for i in range(0, 5):
-        #     self.stimulus_labels__.append(QLabel())
-        #     self.stimulus_layout.addWidget(self.stimulus_labels__[i], i + 1, 0)
-        #     self.stimulus_spinboxes_H.append(QDoubleSpinBox())
-        #     self.stimulus_layout.addWidget(self.stimulus_spinboxes_H[i], i + 1,1)
-
-
-
-        # self.H_sweep_mode = QComboBox()
-        # self.H_sweep_mode.currentIndexChanged.connect(self.H_mode_changed)
-        # stimulus_H_modes_names = ["mag", "\u03B8", "\u03C6"]
-        # for i in range(0, len(stimulus_H_modes_names)):
-        #     self.H_sweep_mode.addItem(stimulus_H_modes_names[i])
-        # self.stimulus_layout.addWidget(self.H_sweep_mode, 0, 1)
-        # self.H_mode_changed()
-
-        
-        # for i in range(0, len(self.stimulus_labels_directions)):
-        #     self.stimulus_layout.addWidget(
-        #         QLabel(self.stimulus_labels_directions[i]), i, 5)
-
-        # self.stimulus_spinboxes_generals = []
-
-        # for i in range(0, len(self.stimulus_labels_generals)):
-        #     self.stimulus_layout.addWidget(QLabel(self.stimulus_labels_generals[i]+ " ("+ self.stimulus_general_units[i] +")"), i, 3)
-
-        #     self.stimulus_spinboxes_generals.append(QDoubleSpinBox())
-        #     self.stimulus_layout.addWidget(self.stimulus_spinboxes_generals[i], i,4)
-        #     self.stimulus_spinboxes_generals[i].setMinimum(self.stimulus_general_min[i])
-        #     self.stimulus_spinboxes_generals[i].setMaximum(self.stimulus_general_max[i])
-
-
-
-        # directions = ["x", "y", "z"]
-        # self.voltmeter = QComboBox()
-        # for i in range(0, len(directions)):
-        #     self.voltmeter.addItem(directions[i])
-        # self.stimulus_layout.addWidget(self.voltmeter, 0, 6)
-
-        # self.ACDC_source = QComboBox()
-        # for i in range(0, len(directions)):
-        #     self.ACDC_source.addItem(directions[i])
-        # self.stimulus_layout.addWidget(self.ACDC_source, 1, 6)
-
-
-
-
-        # self.w = gl.GLViewWidget()
-        # self.w.opts['distance'] = 45.0
-        # self.w.opts['fov'] = 60
-        # self.w.opts['elevation'] = 10
-        # self.w.opts['azimuth'] = 90
-        # self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
-        # self.w.setGeometry(450, 700, 980, 700)
-        # # self.w.show()
-        # # create the background grids
-        # gx = gl.GLGridItem()
-        # gx.rotate(90, 0, 1, 0)
-        # gx.translate(-10, 0, 0)
-        # self.w.addItem(gx)
-        # gy = gl.GLGridItem()
-        # gy.rotate(90, 1, 0, 0)
-        # gy.translate(0, -10, 0)
-        # self.w.addItem(gy)
-        # gz = gl.GLGridItem()
-        # gz.translate(0, 0, -10)
-        # self.w.addItem(gz)
-
-        # verts = np.array([(-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
-        #                   (-1.0, 1.0, 0.0), (1.0, 1.0, 0.0), (-2, -3, -4),
-        #                   (-2, -3, 0.3), (-2, 3, -4), (-2, 3, 0.3),
-        #                   (2, -3, -4), (2, -3, 0.3), (2, 3, -4), (2, 3, 0.3),
-        #                   (-1.0, -1.0, 5), (1.0, -1.0, 5), (-1.0, 1.0, 5),
-        #                   (1.0, 1.0, 5)])
-
-        # faces = np.array([(1, 2, 0), (1, 3, 2), (5, 6, 4), (7, 10, 6),
-        #                   (11, 8, 10), (9, 4, 8), (10, 4, 6), (7, 9, 11),
-        #                   (5, 7, 6), (7, 11, 10), (11, 9, 8), (9, 5, 4),
-        #                   (10, 8, 4), (7, 5, 9), (13, 14, 12), (13, 15, 14)])
-
-        # colors = np.array([[1, i / 16, 1, 1] for i in range(len(faces))])
-
-        # self.object = gl.GLMeshItem(vertexes=verts,
-        #                             faces=faces,
-        #                             faceColors=colors,
-        #                             smooth=False,
-        #                             shader='shaded',
-        #                             glOptions='opaque')
-        # self.w.addItem(self.object)
-
-        # self.stimulus_layout.addWidget(self.w, 2, 5, 5, 2)
-
         theta_min = 0
         theta_max = 180
         phi_min = 0
         phi_max = 360
-        H_min = -1e9
-        H_max = 1e9
+        H_min = -1e6
+        H_max = 1e6
         f_min = 0
         f_max = 1e3
         f_step_min = 1
-        f_step_max = 1e9
+        f_step_max = 1e3
         I_dc_min = 0
         I_dc_max = 1000
         I_RF_min = 0
         I_RF_max = 1000
         steps_min = 1
-        steps_max = 1e9
-        LLG_time_min = 1e-15
+        steps_max = 1e6
+        LLG_time_min = 0.1
         LLG_steps_min = 10
         LLG_time_max = 1e6
-        LLG_steps_max = 1e9
+        LLG_steps_max = 1e6
 
         H_unit = "kA/m"
         angle_unit = "deg"
@@ -355,26 +193,21 @@ class StimulusGUI():
                             [self.Vdir.Label, self.Vdir.Value],
                             [self.Idc.Label,self.Idc.Value],
                             [self.Iac.Label,self.Iac.Value],
-                            [QLabel(" "), QLabel("Simulation parameters")],
+                            [QLabel(" "), QLabel("Simulation\nparameters")],
                             [self.LLGtime.Label,self.LLGtime.Value],
                             [self.LLGsteps.Label,self.LLGsteps.Value],
                             [self.LLGError_threshold.Label,self.LLGError_threshold.Value]]
 
         self.HMode.Value.currentIndexChanged.connect(self.H_mode_changed)
 
-        pixmap = QPixmap('./pymag/presets/image1.png')
-        print(pixmap)
-        label = QLabel()
-        # label.resize(200,200)
-        label.setPixmap(pixmap)
 
+        setup_circuit = QLabel()
+        setup_circuit.setPixmap(QPixmap('./pymag/presets/image1.png'))
+        setup_circuit.resize(80,80)
         for i in range(0,len(self.stimulus_objests[:])):
             for j in range(0,len(self.stimulus_objests[i])):
                 self.stimulus_layout.addWidget(self.stimulus_objests[i][j], i, j)
-        self.stimulus_layout.addWidget(label, 7,2,8,3)
-
-        # # layout.addWidget(label, row, column)
-        
+        self.stimulus_layout.addWidget(setup_circuit, 7,2,8,3)
 
 
         self.H_mode_changed()
@@ -409,8 +242,7 @@ class StimulusGUI():
                 "LLGsteps": [self.LLGsteps.Value.value(), "-", "-",]}
 
         df = pd.concat([pd.DataFrame(tmp_H), pd.DataFrame(tmp)], axis=1)
-        # print("********")
-        # print(df)
+
         return df
 
     def H_mode_changed(self):
@@ -468,11 +300,11 @@ class SimulationParameters():
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
-        self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
-            editable=True, sortable=False)
-        stimulus_header = self.table_stimulus_params.horizontalHeader()
-        stimulus_header.setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeToContents)
+        # self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
+        #     editable=True, sortable=False)
+        # stimulus_header = self.table_stimulus_params.horizontalHeader()
+        # stimulus_header.setSectionResizeMode(
+        #     QtWidgets.QHeaderView.ResizeToContents)
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -489,9 +321,9 @@ class SimulationParameters():
             unicode_subs[c] if c in unicode_subs else c
             for c in layer_parameters.columns
         ])
-        self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
-        self.table_stimulus_params.setHorizontalHeaderLabels(
-            stimulus_parameters.columns)
+        # self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
+        # self.table_stimulus_params.setHorizontalHeaderLabels(
+        #     stimulus_parameters.columns)
         self.central_widget = QtGui.QWidget()
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
@@ -511,10 +343,6 @@ class SimulationParameters():
 
 
     # def get_all_data(self):
-    #     # print(self.stimulus_GUI.get_stimulus_data())
-    #     # print(self.get_table_data(self.table_stimulus_params))
-
-
     #     return self.get_table_data(
     #         self.table_stimulus_params), self.get_table_data(
     #             self.table_layer_params)
