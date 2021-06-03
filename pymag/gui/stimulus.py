@@ -1,6 +1,7 @@
 
-
-import pandas as pd
+import os
+from typing import List
+import json
 import numpy as np
 from pymag.engine.utils import get_stimulus
 from PyQt5 import QtGui, QtWidgets
@@ -43,121 +44,11 @@ class Labelled():
 
 class StimulusGUI():
     def __init__(self) -> None:
-        theta_min = 0
-        theta_max = 180
-        phi_min = 0
-        phi_max = 360
-        H_min = -1e9
-        H_max = 1e9
-        f_min = 0
-        f_max = 1e3
-        f_step_min = 1
-        f_step_max = 1e9
-        I_dc_min = 0
-        I_dc_max = 1000
-        I_RF_min = 0
-        I_RF_max = 1000
-        steps_min = 1
-        steps_max = 1e9
-        LLG_time_min = 1e-15
-        LLG_steps_min = 10
-        LLG_time_max = 1e6
-        LLG_steps_max = 1e9
-
-        H_unit = "kA/m"
-        angle_unit = "deg"
-        f_unit = "GHz"
-        I_unit = "uA"
-        V_unit = "V"
-        time_unit = "ns"
-
-        self.Idc = Labelled(label="I DC",
-                            minimum=I_dc_min,
-                            maximum=I_dc_max,
-                            value=0.01)
-        self.Iac = Labelled(label="I AC",
-                            minimum=I_dc_min,
-                            maximum=I_dc_max,
-                            value=0.01)
-
-        self.LLGtime = Labelled(label="LLG time",
-                                minimum=LLG_time_min,
-                                maximum=LLG_time_max,
-                                value=10)
-        self.LLGsteps = Labelled(label="LLG steps",
-                                 minimum=f_step_min,
-                                 maximum=f_step_max,
-                                 value=10,
-                                 mode='Integer')
-        self.fmin = Labelled(label="f AC",
-                             minimum=f_min,
-                             maximum=f_max,
-                             value=0)
-        self.fsteps = Labelled(label="f AC steps",
-                               minimum=LLG_steps_min,
-                               maximum=LLG_steps_max,
-                               value=10,
-                               mode='Integer')
-        self.fmax = Labelled(label="fmax AC steps",
-                             minimum=f_min,
-                             maximum=f_max,
-                             value=20)
-
-        self.HMin = Labelled(label="H",
-                             minimum=H_min,
-                             maximum=H_max,
-                             value=-1e3)
-        self.HMax = Labelled(label="-",
-                             minimum=H_min,
-                             maximum=H_max,
-                             value=1e3)
-        self.HSteps = Labelled(label="Steps",
-                               minimum=steps_min,
-                               maximum=steps_max,
-                               value=50,
-                               mode='Integer')
-        self.HThetaSteps = Labelled(label="Steps",
-                                    minimum=0,
-                                    maximum=1e6,
-                                    value=50)
-        self.HPhiSteps = Labelled(label="Steps",
-                                  minimum=0,
-                                  maximum=1e6,
-                                  value=50)
-        self.HBack = Labelled(label="Back",
-                              value=False,
-                              mode='Binary')
-        self.HPhiBack = Labelled(label="Back",
-                                 value=False,
-                                 mode='Binary')
-        self.HThetaBack = Labelled(label="Back",
-                                   value=False,
-                                   mode='Binary')
-        self.HThetaMin = Labelled(
-            label="Theta",
-            minimum=-360,
-            maximum=360,
-            value=89)
-        self.HThetaMax = Labelled(
-            label="Phi",
-            minimum=-360,
-            maximum=360,
-            value=89)
-
-        self.HPhiMin = Labelled(label="Phi",
-                                minimum=-360,
-                                maximum=360,
-                                value=1)
-        self.HPhiMax = Labelled(label="Phi",
-                                minimum=-360,
-                                maximum=360,
-                                value=1)
-        self.HMode = Labelled(label="Field sweep mode",
-                              mode="Combo", item_list=["H", "Phi", "Theta"])
-        self.Idir = Labelled(label="I source", mode="Combo",
-                             item_list=["x", "y", "z"])
-        self.Vdir = Labelled(label="Voltmeter", mode="Combo",
-                             item_list=["x", "y", "z"])
+        preset_dir = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'presets'))
+        preset_file = os.path.join(preset_dir,
+                                   "stimulus.json")
+        self.__dynamic_constructor(preset_file=preset_file)
         self.stimulus_layout = QtGui.QGridLayout()
         self.LLGError_threshold = Labelled(label="Max dm error",
                                            minimum=-360,
@@ -209,7 +100,17 @@ class StimulusGUI():
         self.H_mode_changed()
         # self.get_stimulus_data()
 
-    def parse_vector(self, vector_str_value):
+    def __dynamic_constructor(self, preset_file: str):
+        """
+        Add Stimulus Boxes given a json specification.
+        """
+        preset_json = json.load(open(preset_file, "r"))
+        for obj in preset_json["stimulus"]:
+            setattr(self,
+                    obj["name"], Labelled(**obj["params"])
+                    )
+
+    def parse_vector(self, vector_str_value) -> List[int]:
         if vector_str_value == "x":
             return [1, 0, 0]
         elif vector_str_value == "y":
@@ -227,30 +128,11 @@ class StimulusGUI():
         """
         mode = self.HMode.Value.currentText()
         if mode == "H":
-            tmp_H = {'H': [self.HMin.Value.value(), self.HSteps.Value.value(), self.HMax.Value.value()],
-                     'Hback': [self.HBack.Value.checkState(), "-", "-"],
-                     'HTheta': [self.HThetaMin.Value.value(), "-", "-"],
-                     'HPhi': [self.HPhiMin.Value.value(), "-", "-"]}
             steps = int(self.HSteps.Value.value())
         if mode == "Phi":
-            tmp_H = {'H': [self.HMin.Value.value(), "-", "-"],
-                     'Hback': [self.HPhiBack.Value.checkState(), "-", "-"],
-                     'HTheta': [self.HThetaMin.Value.value(), "-", "-"],
-                     'HPhi': [self.HPhiMin.Value.value(), self.HPhiSteps.Value.value(), self.HPhiMax.Value.value()]}
             steps = int(self.HPhiSteps.Value.value())
         if mode == "Theta":
-            tmp_H = {'H': [self.HMin.Value.value(), "-", "-"],
-                     'Hback': [self.HThetaBack.Value.checkState(), "-", "-"],
-                     'HTheta': [self.HThetaMin.Value.value(), self.HThetaSteps.Value.value(), self.HThetaMax.Value.value()],
-                     'HPhi': [self.HPhiMin.Value.value(), "-", "-"]}
             steps = int(self.HThetaSteps.Value.value())
-        tmp = {'f': [self.fmin.Value.value()*1e9, self.fsteps.Value.value(), self.fmax.Value.value()*1e9],
-               "IAC": [self.Iac.Value.value(), "-", "-"],
-               "IDC": [self.Idc.Value.value(), "-", "-"],
-               "Idir": ["1 0 0", "-", "-"],
-               "Vdir": ["1 0 0", "-", "-"],
-               "LLGtime": [self.LLGtime.Value.value()/1e9, "-", "-", ],
-               "LLGsteps": [self.LLGsteps.Value.value(), "-", "-", ]}
 
         H_sweep, sweep = get_stimulus(float(self.HMin.Value.value()),
                                       float(self.HMax.Value.value()),
@@ -289,8 +171,6 @@ class StimulusGUI():
             PIMM_freqs=PIMM_freqs.tolist(),
             PIMM_delta_f=PIMM_delta_f
         )
-        # print(so.dict())
-        # df = pd.concat([pd.DataFrame(tmp_H), pd.DataFrame(tmp)], axis=1)
         return so
 
     def H_mode_changed(self):

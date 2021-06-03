@@ -6,7 +6,7 @@ import queue
 import pandas as pd
 import pyqtgraph as pg
 from pymag import __version__
-from pymag.engine.data_holders import Layer, SimulationInput, Stimulus
+from pymag.engine.data_holders import Layer, SimulationInput
 from pymag.engine.utils import SimulationStatus
 from pymag.gui.core import AddMenuBar, ResultsTable, SimulationParameters
 from pymag.gui.exporter import Exporter
@@ -15,7 +15,11 @@ from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
                                           SimulationManager)
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QSettings
 from pyqtgraph.dockarea import Dock, DockArea
+
+PRESET_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', 'presets'))
 
 
 class UIMainWindow(QMainWindow):
@@ -23,11 +27,9 @@ class UIMainWindow(QMainWindow):
         super().__init__()
         self.setObjectName("PyMag")
         # load defaults
-        preset_dir = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'presets'))
-        default_stimulus_file = os.path.join(preset_dir,
+        default_stimulus_file = os.path.join(PRESET_DIR,
                                              "defaultStimulus.csv")
-        default_layer_parameters_file = os.path.join(preset_dir,
+        default_layer_parameters_file = os.path.join(PRESET_DIR,
                                                      "defaultParameters.csv")
         self.stimulus_parameters, self.layer_parameters = self.load_defaults(
             default_stimulus_file, default_layer_parameters_file)
@@ -120,7 +122,6 @@ class UIMainWindow(QMainWindow):
 
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])
-
         self.ports = []
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.on_simulation_data_update)

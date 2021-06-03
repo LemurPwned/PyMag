@@ -1,0 +1,208 @@
+{
+    "stimulus": [
+        {
+            "name": "Idc",
+            "params": {
+                "label": "I DC",
+                "minimum": 0,
+                "maximum": 1000,
+                "value": 0.1
+            }
+        },
+        {
+            "name": "Iac",
+            "params": {
+                "label": "I AC",
+                "minimum": 0,
+                "maximum": 1000,
+                "value": 0.1
+            }
+        },
+        {
+            "name": "LLGtime",
+            "params": {
+                "label": "LLG time [ns]",
+                "minimum": 1,
+                "maximum": 100,
+                "value": 8
+            }
+        },
+        {
+            "name": "LLGsteps",
+            "params": {
+                "label": "LLG steps",
+                "minimum": 100,
+                "maximum": 1e9,
+                "value": 2000
+            }
+        },
+        {
+            "name": "fmin",
+            "params": {
+                "label": "f AC",
+                "minimum": 0,
+                "maximum": 12,
+                "value": 0
+            }
+        },
+        {
+            "name": "fmax",
+            "params": {
+                "label": "f max",
+                "minimum": 0,
+                "maximum": 100,
+                "value": 20
+            }
+        },
+        {
+            "name": "fsteps",
+            "params": {
+                "label": "f steps",
+                "minimum": 0,
+                "maximum": 100,
+                "value": 0
+            }
+        },
+        {
+            "name": "HMin",
+            "params": {
+                "label": "H [kA/m]",
+                "minimum": -1000,
+                "maximum": 1000,
+                "value": -800
+            }
+        },
+        {
+            "name": "HMax",
+            "params": {
+                "label": "-",
+                "minimum": -1000,
+                "maximum": 1000,
+                "value": 800
+            }
+        },
+        {
+            "name": "HSteps",
+            "params": {
+                "label": "Steps",
+                "minimum": 0,
+                "maximum": 1e8,
+                "value": 100
+            }
+        },
+        {
+            "name": "HThetaSteps",
+            "params": {
+                "label": "Steps",
+                "minimum": 0,
+                "maximum": 1e8,
+                "value": 100
+            }
+        },
+        {
+            "name": "HPhiSteps",
+            "params": {
+                "label": "Steps",
+                "minimum": 0,
+                "maximum": 1e8,
+                "value": 100
+            }
+        },
+        {
+            "name": "HBack",
+            "params": {
+                "label": "Back",
+                "value": false,
+                "mode": "Binary"
+            }
+        },
+        {
+            "name": "HPhiBack",
+            "params": {
+                "label": "Back",
+                "value": false,
+                "mode": "Binary"
+            }
+        },
+        {
+            "name": "HThetaBack",
+            "params": {
+                "label": "Back",
+                "value": false,
+                "mode": "Binary"
+            }
+        },
+        {
+            "name": "HThetaMin",
+            "params": {
+                "label": "Theta",
+                "minimum": -360,
+                "maximum": 360,
+                "value": 90
+            }
+        },
+        {
+            "name": "HThetaMax",
+            "params": {
+                "label": "Theta",
+                "minimum": -360,
+                "maximum": 360,
+                "value": 90
+            }
+        },
+        {
+            "name": "HPhiMin",
+            "params": {
+                "label": "Phi",
+                "minimum": -360,
+                "maximum": 360,
+                "value": 0
+            }
+        },
+        {
+            "name": "HPhiMax",
+            "params": {
+                "label": "Phi",
+                "minimum": -360,
+                "maximum": 360,
+                "value": 0
+            }
+        },
+        {
+            "name": "HMode",
+            "params": {
+                "label": "Field sweep mode",
+                "mode": "Combo",
+                "item_list": [
+                    "H",
+                    "Phi",
+                    "Theta"
+                ]
+            }
+        },
+        {
+            "name": "Idir",
+            "params": {
+                "label": "I source",
+                "mode": "Combo",
+                "item_list": [
+                    "x",
+                    "y",
+                    "z"
+                ]
+            }
+        },
+        {
+            "name": "Vdir",
+            "params": {
+                "label": "Voltmeter",
+                "mode": "Combo",
+                "item_list": [
+                    "x",
+                    "y",
+                    "z"
+                ]
+            }
+        }
+    ]
+}

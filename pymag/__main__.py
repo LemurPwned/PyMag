@@ -1,4 +1,5 @@
 import sys
+from pydantic import main
 from pyqtgraph.Qt import QtGui
 from pymag.gui.main_window import UIMainWindow
 import click
@@ -17,7 +18,8 @@ def run_pymag():
     app.setOrganizationName("PyMag")
     app.setApplicationName(__version__)
     main_window = UIMainWindow()
-    sys.exit(app.exec_())
+    exit_code = app.exec_()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

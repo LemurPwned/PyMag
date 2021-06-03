@@ -13,6 +13,7 @@ class PlotManager:
     """
     Plot Manager manages all plot updates in the dock
     """
+
     def __init__(self, magnetisation_plot: MultiplePlot,
                  resistance_plot: MultiplePlot, SD_plot: SpectrogramPlot,
                  PIMM_plot: SpectrogramPlot) -> None:
@@ -147,14 +148,14 @@ class PlotManager:
         self.spectrogram_PIMM = result_holder.PIMM
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
-        self.SD_deltaf = result_holder.SD_freqs[1] - result_holder.SD_freqs[0]
+
         self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]
         ], [[255, 0, 0], [0, 255, 0], [0, 0, 255]], ["Mx", "My", "Mz"],
-                                          ["norm.", "norm.", "norm."],
-                                          str(result_holder.mode),
-                                          self.units[str(result_holder.mode)])
+            ["norm.", "norm.", "norm."],
+            str(result_holder.mode),
+            self.units[str(result_holder.mode)])
 
         self.resistance_plot.set_plots(
             result_holder.H_mag[:lim],
@@ -164,15 +165,21 @@ class PlotManager:
             str(result_holder.mode), self.units[str(result_holder.mode)])
 
         if lim >= 2:
-            self.SD_plot.update(result_holder.H_mag[:lim],
-                                result_holder.SD_freqs,
-                                self.SD_plot.detrend_f_axis(result_holder.SD))
+            if len(result_holder.SD_freqs) > 1:
+                self.SD_deltaf = result_holder.SD_freqs[1] - \
+                    result_holder.SD_freqs[0]
 
-            self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
-                                     left_units="Hz",
-                                     bottom_caption=str(result_holder.mode),
-                                     bottom_units=self.units[str(
-                                         result_holder.mode)])
+                self.SD_plot.update(result_holder.H_mag[:lim],
+                                    result_holder.SD_freqs,
+                                    self.SD_plot.detrend_f_axis(result_holder.SD))
+
+                self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
+                                         left_units="Hz",
+                                         bottom_caption=str(
+                                             result_holder.mode),
+                                         bottom_units=self.units[str(
+                                             result_holder.mode)])
+                self.SD_update_roi_loc()
 
             self.PIMM_plot.update(result_holder.H_mag[:lim],
                                   result_holder.PIMM_freqs, result_holder.PIMM)
@@ -183,5 +190,4 @@ class PlotManager:
                                        bottom_units=self.units[str(
                                            result_holder.mode)])
 
-            self.SD_update_roi_loc()
             self.PIMM_update_roi_loc()

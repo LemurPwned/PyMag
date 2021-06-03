@@ -106,8 +106,10 @@ class ResultHolder(GenericHolder):
         self.Rx = [Rx]
         self.Ry = [Ry]
         self.Rz = [Rz]
-
-        self.SD = np.asarray(SD).reshape(-1, len(SD_freqs))
+        if len(SD):
+            self.SD = np.asarray(SD).reshape(-1, len(SD_freqs))
+        else:
+            self.SD = np.asarray(SD)
         self.SD_freqs = SD_freqs
         self.PIMM = np.asarray(PIMM).reshape(1, -1)
         self.PIMM_freqs = PIMM_freqs
@@ -336,8 +338,8 @@ class StimulusObject(BaseModel):
     LLG_time: float
 
     I_dc: float
-    I_dir: List[float]
-    V_dir: List[float]
+    I_dir: List[int]
+    V_dir: List[int]
 
     I_rf: float
     frequency_min: float

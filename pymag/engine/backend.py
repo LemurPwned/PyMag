@@ -1,11 +1,12 @@
 import time
 import cmtj
 import numpy as np
-from pymag.engine.data_holders import ResultHolder, StimulusObject
+from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 # import numba
 from PyQt5 import QtCore
 from scipy.fft import fft
+from typing import List
 
 
 def compute_vsd(stime, m_xs, frequency, integration_step):
@@ -89,8 +90,6 @@ class SolverTask(QtCore.QThread):
         int_step = s_time / stimulus.LLG_steps
         org_layers = sim_input.layers
 
-        # Irf = stimulus
-
         Rx0 = np.asarray([l.Rx0 for l in org_layers])
         Ry0 = np.asarray([l.Ry0 for l in org_layers])
         SMR = np.asarray([l.SMR for l in org_layers])
@@ -99,8 +98,6 @@ class SolverTask(QtCore.QThread):
         w = np.asarray([l.w for l in org_layers])
         l = np.asarray([l.l for l in org_layers])
 
-        # Hoe is per Ampere
-        Hoes = np.asarray([l.Hoe for l in org_layers])
         no_org_layers = len(org_layers)
 
         org_layer_strs = [
@@ -108,20 +105,26 @@ class SolverTask(QtCore.QThread):
         ]
         layers = [layer.to_cmtj() for layer in org_layers]
         junction = cmtj.Junction(filename="", layers=layers)
+        # assign IEC interacton
         for i in range(no_org_layers - 1):
             junction.setIECDriver(
                 org_layer_strs[i], org_layer_strs[i + 1],
                 cmtj.ScalarDriver.getConstantDriver(org_layers[i].J))
+
+        # initialise the magnetisation vectors
         m_init_PIMM = [
             cmtj.CVector(*(stimulus.H_sweep[0] /
                            np.linalg.norm(stimulus.H_sweep[0])))
-            for i in range(len(layers))
+            for _ in range(len(layers))
         ]
         m_init_VSD = [
             cmtj.CVector(*(stimulus.H_sweep[0] /
                            np.linalg.norm(stimulus.H_sweep[0])))
-            for i in range(len(layers))
+            for _ in range(len(layers))
         ]
+        """
+        Primary PIMM loop
+        """
         for Hval in stimulus.H_sweep:
             if not self.handle_signals():
                 return
@@ -162,7 +165,9 @@ class SolverTask(QtCore.QThread):
             Rx, Ry, Rz = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m,
                                               no_org_layers, l, w)
             m_avg = np.mean(m, axis=0)
-
+            """
+            Secondary VSD loop 
+            """
             for frequency in stimulus.SD_freqs:
                 if not self.handle_signals():
                     return
@@ -170,12 +175,14 @@ class SolverTask(QtCore.QThread):
                 for i in range(no_org_layers):
                     junction.setLayerMagnetisation(org_layer_strs[i],
                                                    m_init_VSD[i])
-                HoeDriver = cmtj.AxialDriver(
-                    cmtj.NullDriver(),
-                    cmtj.ScalarDriver.getSineDriver(0, 5 * 20000 / 8,
-                                                    frequency, 0),
-                    cmtj.NullDriver())
-                junction.setLayerOerstedFieldDriver("all", HoeDriver)
+
+                self.configure_VSD_excitation(
+                    frequency=frequency,
+                    org_layers_strs=org_layer_strs,
+                    org_layers=org_layers,
+                    junction=junction,
+                    stimulus=stimulus
+                )
                 junction.runSimulation(s_time, int_step, int_step)
                 for i in range(len(layers)):
                     m_init_VSD[i] = junction.getLayerMagnetisation(
@@ -210,6 +217,32 @@ class SolverTask(QtCore.QThread):
                                           m_traj=[0, 0, 0],
                                           PIMM=yf[:len(yf) // 2])
             yield partial_result
+
+    def configure_VSD_excitation(self, frequency: float,
+                                 org_layers_strs: List[str],
+                                 org_layers: List[Layer],
+                                 junction: cmtj.Junction,
+                                 stimulus: StimulusObject):
+        """
+        Decide what kind of excitation is present in the junction.
+        Set both Oersted field and current adequately.
+        """
+        HoeDrivers: List[cmtj.AxialDriver] = [
+            cmtj.AxialDriver(
+                cmtj.ScalarDriver.getSineDriver(
+                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_rf, frequency, 0),
+                cmtj.ScalarDriver.getSineDriver(
+                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_rf, frequency, 0),
+                cmtj.ScalarDriver.getSineDriver(
+                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_dc, frequency, 0))
+            for l in org_layers]
+        for i in range(len(org_layers)):
+            driver = HoeDrivers[i]
+            driver.applyMask(stimulus.I_dir)
+            junction.setLayerOerstedFieldDriver(
+                org_layers_strs[i], driver)
+            junction.setLayerCurrentDriver(org_layers_strs[i],
+                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc, stimulus.I_rf, frequency, 0))
 
     def handle_signals(self):
         if self.is_killed:
