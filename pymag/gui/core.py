@@ -3,7 +3,6 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 import pyqtgraph as pg
-import pyqtgraph.opengl as gl
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.plot_manager import PlotManager
@@ -24,12 +23,6 @@ class SimulationParameters():
         header = self.table_layer_params.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-
-        # self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
-        #     editable=True, sortable=False)
-        # stimulus_header = self.table_stimulus_params.horizontalHeader()
-        # stimulus_header.setSectionResizeMode(
-        #     QtWidgets.QHeaderView.ResizeToContents)
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -46,9 +39,6 @@ class SimulationParameters():
             unicode_subs[c] if c in unicode_subs else c
             for c in layer_parameters.columns
         ])
-        # self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
-        # self.table_stimulus_params.setHorizontalHeaderLabels(
-        #     stimulus_parameters.columns)
         self.central_widget = QtGui.QWidget()
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
@@ -57,22 +47,10 @@ class SimulationParameters():
         self.btn_layout.addWidget(self.add_btn)
         self.btn_layout.addWidget(self.remove_button)
         self.btn_layout.addWidget(self.add_simulation)
-        # self.central_layout.addWidget(self.table_stimulus_params)
         self.central_layout.addLayout(self.btn_layout)
 
         self.stimulus_GUI = StimulusGUI()
         self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
-
-    # def get_all_data(self):
-<<<<<<< HEAD
-    #     # print(self.stimulus_GUI.get_stimulus_data())
-    #     # print(self.get_table_data(self.table_stimulus_params))
-
-=======
->>>>>>> 0f9c6b75d43a100fe6e3090273c2d24d5de385b9
-    #     return self.get_table_data(
-    #         self.table_stimulus_params), self.get_table_data(
-    #             self.table_layer_params)
 
     def get_all_data(self):
         return self.stimulus_GUI.get_stimulus_object(), self.get_table_data(self.table_layer_params)
@@ -91,8 +69,6 @@ class SimulationParameters():
                 tmp_df.loc[j, i] = table.item(j, i).text()
         table.setHorizontalHeaderLabels(tmp_col_name)
         tmp_df.columns = tmp_col_name
-        # d = {'col1': [1, 2], 'col2': [3, 4]}
-        # print(tmp_df)
         return tmp_df
 
     def add_layer(self):

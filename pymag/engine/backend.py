@@ -1,11 +1,10 @@
-from pymag.engine.data_holders import ResultHolder, StimulusObject
-from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
-
-# import numba
-from PyQt5 import QtCore
 import time
 import cmtj
 import numpy as np
+from pymag.engine.data_holders import ResultHolder, StimulusObject
+from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
+# import numba
+from PyQt5 import QtCore
 from scipy.fft import fft
 
 

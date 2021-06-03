@@ -117,7 +117,6 @@ class UIMainWindow(QMainWindow):
 
                     (self.d[7], 'above', self.d[6]),
                     (self.d[8], 'bottom', self.d[0])]
-        
 
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])
