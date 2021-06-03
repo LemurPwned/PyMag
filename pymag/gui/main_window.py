@@ -102,10 +102,8 @@ class UIMainWindow(QMainWindow):
             self.widget_layer_params.central_widget
         ]
         # no size here
-        self.d.append(Dock(dock_titles[0]))
-        self.d[0].addWidget(dock_contents[0])
-        for i in range(1, len(dock_titles)):
-            self.d.append(Dock(dock_titles[i], size=(200, 50)))
+        for i in range(0, len(dock_titles)):
+            self.d.append(Dock(dock_titles[i]))
             self.d[i].addWidget(dock_contents[i])
 
         dock_pos = [(self.d[0], 'left'),
@@ -119,6 +117,7 @@ class UIMainWindow(QMainWindow):
 
                     (self.d[7], 'above', self.d[6]),
                     (self.d[8], 'bottom', self.d[0])]
+        
 
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])

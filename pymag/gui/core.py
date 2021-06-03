@@ -25,11 +25,11 @@ class SimulationParameters():
         # also QtWidgets.QHeaderView.Stretch is good
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
-        self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
-            editable=True, sortable=False)
-        stimulus_header = self.table_stimulus_params.horizontalHeader()
-        stimulus_header.setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeToContents)
+        # self.table_stimulus_params: pg.TableWidget = pg.TableWidget(
+        #     editable=True, sortable=False)
+        # stimulus_header = self.table_stimulus_params.horizontalHeader()
+        # stimulus_header.setSectionResizeMode(
+        #     QtWidgets.QHeaderView.ResizeToContents)
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -46,9 +46,9 @@ class SimulationParameters():
             unicode_subs[c] if c in unicode_subs else c
             for c in layer_parameters.columns
         ])
-        self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
-        self.table_stimulus_params.setHorizontalHeaderLabels(
-            stimulus_parameters.columns)
+        # self.table_stimulus_params.setData(stimulus_parameters.to_numpy())
+        # self.table_stimulus_params.setHorizontalHeaderLabels(
+        #     stimulus_parameters.columns)
         self.central_widget = QtGui.QWidget()
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
@@ -64,9 +64,12 @@ class SimulationParameters():
         self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
 
     # def get_all_data(self):
+<<<<<<< HEAD
     #     # print(self.stimulus_GUI.get_stimulus_data())
     #     # print(self.get_table_data(self.table_stimulus_params))
 
+=======
+>>>>>>> 0f9c6b75d43a100fe6e3090273c2d24d5de385b9
     #     return self.get_table_data(
     #         self.table_stimulus_params), self.get_table_data(
     #             self.table_layer_params)
