@@ -1,3 +1,6 @@
+import json
+import os
+
 from functools import partial
 from typing import List, Tuple, Union
 
@@ -213,15 +216,18 @@ class ResultsTable():
 
 
 class AddMenuBar():
-    def __init__(self, parent: 'UIMainWindow'):
+    def __init__(self, parent: 'UIMainWindow', docks):
         """
         still to do: remove parent
         """
+        self.docks = docks
         self.parent: 'UIMainWindow' = parent
         self.menubar = QtWidgets.QMenuBar()
         self.window_about = About()
+        self.file_menu = self.menubar.addMenu("File")
         self.window_menu = self.menubar.addMenu("Window")
-
+        self.window_menu.addAction("Save dock State").triggered.connect(self.save_dock_state)
+        self.window_menu.addAction("Load dock State").triggered.connect(self.load_dock_state)
         self.help_menu = self.menubar.addMenu("Help")
         self.help_menu.addAction("About").triggered.connect(self.about)
 
@@ -247,9 +253,22 @@ class AddMenuBar():
         self.central_layout.addLayout(self.btn_layout)
         self.central_layout.addStretch()
 
+        self.preset_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'presets'))
+        self.preset_file = os.path.join(self.preset_dir,"dock_area_state.json")
+
+
+    def save_dock_state(self):
+        docks_state = self.docks.saveState()
+        with open(self.preset_file, 'w') as f:
+            json.dump(docks_state,f, sort_keys=True)
+
+    def load_dock_state(self):
+        with open(self.preset_file, 'r') as f:
+            docks_state = json.load(f)
+        self.docks.restoreState(docks_state)
+
     def set_exporter(self, exporter: 'Exporter'):
         self.exporter = exporter
-        self.file_menu = self.menubar.addMenu("File")
 
         self.file_menu.addAction("Add experiment data").triggered.connect(
             self.exporter.load_experimental_data)
