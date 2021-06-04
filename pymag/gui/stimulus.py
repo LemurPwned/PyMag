@@ -40,6 +40,12 @@ class Labelled():
             self.Value.setObjectName(label)
             for i in range(0, len(item_list)):
                 self.Value.addItem(item_list[i])
+    def show(self):
+        self.Value.show()
+        self.Label.show()
+    def hide(self):
+        self.Value.hide()
+        self.Label.hide()
 
 
 class StimulusGUI():
@@ -55,50 +61,44 @@ class StimulusGUI():
                                            maximum=360,
                                            value=0.0)
 
-        self.stimulus_objects = [[QLabel(" "), self.HMode.Label, self.HMode.Value],
-                                 [QLabel(" "),
-                                 QLabel("Start"),
-                                 QLabel("Steps"),
-                                 QLabel("Stop"), QLabel("Back")],
-                                 [self.HMin.Label, self.HMin.Value,
-                                 self.HSteps.Value,
-                                  self.HMax.Value, self.HBack.Value],
-                                 [self.HPhiMin.Label,
-                                 self.HPhiMin.Value,
-                                 self.HPhiSteps.Value,
-                                  self.HPhiMax.Value,
-                                  self.HPhiBack.Value],
-                                 [self.HThetaMin.Label,
-                                 self.HThetaMin.Value, self.HThetaSteps.Value,
-                                  self.HThetaMax.Value, self.HThetaBack.Value],
-                                 [QLabel(" "), QLabel("Electrical")],
-                                 [self.fmin.Label, self.fmin.Value,
-                                     self.fsteps.Value, self.fmax.Value],
-                                 [self.Idir.Label, self.Idir.Value],
-                                 [self.Vdir.Label, self.Vdir.Value],
-                                 [self.Idc.Label, self.Idc.Value],
-                                 [self.Iac.Label, self.Iac.Value],
-                                 [QLabel(" "), QLabel(
-                                     "Simulation parameters")],
-                                 [self.LLGtime.Label, self.LLGtime.Value],
-                                 [self.LLGsteps.Label, self.LLGsteps.Value],
-                                 [self.LLGError_threshold.Label, self.LLGError_threshold.Value]]
+        self.stimulus_objects = [self.HMode,
+                                 self.H,
+                                 self.HMin,
+                                 self.HSteps,
+                                 self.HMax,
+                                 self.HBack,
+                                 self.HPhi,
+                                 self.HPhiMin,
+                                 self.HPhiSteps,
+                                 self.HPhiMax,
+                                 self.HPhiBack,
+                                 self.HTheta,
+                                 self.HThetaMin,
+                                 self.HThetaSteps,
+                                 self.HThetaMax,
+                                 self.HThetaBack,
+                                 self.fmin,
+                                 self.fsteps,
+                                 self.fmax,
+                                 self.Idir,
+                                 self.Vdir,
+                                 self.Idc,
+                                 self.Iac,
+                                 self.LLGtime,
+                                 self.LLGsteps,
+                                 self.LLGError_threshold]
 
         self.HMode.Value.currentIndexChanged.connect(self.H_mode_changed)
 
-        pixmap = QPixmap('./pymag/presets/image1.png')
-        label = QLabel()
-        # label.resize(200,200)
-        label.setPixmap(pixmap)
 
-        for i in range(0, len(self.stimulus_objects[:])):
-            for j in range(0, len(self.stimulus_objects[i])):
-                self.stimulus_layout.addWidget(
-                    self.stimulus_objects[i][j], i, j)
-        self.stimulus_layout.addWidget(label, 7, 2, 8, 3)
+
+        for i in range(0, len(self.stimulus_objects)):
+
+            self.stimulus_layout.addWidget(self.stimulus_objects[i].Label,0,i)
+            self.stimulus_layout.addWidget(self.stimulus_objects[i].Value,1,i)
 
         self.H_mode_changed()
-        # self.get_stimulus_data()
+
 
     def __dynamic_constructor(self, preset_file: str):
         """
@@ -129,21 +129,24 @@ class StimulusGUI():
         mode = self.HMode.Value.currentText()
         if mode == "H":
             steps = int(self.HSteps.Value.value())
+            back = bool(self.HThetaBack.Value.checkState())
         if mode == "Phi":
             steps = int(self.HPhiSteps.Value.value())
+            back = bool(self.HPhiBack.Value.checkState())
         if mode == "Theta":
             steps = int(self.HThetaSteps.Value.value())
+            back = bool(self.HBack.Value.checkState())
 
-        H_sweep, sweep = get_stimulus(float(self.HMin.Value.value()),
+        H_sweep, sweep = get_stimulus(float(self.H.Value.value()),
+                                      float(self.HMin.Value.value()),
                                       float(self.HMax.Value.value()),
+                                      float(self.HTheta.Value.value()),
                                       float(self.HThetaMin.Value.value()),
                                       float(self.HThetaMax.Value.value()),
+                                      float(self.HPhi.Value.value()),
                                       float(self.HPhiMin.Value.value()),
                                       float(self.HPhiMax.Value.value()),
-                                      steps,
-                                      bool(self.HThetaBack.Value.checkState()) or bool(
-                                          self.HPhiBack.Value.checkState()) or bool(self.HBack.Value.checkState()),
-                                      mode)
+                                      steps,back,mode)
         f_min = float(self.fmin.Value.value()*1e9)
         f_max = float(self.fmax.Value.value()*1e9)
         f_steps = int(self.fsteps.Value.value())
@@ -176,43 +179,16 @@ class StimulusGUI():
     def H_mode_changed(self):
 
         mode = self.HMode.Value.currentText()
-
+        for i in self.stimulus_objects[1:16]:
+            i.hide()
         if mode == "H":
-
-            self.HMax.Value.setEnabled(True)
-            self.HSteps.Value.setEnabled(True)
-            self.HBack.Value.setEnabled(True)
-
-            self.HPhiSteps.Value.setEnabled(False)
-            self.HPhiMax.Value.setEnabled(False)
-            self.HPhiBack.Value.setEnabled(False)
-
-            self.HThetaSteps.Value.setEnabled(False)
-            self.HThetaMax.Value.setEnabled(False)
-            self.HThetaBack.Value.setEnabled(False)
+            for i in [self.HMin, self.HSteps, self.HMax, self.HBack, self.HPhi, self.HTheta]:
+                i.show()
 
         if mode == "Phi":
-            self.HMax.Value.setEnabled(False)
-            self.HSteps.Value.setEnabled(False)
-            self.HBack.Value.setEnabled(False)
-
-            self.HPhiSteps.Value.setEnabled(True)
-            self.HPhiMax.Value.setEnabled(True)
-            self.HPhiBack.Value.setEnabled(True)
-
-            self.HThetaSteps.Value.setEnabled(False)
-            self.HThetaMax.Value.setEnabled(False)
-            self.HThetaBack.Value.setEnabled(False)
+            for i in [self.H, self.HPhiMin, self.HPhiSteps, self.HPhiMax, self.HPhiBack, self.HTheta]:
+                i.show()
 
         if mode == "Theta":
-            self.HMax.Value.setEnabled(False)
-            self.HSteps.Value.setEnabled(False)
-            self.HBack.Value.setEnabled(False)
-
-            self.HPhiSteps.Value.setEnabled(False)
-            self.HPhiMax.Value.setEnabled(False)
-            self.HPhiBack.Value.setEnabled(False)
-
-            self.HThetaSteps.Value.setEnabled(True)
-            self.HThetaMax.Value.setEnabled(True)
-            self.HThetaBack.Value.setEnabled(True)
+            for i in [self.H, self.HPhi, self.HThetaMin, self.HThetaSteps, self.HThetaMax, self.HThetaBack]:
+                i.show()

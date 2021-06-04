@@ -46,14 +46,16 @@ class SimulationParameters():
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.table_layer_params)
+
+
+        self.stimulus_GUI = StimulusGUI()
+        self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
+
         self.btn_layout = QtGui.QHBoxLayout()
         self.btn_layout.addWidget(self.add_btn)
         self.btn_layout.addWidget(self.remove_button)
         self.btn_layout.addWidget(self.add_simulation)
         self.central_layout.addLayout(self.btn_layout)
-
-        self.stimulus_GUI = StimulusGUI()
-        self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
 
     def get_all_data(self):
         return self.stimulus_GUI.get_stimulus_object(), self.get_table_data(self.table_layer_params)
