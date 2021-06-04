@@ -58,7 +58,7 @@ class UIMainWindow(QMainWindow):
                                         SD_plot=self.SD_plot,
                                         PIMM_plot=self.PIMM_plot)
         self.result_queue = mp.Queue()
-        self.central_layout = AddMenuBar(parent=self)
+        self.central_layout = AddMenuBar(parent=self, docks = self.area)
 
         self.global_experiment_manager = ExperimentManager()
         self.global_sim_manager = SimulationManager(
@@ -126,6 +126,8 @@ class UIMainWindow(QMainWindow):
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.on_simulation_data_update)
         self.timer.start(0)
+
+        self.central_layout.load_dock_state()
         self.show()
 
     def load_defaults(self, default_stimulus_file,
@@ -144,10 +146,6 @@ class UIMainWindow(QMainWindow):
         Stimulus and layer params at shutdown
         """
         df_stimulus, df_layers = self.widget_layer_params.get_all_data()
-        df_stimulus.to_csv(self.stimulus_parameters,
-                           encoding='utf-8',
-                           index=False,
-                           sep='\t')
         df_layers.to_csv(self.layer_parameters,
                          encoding='utf-8',
                          index=False,

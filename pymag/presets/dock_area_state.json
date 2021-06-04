@@ -1,0 +1,106 @@
+{
+    "float": [],
+    "main": [
+        "vertical",
+        [
+            [
+                "horizontal",
+                [
+                    [
+                        "dock",
+                        "Control panel",
+                        {}
+                    ],
+                    [
+                        "dock",
+                        "Simulation parameters",
+                        {}
+                    ]
+                ],
+                {
+                    "sizes": [
+                        275,
+                        1592
+                    ]
+                }
+            ],
+            [
+                "horizontal",
+                [
+                    [
+                        "tab",
+                        [
+                            [
+                                "dock",
+                                "Simulation results",
+                                {}
+                            ],
+                            [
+                                "dock",
+                                "Resistance",
+                                {}
+                            ],
+                            [
+                                "dock",
+                                "Magnetization",
+                                {}
+                            ]
+                        ],
+                        {
+                            "index": 1
+                        }
+                    ],
+                    [
+                        "tab",
+                        [
+                            [
+                                "dock",
+                                "SD-FMR",
+                                {}
+                            ],
+                            [
+                                "dock",
+                                "PIMM-FMR",
+                                {}
+                            ]
+                        ],
+                        {
+                            "index": 0
+                        }
+                    ],
+                    [
+                        "tab",
+                        [
+                            [
+                                "dock",
+                                "Simulation manager",
+                                {}
+                            ],
+                            [
+                                "dock",
+                                "Measurement manager",
+                                {}
+                            ]
+                        ],
+                        {
+                            "index": 0
+                        }
+                    ]
+                ],
+                {
+                    "sizes": [
+                        620,
+                        623,
+                        620
+                    ]
+                }
+            ]
+        ],
+        {
+            "sizes": [
+                216,
+                805
+            ]
+        }
+    ]
+}

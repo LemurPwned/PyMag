@@ -20,12 +20,10 @@ class SimulationStatus:
     ALL_DONE = "ALL_DONE"
 
 
-def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
+def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, STEPS, back,
                  mode):
 
     if mode == "H":
-        theta = ThetaMin
-        phi = PhiMin
         steps = int(STEPS)
         x_versor = np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
         y_versor = np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
@@ -37,8 +35,6 @@ def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
             np.cos(np.arctan2(Hx, Hy)))
 
     elif mode == "phi":
-        theta = ThetaMin
-        H = Hmin
         steps = int(STEPS)
         phi = np.linspace(PhiMin, PhiMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
@@ -47,8 +43,6 @@ def get_stimulus(Hmin, Hmax, ThetaMin, ThetaMax, PhiMin, PhiMax, STEPS, back,
         Hmag = phi
 
     elif mode == "theta":
-        phi = PhiMin
-        H = Hmin
         steps = int(STEPS)
         theta = np.linspace(ThetaMin, ThetaMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))

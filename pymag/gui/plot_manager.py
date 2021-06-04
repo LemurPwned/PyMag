@@ -1,5 +1,4 @@
 import numpy as np
-from pymag.gui.trajectory import TrajectoryPlot
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.engine.data_holders import ExperimentData, ResultHolder
 from pymag.gui.simulation_manager import Simulation
