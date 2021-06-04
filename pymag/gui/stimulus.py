@@ -98,7 +98,6 @@ class StimulusGUI():
         self.stimulus_layout.addWidget(label, 7, 2, 8, 3)
 
         self.H_mode_changed()
-        # self.get_stimulus_data()
 
     def __dynamic_constructor(self, preset_file: str):
         """
@@ -106,9 +105,7 @@ class StimulusGUI():
         """
         preset_json = json.load(open(preset_file, "r"))
         for obj in preset_json["stimulus"]:
-            setattr(self,
-                    obj["name"], Labelled(**obj["params"])
-                    )
+            setattr(self, obj["name"], Labelled(**obj["params"]))
 
     def parse_vector(self, vector_str_value) -> List[int]:
         if vector_str_value == "x":
