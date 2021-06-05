@@ -1,24 +1,28 @@
 
-import os
-from typing import List
 import json
+import os
+from typing import Any, Dict, List
+
 import numpy as np
+from pydantic.types import Json
+from pymag.engine.data_holders import StimulusObject
 from pymag.engine.utils import get_stimulus
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel
-from pymag.engine.data_holders import StimulusObject
 
 
 class Labelled():
     def __init__(self,
+                 var_name,
                  label="Label",
                  minimum=0,
                  maximum=1,
                  value=0,
                  mode='Double',
                  item_list=["1", "2", "3"]):
+        self.var_name = var_name
         self.Label = QLabel(label)
+        self.mode = mode
         if mode == 'Double':
             self.Value = QtWidgets.QDoubleSpinBox()
             self.Value.setMinimum(minimum)
@@ -49,16 +53,38 @@ class Labelled():
         self.Value.hide()
         self.Label.hide()
 
+    def to_json(self) -> Dict[str, Any]:
+        ret = {
+            "label": self.Label.text(),
+            "mode": self.mode
+        }
+        if self.mode == 'Double' or self.mode == 'Integer':
+            add = {
+                "maximum": self.Value.maximum(),
+                "minimum": self.Value.minimum(),
+                "value": self.Value.value(),
+            }
+        elif self.mode == "Binary":
+            add = {
+                "value": self.Value.checkState()
+            }
+        else:
+            add = {
+                "item_list": [self.Value.itemText(i) for i in range(self.Value.count())]
+            }
+        return {"name": self.var_name,
+                "params": {**ret, **add}}
+
 
 class StimulusGUI():
     def __init__(self) -> None:
-        preset_dir = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'presets'))
-        preset_file = os.path.join(preset_dir,
-                                   "stimulus.json")
-        self.__dynamic_constructor(preset_file=preset_file)
+        self.preset_file = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'presets', "stimulus.json"))
+
+        self.__dynamic_constructor(preset_file=self.preset_file)
         self.stimulus_layout = QtGui.QGridLayout()
-        self.LLGError_threshold = Labelled(label="Max dm error",
+        self.LLGError_threshold = Labelled(var_name="LLGError_threshold",
+                                           label="Max dm error",
                                            minimum=-360,
                                            maximum=360,
                                            value=0.0)
@@ -107,7 +133,24 @@ class StimulusGUI():
         """
         preset_json = json.load(open(preset_file, "r"))
         for obj in preset_json["stimulus"]:
-            setattr(self, obj["name"], Labelled(**obj["params"]))
+            setattr(self, obj["name"], Labelled(
+                **obj["params"], var_name=obj["name"]))
+
+    def set_stimulus(self, stimulus_json: Json):
+        for obj in stimulus_json["stimulus"]:
+            _ref = getattr(self, obj["name"])
+            for k, v in obj['params'].items():
+                setattr(_ref, k, v)
+
+    def to_json(self):
+        output_json = {"stimulus": []}
+        obj: Labelled
+        for obj in self.stimulus_objects:
+            output_json["stimulus"].append(obj.to_json())
+        return output_json
+
+    def save_stimulus(self):
+        json.dump(self.to_json(), open(self.preset_file, "w"), indent=4)
 
     def parse_vector(self, vector_str_value) -> List[int]:
         if vector_str_value == "x":
@@ -128,29 +171,30 @@ class StimulusGUI():
         mode = self.HMode.Value.currentText()
         if mode == "H":
             steps = int(self.HSteps.Value.value())
-            back = bool(self.HThetaBack.Value.checkState())
+            back = self.HThetaBack.Value.checkState()
         if mode == "Phi":
             steps = int(self.HPhiSteps.Value.value())
-            back = bool(self.HPhiBack.Value.checkState())
+            back = self.HPhiBack.Value.checkState()
         if mode == "Theta":
             steps = int(self.HThetaSteps.Value.value())
-            back = bool(self.HBack.Value.checkState())
-
-        H_sweep, sweep = get_stimulus(float(self.H.Value.value()),
-                                      float(self.HMin.Value.value()),
-                                      float(self.HMax.Value.value()),
-                                      float(self.HTheta.Value.value()),
-                                      float(self.HThetaMin.Value.value()),
-                                      float(self.HThetaMax.Value.value()),
-                                      float(self.HPhi.Value.value()),
-                                      float(self.HPhiMin.Value.value()),
-                                      float(self.HPhiMax.Value.value()),
+            back = self.HBack.Value.checkState()
+        # convert H from kA/m -> A/m
+        H_sweep, sweep = get_stimulus(self.H.Value.value()*1e3,
+                                      self.HMin.Value.value()*1e3,
+                                      self.HMax.Value.value()*1e3,
+                                      self.HTheta.Value.value(),
+                                      self.HThetaMin.Value.value(),
+                                      self.HThetaMax.Value.value(),
+                                      self.HPhi.Value.value(),
+                                      self.HPhiMin.Value.value(),
+                                      self.HPhiMax.Value.value(),
                                       steps, back, mode)
-        f_min = float(self.fmin.Value.value()*1e9)
-        f_max = float(self.fmax.Value.value()*1e9)
+        f_min = self.fmin.Value.value()*1e9
+        f_max = self.fmax.Value.value()*1e9
         f_steps = int(self.fsteps.Value.value())
         LLG_steps = int(self.LLGsteps.Value.value())
-        PIMM_delta_f = 1./LLG_steps
+        LLG_time = self.LLGtime.Value.value()/1e9 # ns -> s
+        PIMM_delta_f = 1./LLG_time
         PIMM_freqs = np.arange(0, PIMM_delta_f*LLG_steps, step=PIMM_delta_f)
         SD_freqs = np.linspace(f_min, f_max, f_steps)
         spectrum_len = LLG_steps // 2
@@ -159,24 +203,24 @@ class StimulusGUI():
             H_sweep=H_sweep.tolist(),
             sweep=sweep.tolist(),
             LLG_steps=LLG_steps,
-            LLG_time=float(self.LLGtime.Value.value()/1e9),
+            LLG_time=LLG_time,
             frequency_min=f_min,
             frequency_max=f_max,
             frequency_steps=f_steps,
-            I_rf=float(self.Iac.Value.value()),
-            I_dc=float(self.Idc.Value.value()),
+            I_rf=self.Iac.Value.value(),
+            I_dc=self.Idc.Value.value(),
             I_dir=self.parse_vector(self.Idir.Value.currentText()),
             V_dir=self.parse_vector(self.Vdir.Value.currentText()),
             # PIMM and VSD
             spectrum_len=spectrum_len,
             SD_freqs=SD_freqs.tolist(),
             PIMM_freqs=PIMM_freqs.tolist(),
-            PIMM_delta_f=PIMM_delta_f
+            PIMM_delta_f=PIMM_delta_f,
+            stimulus_json=self.to_json()
         )
         return so
 
     def H_mode_changed(self):
-
         mode = self.HMode.Value.currentText()
         for i in self.stimulus_objects[1:16]:
             i.hide()

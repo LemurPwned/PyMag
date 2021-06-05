@@ -37,7 +37,6 @@ class PlotManager:
         self.PIMM_plot = PIMM_plot
         self.PIMM_plot.inf_line.sigPositionChanged.connect(
             self.PIMM_update_roi_loc)
-        # self.trajectory_plot = trajectory_plot
 
         units_SI = {"H": "A/m", "theta": "deg", "phi": "deg", "f": "Hz"}
         self.units = units_SI
@@ -164,10 +163,21 @@ class PlotManager:
             str(result_holder.mode), self.units[str(result_holder.mode)])
 
         if lim >= 2:
+            self.PIMM_plot.update(result_holder.H_mag[:lim],
+                                  result_holder.PIMM_freqs, result_holder.PIMM)
+
+            self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
+                                       left_units="Hz",
+                                       bottom_caption=str(result_holder.mode),
+                                       bottom_units=self.units[str(
+                                           result_holder.mode)])
+
+            self.PIMM_update_roi_loc()
+
+
             if len(result_holder.SD_freqs) > 1:
                 self.SD_deltaf = result_holder.SD_freqs[1] - \
                     result_holder.SD_freqs[0]
-
                 self.SD_plot.update(result_holder.H_mag[:lim],
                                     result_holder.SD_freqs,
                                     self.SD_plot.detrend_f_axis(result_holder.SD))
@@ -180,13 +190,4 @@ class PlotManager:
                                              result_holder.mode)])
                 self.SD_update_roi_loc()
 
-            self.PIMM_plot.update(result_holder.H_mag[:lim],
-                                  result_holder.PIMM_freqs, result_holder.PIMM)
 
-            self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
-                                       left_units="Hz",
-                                       bottom_caption=str(result_holder.mode),
-                                       bottom_units=self.units[str(
-                                           result_holder.mode)])
-
-            self.PIMM_update_roi_loc()

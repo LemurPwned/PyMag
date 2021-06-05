@@ -34,7 +34,7 @@ def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, 
         Hmag = (Hx**2 + Hy**2 + Hz**2)**0.5 * np.sign(
             np.cos(np.arctan2(Hx, Hy)))
 
-    elif mode == "phi":
+    elif mode == "Phi":
         steps = int(STEPS)
         phi = np.linspace(PhiMin, PhiMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
@@ -42,13 +42,15 @@ def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, 
         Hz = H * np.cos(np.deg2rad(theta)) + phi * 0
         Hmag = phi
 
-    elif mode == "theta":
+    elif mode == "Theta":
         steps = int(STEPS)
         theta = np.linspace(ThetaMin, ThetaMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
         Hy = H * np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
         Hz = H * np.cos(np.deg2rad(theta))
         Hmag = theta
+    else:
+        raise ValueError(f"Invalid mode: {mode}")
 
     if (back != 0):
         Hx = np.append(Hx, -Hx)

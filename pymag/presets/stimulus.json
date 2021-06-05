@@ -1,209 +1,6 @@
 {
     "stimulus": [
         {
-            "name": "Idc",
-            "params": {
-                "label": "I DC",
-                "minimum": 0,
-                "maximum": 1000,
-                "value": 0.1
-            }
-        },
-        {
-            "name": "Iac",
-            "params": {
-                "label": "I AC",
-                "minimum": 0,
-                "maximum": 1000,
-                "value": 0.1
-            }
-        },
-        {
-            "name": "LLGtime",
-            "params": {
-                "label": "LLG time [ns]",
-                "minimum": 1,
-                "maximum": 100,
-                "value": 8
-            }
-        },
-        {
-            "name": "LLGsteps",
-            "params": {
-                "label": "LLG steps",
-                "minimum": 100,
-                "maximum": 1e9,
-                "value": 2000,
-                "mode": "Integer"
-            }
-        },
-        {
-            "name": "fmin",
-            "params": {
-                "label": "f AC",
-                "minimum": 0,
-                "maximum": 12,
-                "value": 0
-            }
-        },
-        {
-            "name": "fmax",
-            "params": {
-                "label": "f max",
-                "minimum": 0,
-                "maximum": 100,
-                "value": 20
-            }
-        },
-        {
-            "name": "fsteps",
-            "params": {
-                "label": "f steps",
-                "minimum": 0,
-                "maximum": 100,
-                "value": 0,
-                "mode": "Integer"
-            }
-        },
-
-        {
-            "name": "H",
-            "params": {
-                "label": "H",
-                "minimum": -1000,
-                "maximum": 1000,
-                "value": 800
-            }
-        },
-        {
-            "name": "HMin",
-            "params": {
-                "label": "HMin",
-                "minimum": -1000,
-                "maximum": 1000,
-                "value": -800
-            }
-        },
-        {
-            "name": "HMax",
-            "params": {
-                "label": "HMax",
-                "minimum": -1000,
-                "maximum": 1000,
-                "value": 800
-            }
-        },
-
-        {
-            "name": "HSteps",
-            "params": {
-                "label": "Steps",
-                "minimum": 0,
-                "maximum": 1e8,
-                "value": 100,
-                "mode": "Integer"
-                
-            }
-        },
-        {
-            "name": "HThetaSteps",
-            "params": {
-                "label": "Steps",
-                "minimum": 0,
-                "maximum": 1e8,
-                "value": 100,
-                "mode": "Integer"
-            }
-        },
-        {
-            "name": "HPhiSteps",
-            "params": {
-                "label": "Steps",
-                "minimum": 0,
-                "maximum": 1e8,
-                "value": 100,
-                "mode": "Integer"
-            }
-        },
-        {
-            "name": "HBack",
-            "params": {
-                "label": "Back",
-                "value": false,
-                "mode": "Binary"
-            }
-        },
-        {
-            "name": "HPhiBack",
-            "params": {
-                "label": "Back",
-                "value": false,
-                "mode": "Binary"
-            }
-        },
-        {
-            "name": "HThetaBack",
-            "params": {
-                "label": "Back",
-                "value": false,
-                "mode": "Binary"
-            }
-        },
-        {
-            "name": "HTheta",
-            "params": {
-                "label": "Theta",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 90
-            }
-        },
-        {
-            "name": "HThetaMin",
-            "params": {
-                "label": "Theta Min",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 90
-            }
-        },
-        {
-            "name": "HThetaMax",
-            "params": {
-                "label": "Theta Max",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 90
-            }
-        },
-        {
-            "name": "HPhi",
-            "params": {
-                "label": "Phi",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 0
-            }
-        },
-        {
-            "name": "HPhiMin",
-            "params": {
-                "label": "Phi Min",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 0
-            }
-        },
-        {
-            "name": "HPhiMax",
-            "params": {
-                "label": "Phi Max",
-                "minimum": -360,
-                "maximum": 360,
-                "value": 0
-            }
-        },
-        {
             "name": "HMode",
             "params": {
                 "label": "Field sweep mode",
@@ -213,6 +10,180 @@
                     "Phi",
                     "Theta"
                 ]
+            }
+        },
+        {
+            "name": "H",
+            "params": {
+                "label": "H",
+                "mode": "Double",
+                "maximum": 1000.0,
+                "minimum": -1000.0,
+                "value": 800.0
+            }
+        },
+        {
+            "name": "HMin",
+            "params": {
+                "label": "HMin",
+                "mode": "Double",
+                "maximum": 1000.0,
+                "minimum": -1000.0,
+                "value": -800.0
+            }
+        },
+        {
+            "name": "HSteps",
+            "params": {
+                "label": "Steps",
+                "mode": "Integer",
+                "maximum": 100000000,
+                "minimum": 0,
+                "value": 100
+            }
+        },
+        {
+            "name": "HMax",
+            "params": {
+                "label": "HMax",
+                "mode": "Double",
+                "maximum": 1000.0,
+                "minimum": -1000.0,
+                "value": 800.0
+            }
+        },
+        {
+            "name": "HBack",
+            "params": {
+                "label": "Back",
+                "mode": "Binary",
+                "value": 0
+            }
+        },
+        {
+            "name": "HPhi",
+            "params": {
+                "label": "Phi",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 1.0
+            }
+        },
+        {
+            "name": "HPhiMin",
+            "params": {
+                "label": "Phi Min",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 0.0
+            }
+        },
+        {
+            "name": "HPhiSteps",
+            "params": {
+                "label": "Steps",
+                "mode": "Integer",
+                "maximum": 100000000,
+                "minimum": 0,
+                "value": 100
+            }
+        },
+        {
+            "name": "HPhiMax",
+            "params": {
+                "label": "Phi Max",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 0.0
+            }
+        },
+        {
+            "name": "HPhiBack",
+            "params": {
+                "label": "Back",
+                "mode": "Binary",
+                "value": 0
+            }
+        },
+        {
+            "name": "HTheta",
+            "params": {
+                "label": "Theta",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 89.0
+            }
+        },
+        {
+            "name": "HThetaMin",
+            "params": {
+                "label": "Theta Min",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 90.0
+            }
+        },
+        {
+            "name": "HThetaSteps",
+            "params": {
+                "label": "Steps",
+                "mode": "Integer",
+                "maximum": 100000000,
+                "minimum": 0,
+                "value": 100
+            }
+        },
+        {
+            "name": "HThetaMax",
+            "params": {
+                "label": "Theta Max",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 90.0
+            }
+        },
+        {
+            "name": "HThetaBack",
+            "params": {
+                "label": "Back",
+                "mode": "Binary",
+                "value": 0
+            }
+        },
+        {
+            "name": "fmin",
+            "params": {
+                "label": "f AC",
+                "mode": "Double",
+                "maximum": 12.0,
+                "minimum": 0.0,
+                "value": 0.0
+            }
+        },
+        {
+            "name": "fsteps",
+            "params": {
+                "label": "f steps",
+                "mode": "Integer",
+                "maximum": 100,
+                "minimum": 0,
+                "value": 44
+            }
+        },
+        {
+            "name": "fmax",
+            "params": {
+                "label": "f max",
+                "mode": "Double",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "value": 44.0
             }
         },
         {
@@ -237,6 +208,56 @@
                     "y",
                     "z"
                 ]
+            }
+        },
+        {
+            "name": "Idc",
+            "params": {
+                "label": "I DC",
+                "mode": "Double",
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "value": 0.1
+            }
+        },
+        {
+            "name": "Iac",
+            "params": {
+                "label": "I AC",
+                "mode": "Double",
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "value": 0.1
+            }
+        },
+        {
+            "name": "LLGtime",
+            "params": {
+                "label": "LLG time [ns]",
+                "mode": "Double",
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "value": 8.0
+            }
+        },
+        {
+            "name": "LLGsteps",
+            "params": {
+                "label": "LLG steps",
+                "mode": "Integer",
+                "maximum": 1000000000,
+                "minimum": 100,
+                "value": 2000
+            }
+        },
+        {
+            "name": "LLGError_threshold",
+            "params": {
+                "label": "Max dm error",
+                "mode": "Double",
+                "maximum": 360.0,
+                "minimum": -360.0,
+                "value": 0.0
             }
         }
     ]

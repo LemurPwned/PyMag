@@ -4,25 +4,9 @@
         "vertical",
         [
             [
-                "horizontal",
-                [
-                    [
-                        "dock",
-                        "Control panel",
-                        {}
-                    ],
-                    [
-                        "dock",
-                        "Simulation parameters",
-                        {}
-                    ]
-                ],
-                {
-                    "sizes": [
-                        275,
-                        1592
-                    ]
-                }
+                "dock",
+                "Simulation parameters",
+                {}
             ],
             [
                 "horizontal",
@@ -30,11 +14,6 @@
                     [
                         "tab",
                         [
-                            [
-                                "dock",
-                                "Simulation results",
-                                {}
-                            ],
                             [
                                 "dock",
                                 "Resistance",
@@ -69,37 +48,53 @@
                         }
                     ],
                     [
-                        "tab",
+                        "vertical",
                         [
                             [
                                 "dock",
-                                "Simulation manager",
+                                "Control panel",
                                 {}
                             ],
                             [
-                                "dock",
-                                "Measurement manager",
-                                {}
+                                "tab",
+                                [
+                                    [
+                                        "dock",
+                                        "Simulation manager",
+                                        {}
+                                    ],
+                                    [
+                                        "dock",
+                                        "Measurement manager",
+                                        {}
+                                    ]
+                                ],
+                                {
+                                    "index": 0
+                                }
                             ]
                         ],
                         {
-                            "index": 0
+                            "sizes": [
+                                92,
+                                461
+                            ]
                         }
                     ]
                 ],
                 {
                     "sizes": [
-                        620,
-                        623,
-                        620
+                        473,
+                        473,
+                        480
                     ]
                 }
             ]
         ],
         {
             "sizes": [
-                216,
-                805
+                280,
+                560
             ]
         }
     ]

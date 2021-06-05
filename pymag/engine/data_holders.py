@@ -7,6 +7,7 @@ import cmtj
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel
+from pydantic.types import Json
 from pymag.engine.utils import get_stimulus
 from pymag.gui.utils import unicode_subs
 
@@ -190,6 +191,7 @@ class Layer(GenericHolder, GUIObject):
                  beta,
                  eng,
                  Hoe,
+                 Hoedir,
                  T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]) -> None:
@@ -212,13 +214,17 @@ class Layer(GenericHolder, GUIObject):
         self.Ry0 = float(Ry0)
         self.w = float(w)
         self.l = float(l)
-        self.p = p
-        self.p = np.asarray(self.p) / np.linalg.norm(self.p)
+        if any(p):
+            self.p = np.asarray(p)/np.linalg.norm(p)
+            self.p = self.p.tolist()
+        else:
+            self.p = p
         self.lam = float(lam)
         self.beta = float(beta)
         self.eng = float(eng)
         self.T = float(T)
         self.Hoe = float(Hoe)
+        self.Hoedir = [int(x) for x in Hoedir]
 
     def to_cmtj(self) -> cmtj.Layer:
         N = [
@@ -249,7 +255,7 @@ class Layer(GenericHolder, GUIObject):
             **stt_params)
         clayer.setAnisotropyDriver(cmtj.ScalarDriver.getConstantDriver(
             self.Ku))
-        clayer.setReferenceLayer(cmtj.CVector(*self.p.tolist()))
+        clayer.setReferenceLayer(cmtj.CVector(*self.p))
         return clayer
 
     @classmethod
@@ -274,12 +280,14 @@ class Layer(GenericHolder, GUIObject):
                  beta,
                  eng,
                  Hoe,
+                 Hoedir,
                  T=0.0,
                  mag=[0, 0, 1],
                  dipole=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
         parsed_Kdir = Layer.parse_list(Kdir)
         parsed_N = Layer.parse_list(N)
         parsed_p = Layer.parse_list(p)
+        parsed_Hoedir = Layer.parse_list(Hoedir)
         return cls(layer=layer,
                    alpha=alpha,
                    Kdir=parsed_Kdir,
@@ -300,6 +308,7 @@ class Layer(GenericHolder, GUIObject):
                    beta=beta,
                    eng=eng,
                    Hoe=Hoe,
+                   Hoedir=parsed_Hoedir,
                    T=T,
                    mag=mag,
                    dipole=dipole)
@@ -307,7 +316,7 @@ class Layer(GenericHolder, GUIObject):
     def to_gui(self):
         headers = [
             "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
-            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng", "Hoe"
+            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng", "Hoe", "Hoedir"
         ]
         res = {}
         for itm in headers:
@@ -351,6 +360,11 @@ class StimulusObject(BaseModel):
 
     spectrum_len: int
     SD_freqs: List[float]
+
+    stimulus_json: Dict[str, Any]
+
+    def to_gui(self) -> Dict[str, Any]:
+        return self.stimulus_json
 
 
 class SimulationInput(GenericHolder):

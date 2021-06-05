@@ -144,6 +144,8 @@ class SolverTask(QtCore.QThread):
                 cmtj.NullDriver(), cmtj.NullDriver(),
                 cmtj.ScalarDriver.getStepDriver(0, 1000, 0.0, 1e-11))
             junction.setLayerOerstedFieldDriver("all", HoeDriver)
+            junction.setLayerCurrentDriver("all", cmtj.NullDriver())
+
             junction.runSimulation(s_time, int_step, int_step)
             for i in range(no_org_layers):
                 m_init_PIMM[i] = junction.getLayerMagnetisation(
@@ -226,6 +228,7 @@ class SolverTask(QtCore.QThread):
         """
         Decide what kind of excitation is present in the junction.
         Set both Oersted field and current adequately.
+        Convert current to layer current density.
         """
         HoeDrivers: List[cmtj.AxialDriver] = [
             cmtj.AxialDriver(
@@ -238,11 +241,18 @@ class SolverTask(QtCore.QThread):
             for l in org_layers]
         for i in range(len(org_layers)):
             driver = HoeDrivers[i]
-            driver.applyMask(stimulus.I_dir)
+            driver.applyMask(org_layers[i].Hoedir)
             junction.setLayerOerstedFieldDriver(
                 org_layers_strs[i], driver)
+            # for converting to current density
+            if stimulus.I_dir == [1, 0, 0]:
+                area = org_layers[i].w*org_layers[i].th
+            elif stimulus.I_dir == [0, 1, 0]:
+                area = org_layers[i].l*org_layers[i].th
+            else:
+                area = org_layers[i].w*org_layers[i].l
             junction.setLayerCurrentDriver(org_layers_strs[i],
-                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc, stimulus.I_rf, frequency, 0))
+                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area, stimulus.I_rf/area, frequency, 0))
 
     def handle_signals(self):
         if self.is_killed:

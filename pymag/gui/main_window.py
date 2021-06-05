@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing as mp
 import os
@@ -27,12 +28,10 @@ class UIMainWindow(QMainWindow):
         super().__init__()
         self.setObjectName("PyMag")
         # load defaults
-        default_stimulus_file = os.path.join(PRESET_DIR,
-                                             "defaultStimulus.csv")
         default_layer_parameters_file = os.path.join(PRESET_DIR,
                                                      "defaultParameters.csv")
-        self.stimulus_parameters, self.layer_parameters = self.load_defaults(
-            default_stimulus_file, default_layer_parameters_file)
+        self.layer_parameters = self.load_defaults(
+            default_layer_parameters_file)
 
         # main window properties
         self.setObjectName(__version__)
@@ -58,7 +57,7 @@ class UIMainWindow(QMainWindow):
                                         SD_plot=self.SD_plot,
                                         PIMM_plot=self.PIMM_plot)
         self.result_queue = mp.Queue()
-        self.central_layout = AddMenuBar(parent=self, docks = self.area)
+        self.central_layout = AddMenuBar(parent=self, docks=self.area)
 
         self.global_experiment_manager = ExperimentManager()
         self.global_sim_manager = SimulationManager(
@@ -72,7 +71,7 @@ class UIMainWindow(QMainWindow):
         self.central_layout.set_exporter(exporter)
 
         self.widget_layer_params = SimulationParameters(
-            self, self.layer_parameters, self.stimulus_parameters)
+            self, self.layer_parameters)
 
         self.simulation_manager = ResultsTable(self.global_sim_manager,
                                                self.plot_manager,
@@ -89,7 +88,7 @@ class UIMainWindow(QMainWindow):
 
         self.d = []
         dock_titles = [
-            "Control panel", "PIMM-FMR", "Magnetization", "Simulation results",
+            "Control panel", "PIMM-FMR", "Magnetization",
             "Resistance", "SD-FMR", "Measurement manager",
             "Simulation manager", "Simulation parameters"
         ]
@@ -97,7 +96,7 @@ class UIMainWindow(QMainWindow):
         self.central_widget = self.central_layout.central_widget
         dock_contents = [
             self.central_widget, self.PIMM_plot.plot_view,
-            self.mag_plot.plot_area, self.table_results,
+            self.mag_plot.plot_area,
             self.res_plot.plot_area, self.SD_plot.plot_view,
             self.measurement_manager.central_widget,
             self.simulation_manager.central_widget,
@@ -109,16 +108,16 @@ class UIMainWindow(QMainWindow):
             self.d[i].addWidget(dock_contents[i])
 
         dock_pos = [(self.d[0], 'left'),
-                    (self.d[6], 'right', self.d[0]),
+                    (self.d[5], 'right', self.d[0]),
                     (self.d[1], 'right', self.d[0]),
 
                     (self.d[2], 'bottom', self.d[1]),
+                    # (self.d[3], 'above', self.d[2]),
                     (self.d[3], 'above', self.d[2]),
-                    (self.d[4], 'above', self.d[2]),
-                    (self.d[5], 'above', self.d[1]),
+                    (self.d[4], 'above', self.d[1]),
 
-                    (self.d[7], 'above', self.d[6]),
-                    (self.d[8], 'bottom', self.d[0])]
+                    (self.d[6], 'above', self.d[5]),
+                    (self.d[7], 'bottom', self.d[0])]
 
         for i in range(len(dock_titles)):
             self.area.addDock(*dock_pos[i])
@@ -130,34 +129,34 @@ class UIMainWindow(QMainWindow):
         self.central_layout.load_dock_state()
         self.show()
 
-    def load_defaults(self, default_stimulus_file,
+    def load_defaults(self,
                       default_layer_parameter_file):
         """
         Load default parameters: Simulus and Layer Structure
         """
-        stimulus_parameters = pd.read_csv(default_stimulus_file,
-                                          delimiter='\t')
         layer_parameters = pd.read_csv(default_layer_parameter_file,
                                        delimiter='\t')
-        return stimulus_parameters, layer_parameters
+        return layer_parameters
 
     def end_program(self):
         """
         Stimulus and layer params at shutdown
         """
-        df_stimulus, df_layers = self.widget_layer_params.get_all_data()
-        df_layers.to_csv(self.layer_parameters,
-                         encoding='utf-8',
-                         index=False,
-                         sep='\t')
-        os._exit(0)
+        _, df_layers = self.widget_layer_params.get_all_data()
+        # df_layers.to_csv(self.layer_parameters,
+        #                  encoding='utf-8',
+        #                  index=False,
+        #                  sep='\t')
+        self.widget_layer_params.stimulus_GUI.save_stimulus()
 
     def add_to_simulation_list(self):
-        stimulus, df_layers = self.widget_layer_params.get_all_data()
-        sim_layers = [
-            Layer.from_gui(**df_dict)
-            for df_dict in df_layers.to_dict(orient="records")
-        ]
+        stimulus, layers = self.widget_layer_params.get_all_data()
+        sim_layers = [Layer.from_gui(**df_dict)
+                      for df_dict in layers.to_dict(orient="records")]
+        # sim_layers = [
+        #     Layer.from_gui(**l_dict)
+        #     for l_dict in layers
+        # ]
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=stimulus)))

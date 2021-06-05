@@ -1,12 +1,11 @@
 from os import stat
-from pymag.engine.utils import SimulationStatus
 from queue import Queue
-import re
 from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
                                        ResultHolder, SimulationInput)
+from pymag.engine.utils import SimulationStatus
 from PyQt5 import QtCore
 
 DEFAULT_SIM_NAME = "Sim"

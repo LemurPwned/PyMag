@@ -21,7 +21,7 @@ class SimulationParameters():
     Don't pass parent -- pass Layer & Stimulus
     """
 
-    def __init__(self, parent, layer_parameters, stimulus_parameters):
+    def __init__(self, parent, layer_parameters):
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         header = self.table_layer_params.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
@@ -46,7 +46,6 @@ class SimulationParameters():
         self.central_layout = QtGui.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.table_layer_params)
-
 
         self.stimulus_GUI = StimulusGUI()
         self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
@@ -90,7 +89,7 @@ class SimulationParameters():
         layer_params = [layer.to_gui() for layer in sim_input.layers]
         stimulus_params = sim_input.stimulus.to_gui()
         self.table_layer_params.setData(layer_params)
-        self.table_stimulus_params.setData(stimulus_params)
+        self.stimulus_GUI.set_stimulus(stimulus_params)
 
 
 class ResultsTable():
@@ -228,8 +227,10 @@ class AddMenuBar():
         self.window_about = About()
         self.file_menu = self.menubar.addMenu("File")
         self.window_menu = self.menubar.addMenu("Window")
-        self.window_menu.addAction("Save dock State").triggered.connect(self.save_dock_state)
-        self.window_menu.addAction("Load dock State").triggered.connect(self.load_dock_state)
+        self.window_menu.addAction(
+            "Save dock State").triggered.connect(self.save_dock_state)
+        self.window_menu.addAction(
+            "Load dock State").triggered.connect(self.load_dock_state)
         self.help_menu = self.menubar.addMenu("Help")
         self.help_menu.addAction("About").triggered.connect(self.about)
 
@@ -255,14 +256,15 @@ class AddMenuBar():
         self.central_layout.addLayout(self.btn_layout)
         self.central_layout.addStretch()
 
-        self.preset_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'presets'))
-        self.preset_file = os.path.join(self.preset_dir,"dock_area_state.json")
-
+        self.preset_dir = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'presets'))
+        self.preset_file = os.path.join(
+            self.preset_dir, "dock_area_state.json")
 
     def save_dock_state(self):
         docks_state = self.docks.saveState()
         with open(self.preset_file, 'w') as f:
-            json.dump(docks_state,f, sort_keys=True)
+            json.dump(docks_state, f, sort_keys=True, indent=4)
 
     def load_dock_state(self):
         with open(self.preset_file, 'r') as f:
