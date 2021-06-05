@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import numpy as np
 from pydantic.types import Json
 from pymag.engine.data_holders import StimulusObject
-from pymag.engine.utils import get_stimulus
+from pymag.engine.utils import SweepMode, get_stimulus
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QLabel
 
@@ -169,13 +169,13 @@ class StimulusGUI():
         Calculates the values necessary for calculation while parsing as well
         """
         mode = self.HMode.Value.currentText()
-        if mode == "H":
+        if mode == SweepMode.H:
             steps = int(self.HSteps.Value.value())
             back = self.HThetaBack.Value.checkState()
-        if mode == "Phi":
+        if mode == SweepMode.PHI:
             steps = int(self.HPhiSteps.Value.value())
             back = self.HPhiBack.Value.checkState()
-        if mode == "Theta":
+        if mode == SweepMode.THETA:
             steps = int(self.HThetaSteps.Value.value())
             back = self.HBack.Value.checkState()
         # convert H from kA/m -> A/m
@@ -193,7 +193,7 @@ class StimulusGUI():
         f_max = self.fmax.Value.value()*1e9
         f_steps = int(self.fsteps.Value.value())
         LLG_steps = int(self.LLGsteps.Value.value())
-        LLG_time = self.LLGtime.Value.value()/1e9 # ns -> s
+        LLG_time = self.LLGtime.Value.value()/1e9  # ns -> s
         PIMM_delta_f = 1./LLG_time
         PIMM_freqs = np.arange(0, PIMM_delta_f*LLG_steps, step=PIMM_delta_f)
         SD_freqs = np.linspace(f_min, f_max, f_steps)
@@ -224,14 +224,14 @@ class StimulusGUI():
         mode = self.HMode.Value.currentText()
         for i in self.stimulus_objects[1:16]:
             i.hide()
-        if mode == "H":
+        if mode == SweepMode.H:
             for i in [self.HMin, self.HSteps, self.HMax, self.HBack, self.HPhi, self.HTheta]:
                 i.show()
 
-        if mode == "Phi":
+        if mode == SweepMode.PHI:
             for i in [self.H, self.HPhiMin, self.HPhiSteps, self.HPhiMax, self.HPhiBack, self.HTheta]:
                 i.show()
 
-        if mode == "Theta":
+        if mode == SweepMode.THETA:
             for i in [self.H, self.HPhi, self.HThetaMin, self.HThetaSteps, self.HThetaMax, self.HThetaBack]:
                 i.show()

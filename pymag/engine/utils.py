@@ -20,10 +20,16 @@ class SimulationStatus:
     ALL_DONE = "ALL_DONE"
 
 
+class SweepMode:
+    H = "H"
+    PHI = "Phi"
+    THETA = "Theta"
+
+
 def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, STEPS, back,
                  mode):
 
-    if mode == "H":
+    if mode == SweepMode.H:
         steps = int(STEPS)
         x_versor = np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
         y_versor = np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
@@ -34,7 +40,7 @@ def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, 
         Hmag = (Hx**2 + Hy**2 + Hz**2)**0.5 * np.sign(
             np.cos(np.arctan2(Hx, Hy)))
 
-    elif mode == "Phi":
+    elif mode == SweepMode.PHI:
         steps = int(STEPS)
         phi = np.linspace(PhiMin, PhiMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
@@ -42,7 +48,7 @@ def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, 
         Hz = H * np.cos(np.deg2rad(theta)) + phi * 0
         Hmag = phi
 
-    elif mode == "Theta":
+    elif mode == SweepMode.THETA:
         steps = int(STEPS)
         theta = np.linspace(ThetaMin, ThetaMax, steps)
         Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))

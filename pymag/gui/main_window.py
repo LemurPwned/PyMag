@@ -112,7 +112,6 @@ class UIMainWindow(QMainWindow):
                     (self.d[1], 'right', self.d[0]),
 
                     (self.d[2], 'bottom', self.d[1]),
-                    # (self.d[3], 'above', self.d[2]),
                     (self.d[3], 'above', self.d[2]),
                     (self.d[4], 'above', self.d[1]),
 
