@@ -28,32 +28,34 @@ class SweepMode:
 
 def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, STEPS, back,
                  mode):
-
+    st = np.sin(np.deg2rad(theta))
+    ct = np.cos(np.deg2rad(theta))
+    sp = np.sin(np.deg2rad(phi))
+    cp = np.cos(np.deg2rad(phi))
     if mode == SweepMode.H:
         steps = int(STEPS)
-        x_versor = np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
-        y_versor = np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
-        z_versor = np.cos(np.deg2rad(theta))
-        Hx = np.around(np.linspace(Hmin, Hmax, steps) * x_versor, decimals=2)
-        Hy = np.around(np.linspace(Hmin, Hmax, steps) * y_versor, decimals=2)
-        Hz = np.around(np.linspace(Hmin, Hmax, steps) * z_versor, decimals=2)
-        Hmag = (Hx**2 + Hy**2 + Hz**2)**0.5 * np.sign(
-            np.cos(np.arctan2(Hx, Hy)))
+        x_versor = st * cp
+        y_versor = st * sp
+        z_versor = ct
+        Hmag = np.linspace(Hmin, Hmax, steps)
+        Hx = np.around(Hmag * x_versor, decimals=2)
+        Hy = np.around(Hmag * y_versor, decimals=2)
+        Hz = np.around(Hmag * z_versor, decimals=2)
 
     elif mode == SweepMode.PHI:
         steps = int(STEPS)
         phi = np.linspace(PhiMin, PhiMax, steps)
-        Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
-        Hy = H * np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
-        Hz = H * np.cos(np.deg2rad(theta)) + phi * 0
+        Hx = H * st * cp
+        Hy = H * st * sp
+        Hz = H * ct + phi * 0 #???
         Hmag = phi
 
     elif mode == SweepMode.THETA:
         steps = int(STEPS)
         theta = np.linspace(ThetaMin, ThetaMax, steps)
-        Hx = H * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
-        Hy = H * np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
-        Hz = H * np.cos(np.deg2rad(theta))
+        Hx = H * st * cp
+        Hy = H * st * sp
+        Hz = H * ct
         Hmag = theta
     else:
         raise ValueError(f"Invalid mode: {mode}")
