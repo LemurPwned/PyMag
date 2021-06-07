@@ -76,9 +76,11 @@ class SimulationParameters():
         return tmp_df
 
     def add_layer(self):
+        layer_no = self.table_layer_params.rowCount() + 1
         self.table_layer_params.addRow([
-            1, 1.6, 3000, "[1 0 0]", -1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
-            0.01, 100, 120, 1, [0, 0, 0], 0, 0, 0
+            layer_no, 1.6, 3000, "[1 0 0]", -
+            1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
+            0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, 0, [0, 0, 0]
         ])
 
     def remove_layer(self):

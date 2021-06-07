@@ -103,6 +103,7 @@ class SolverTask(QtCore.QThread):
         org_layer_strs = [
             f"{str(org_layers[i].layer)}" for i in range(no_org_layers)
         ]
+        print(org_layer_strs)
         layers = [layer.to_cmtj() for layer in org_layers]
         junction = cmtj.Junction(filename="", layers=layers)
         # assign IEC interacton
