@@ -65,13 +65,12 @@ class SimulationParameters():
         tmp_df = pd.DataFrame()
         tmp_col_name = []
         for i in range(number_of_columns):
-            name = table.takeHorizontalHeaderItem(i).text()
+            name = table.horizontalHeaderItem(i).text()
             if name in inverse_subs:
                 name = inverse_subs[name]
             tmp_col_name.append(name)
             for j in range(number_of_rows):
                 tmp_df.loc[j, i] = table.item(j, i).text()
-        table.setHorizontalHeaderLabels(tmp_col_name)
         tmp_df.columns = tmp_col_name
         return tmp_df
 
