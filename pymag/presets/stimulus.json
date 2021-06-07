@@ -217,7 +217,7 @@
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": 0.0,
-                "value": 0.1
+                "value": 7.1
             }
         },
         {
@@ -227,7 +227,7 @@
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": 0.0,
-                "value": 0.1
+                "value": 1.1
             }
         },
         {

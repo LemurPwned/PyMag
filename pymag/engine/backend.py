@@ -58,7 +58,7 @@ def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     Ry = 1 / np.sum(SyAll, axis=0)
 
     if number_of_layers > 1:
-        Rz = R_P + (R_AP - R_P) / 2 * (1 - np.sum(m[0, :] * m[1, :], axis=0))
+        Rz = R_P + ((R_AP - R_P) / 2) * (1 - np.sum(m[0, :] * m[1, :], axis=0))
     else:
         Rz = 0
 
