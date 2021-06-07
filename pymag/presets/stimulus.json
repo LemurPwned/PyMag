@@ -15,7 +15,7 @@
         {
             "name": "H",
             "params": {
-                "label": "H",
+                "label": "H (kA/m)",
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": -1000.0,
@@ -25,7 +25,7 @@
         {
             "name": "HMin",
             "params": {
-                "label": "HMin",
+                "label": "HMin (kA/m)",
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": -1000.0,
@@ -45,7 +45,7 @@
         {
             "name": "HMax",
             "params": {
-                "label": "HMax",
+                "label": "HMax (kA/m)",
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": -1000.0,
