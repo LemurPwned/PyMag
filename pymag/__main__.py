@@ -19,7 +19,7 @@ def run_pymag():
     app.setApplicationName(__version__)
     main_window = UIMainWindow()
     exit_code = app.exec_()
-    main_window.end_program()
+    main_window.save_before_exit()
     sys.exit(exit_code)
 
 

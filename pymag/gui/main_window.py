@@ -1,8 +1,8 @@
-import json
 import logging
 import multiprocessing as mp
 import os
 import queue
+import sys
 
 import pandas as pd
 import pyqtgraph as pg
@@ -16,11 +16,11 @@ from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
                                           SimulationManager)
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import QSettings
 from pyqtgraph.dockarea import Dock, DockArea
 
 PRESET_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'presets'))
+LAYER_DEFAULTS = os.path.join(PRESET_DIR, "defaultParameters.csv")
 
 
 class UIMainWindow(QMainWindow):
@@ -28,10 +28,7 @@ class UIMainWindow(QMainWindow):
         super().__init__()
         self.setObjectName("PyMag")
         # load defaults
-        default_layer_parameters_file = os.path.join(PRESET_DIR,
-                                                     "defaultParameters.csv")
-        self.layer_parameters = self.load_defaults(
-            default_layer_parameters_file)
+        self.layer_parameters = self.load_defaults()
 
         # main window properties
         self.setObjectName(__version__)
@@ -128,12 +125,11 @@ class UIMainWindow(QMainWindow):
         self.central_layout.load_dock_state()
         self.show()
 
-    def load_defaults(self,
-                      default_layer_parameter_file):
+    def load_defaults(self):
         """
         Load default parameters: Simulus and Layer Structure
         """
-        layer_parameters = pd.read_csv(default_layer_parameter_file,
+        layer_parameters = pd.read_csv(LAYER_DEFAULTS,
                                        delimiter='\t')
         return layer_parameters
 
@@ -141,21 +137,21 @@ class UIMainWindow(QMainWindow):
         """
         Stimulus and layer params at shutdown
         """
+        self.save_before_exit()
+        sys.exit(0)
+
+    def save_before_exit(self):
         _, df_layers = self.widget_layer_params.get_all_data()
-        # df_layers.to_csv(self.layer_parameters,
-        #                  encoding='utf-8',
-        #                  index=False,
-        #                  sep='\t')
+        df_layers.to_csv(LAYER_DEFAULTS,
+                         encoding='utf-8',
+                         index=False,
+                         sep='\t')
         self.widget_layer_params.stimulus_GUI.save_stimulus()
 
     def add_to_simulation_list(self):
         stimulus, layers = self.widget_layer_params.get_all_data()
         sim_layers = [Layer.from_gui(**df_dict)
                       for df_dict in layers.to_dict(orient="records")]
-        # sim_layers = [
-        #     Layer.from_gui(**l_dict)
-        #     for l_dict in layers
-        # ]
         self.global_sim_manager.add_simulation(
             Simulation(simulation_input=SimulationInput(
                 layers=sim_layers, stimulus=stimulus)))
