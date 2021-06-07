@@ -166,11 +166,8 @@ class StimulusGUI():
         """
         Parse the GUI object to the corresponding backend 
         object. 
-        Calculates the values necessary for calculation while parsing as well
+        Calculates the values necessary for calculation while parsing as well.
         """
-
-        
-
         mode = self.HMode.Value.currentText()
         if mode == SweepMode.H:
             steps = int(self.HSteps.Value.value())

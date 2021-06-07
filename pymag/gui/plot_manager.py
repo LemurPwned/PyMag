@@ -38,7 +38,7 @@ class PlotManager:
         self.PIMM_plot.inf_line.sigPositionChanged.connect(
             self.PIMM_update_roi_loc)
 
-        units_SI = {"H": "A/m", "theta": "deg", "phi": "deg", "f": "Hz"}
+        units_SI = {"H": "A/m", "Theta": "deg", "Phi": "deg", "f": "Hz"}
         self.units = units_SI
         self.H = None
         self.spectrogram_SD = None
