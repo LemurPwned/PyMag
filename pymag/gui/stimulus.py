@@ -168,16 +168,19 @@ class StimulusGUI():
         object. 
         Calculates the values necessary for calculation while parsing as well
         """
+
+        
+
         mode = self.HMode.Value.currentText()
         if mode == SweepMode.H:
             steps = int(self.HSteps.Value.value())
-            back = self.HThetaBack.Value.checkState()
+            back = self.HBack.Value.checkState()
         if mode == SweepMode.PHI:
             steps = int(self.HPhiSteps.Value.value())
             back = self.HPhiBack.Value.checkState()
         if mode == SweepMode.THETA:
             steps = int(self.HThetaSteps.Value.value())
-            back = self.HBack.Value.checkState()
+            back = self.HThetaBack.Value.checkState()
         # convert H from kA/m -> A/m
         H_sweep, sweep = get_stimulus(self.H.Value.value()*1e3,
                                       self.HMin.Value.value()*1e3,
