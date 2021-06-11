@@ -85,11 +85,16 @@ class SimulationParameters():
     def remove_layer(self):
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
+
+
+
     def update_simulation_input_table(self, simulation: Simulation):
         sim_input = simulation.get_simulation_input()
         layer_params = [layer.to_gui() for layer in sim_input.layers]
         stimulus_params = sim_input.stimulus.to_gui()
-        self.table_layer_params.setData(layer_params)
+        print(layer_params[0])
+        print({str(key): str(value) for key, value in layer_params[0].items()})
+        self.table_layer_params.setData([{str(key): str(value) for key, value in layer_params[i].items()} for i in range (0,len(layer_params))])
         self.stimulus_GUI.set_stimulus(stimulus_params)
 
 
