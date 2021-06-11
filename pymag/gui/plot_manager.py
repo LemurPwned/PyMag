@@ -112,11 +112,9 @@ class PlotManager:
         Plot the experimental data if it exists
         """
         x, f = data.get_pimm_series()
-        if f:
-            self.PIMM_plot.update_plot(np.asarray(x), np.asarray(f))
-        x, vmix = data.get_vsd_series()
-        if vmix:
-            self.SD_plot.update_plot(np.asarray(x), np.asarray(vmix))
+
+        self.PIMM_plot.update_plot(np.asarray(x), np.asarray(f))
+        self.SD_plot.update_plot(np.asarray(x), np.asarray(f))
 
         x, Rx, Ry, Rz = data.get_r_series()
         for i, R in enumerate((Rx, Ry, Rz)):
