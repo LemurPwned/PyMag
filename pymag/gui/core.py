@@ -85,9 +85,6 @@ class SimulationParameters():
     def remove_layer(self):
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())
 
-
-
-
     def update_simulation_input_table(self, simulation: Simulation):
         sim_input = simulation.get_simulation_input()
         layer_params = [layer.to_gui() for layer in sim_input.layers]
