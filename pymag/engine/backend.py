@@ -103,7 +103,6 @@ class SolverTask(QtCore.QThread):
         org_layer_strs = [
             f"{str(org_layers[i].layer)}" for i in range(no_org_layers)
         ]
-        print(org_layer_strs)
         layers = [layer.to_cmtj() for layer in org_layers]
         junction = cmtj.Junction(filename="", layers=layers)
         # assign IEC interacton
@@ -253,7 +252,8 @@ class SolverTask(QtCore.QThread):
             else:
                 area = org_layers[i].w*org_layers[i].l
             junction.setLayerCurrentDriver(org_layers_strs[i],
-                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area, stimulus.I_rf/area, frequency, 0))
+                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area,
+                                           stimulus.I_rf/area, frequency, 0))
 
     def handle_signals(self):
         if self.is_killed:

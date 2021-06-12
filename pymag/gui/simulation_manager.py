@@ -1,5 +1,5 @@
 from os import stat
-from queue import Queue
+from multiprocessing import Queue
 from typing import List, Set, Union
 
 from pymag.engine.backend import SolverTask
