@@ -94,6 +94,7 @@ class SimulationParameters():
         self.stimulus_GUI.set_stimulus(stimulus_params)
 
 
+
 class ResultsTable():
     """
     To be changed & renamed -- must use Simulation Manager

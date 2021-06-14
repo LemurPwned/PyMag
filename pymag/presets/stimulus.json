@@ -98,7 +98,7 @@
                 "mode": "Double",
                 "maximum": 360.0,
                 "minimum": -360.0,
-                "value": 120.0
+                "value": 180.0
             }
         },
         {
@@ -116,7 +116,11 @@
                 "mode": "Double",
                 "maximum": 360.0,
                 "minimum": -360.0,
+<<<<<<< HEAD
                 "value": 91.0
+=======
+                "value": 90.0
+>>>>>>> 30f1d55b95a8251f7f71c2c1473c671f6d294e4b
             }
         },
         {

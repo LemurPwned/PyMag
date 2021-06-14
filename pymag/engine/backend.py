@@ -9,12 +9,11 @@ from scipy.fft import fft
 from typing import List
 
 
-def compute_vsd(stime, m_xs, frequency, integration_step):
-    I_amp = 20000
-    Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
-    Rlow = 100 * len(m_xs)
-    dR = 0.1
-    SD = -Isdd * np.sum(Rlow + dR * m_xs, axis=0)
+
+def compute_vsd_(stime, dynamicR, frequency, integration_step, dynamicI):
+
+    SD = -dynamicI * dynamicR
+
     SD_voltage = butter_lowpass_filter(SD,
                                        cutoff=10e6,
                                        fs=1. / integration_step,
@@ -22,17 +21,26 @@ def compute_vsd(stime, m_xs, frequency, integration_step):
     return np.mean(SD_voltage)
 
 
-def compute_vsd_(stime, dynamicR, frequency, integration_step):
-    I_amp = 20000
-    Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
+# def compute_vsd_AHE(stime, dynamicR, frequency, integration_step, dynamicI):
 
-    SD = -Isdd * dynamicR
-    SD_voltage = butter_lowpass_filter(SD,
-                                       cutoff=10e6,
-                                       fs=1. / integration_step,
-                                       order=3)
-    return np.mean(SD_voltage)
+#     SD = -dynamicI * dynamicR
 
+#     SD_voltage = butter_lowpass_filter(SD,
+#                                        cutoff=10e6,
+#                                        fs=1. / integration_step,
+#                                        order=3)
+#     return np.mean(SD_voltage)
+
+# def compute_2nd_harmonic(stime, dynamicR, frequency, integration_step):
+#     I_amp = 20000
+#     Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
+
+#     SD = -Isdd * dynamicR
+#     SD_voltage = butter_lowpass_filter(SD,
+#                                        cutoff=10e6,
+#                                        fs=1. / integration_step,
+#                                        order=3)
+#     return np.mean(SD_voltage)
 
 # @numba.jit(nopython=True, parallel=False)
 def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
@@ -196,14 +204,23 @@ class SolverTask(QtCore.QThread):
                     log[f'{org_layer_strs[i]}_mz']
                 ] for i in range(no_org_layers)])
 
-                dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR,
+                dynamicRx, dynamicRy, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR,
                                                       m, no_org_layers, l, w)
+                dynamicI = stimulus.I_dc + stimulus.I_rf * np.sin(2 * np.pi * frequency * np.asarray(log['time']))
 
-                vmix = compute_vsd_(stime=np.asarray(log['time']),
-                                    dynamicR=dynamicR,
+                V_SD_FMR = compute_vsd_(stime=np.asarray(log['time']),
+                                    dynamicR=dynamicRx,
                                     frequency=frequency,
-                                    integration_step=int_step)
-                SD_results.append(vmix)
+                                    integration_step=int_step, dynamicI = dynamicI)
+
+                # dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
+                vmix_AHE = compute_vsd_(stime=np.asarray(log['time']),
+                                    dynamicR=dynamicRy,
+                                    frequency=frequency,
+                                    integration_step=int_step, dynamicI = dynamicI)
+
+                # SD_results.append(vmix_AHE)
+                SD_results.append(V_SD_FMR)
             # run PIMM
             if not self.handle_signals():
                 return
