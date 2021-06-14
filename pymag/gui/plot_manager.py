@@ -172,7 +172,6 @@ class PlotManager:
 
             self.PIMM_update_roi_loc()
 
-
             if len(result_holder.SD_freqs) > 1:
                 self.SD_deltaf = result_holder.SD_freqs[1] - \
                     result_holder.SD_freqs[0]
@@ -187,5 +186,3 @@ class PlotManager:
                                          bottom_units=self.units[str(
                                              result_holder.mode)])
                 self.SD_update_roi_loc()
-
-

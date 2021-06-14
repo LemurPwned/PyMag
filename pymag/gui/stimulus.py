@@ -45,6 +45,14 @@ class Labelled():
             for i in range(0, len(item_list)):
                 self.Value.addItem(item_list[i])
 
+    def setValue(self, value: Any):
+        if self.mode == "Binary":
+            self.Value.setChecked(value)
+        elif self.mode == "Combo":
+            self.Value.setCurrentIndex(value)
+        else:
+            self.Value.setValue(value)
+
     def show(self):
         self.Value.show()
         self.Label.show()
@@ -70,7 +78,8 @@ class Labelled():
             }
         else:
             add = {
-                "item_list": [self.Value.itemText(i) for i in range(self.Value.count())]
+                "item_list": [self.Value.itemText(i) for i in range(self.Value.count())],
+                "value": self.Value.currentIndex()
             }
         return {"name": self.var_name,
                 "params": {**ret, **add}}
@@ -119,7 +128,6 @@ class StimulusGUI():
         self.HMode.Value.currentIndexChanged.connect(self.H_mode_changed)
 
         for i in range(0, len(self.stimulus_objects)):
-
             self.stimulus_layout.addWidget(
                 self.stimulus_objects[i].Label, 0, i)
             self.stimulus_layout.addWidget(
@@ -139,8 +147,10 @@ class StimulusGUI():
     def set_stimulus(self, stimulus_json: Json):
         for obj in stimulus_json["stimulus"]:
             _ref = getattr(self, obj["name"])
-            for k, v in obj['params'].items():
-                setattr(_ref, k, v)
+            if 'value' in obj['params']:
+                _ref.setValue(obj['params']['value'])
+
+        self.H_mode_changed()
 
     def to_json(self):
         output_json = {"stimulus": []}

@@ -284,3 +284,24 @@ class SolverTask(QtCore.QThread):
             if not self.is_killed:
                 self.queue.put((sim_index, ..., SimulationStatus.DONE))
         self.queue.put(({}, ..., SimulationStatus.ALL_DONE))
+
+    def run_batch(self):
+        all_H_sweep_vals = sum([
+            len(sim.get_simulation_input().stimulus.H_sweep)
+            for sim in self.simulations
+        ])
+        all_H_indx = 0
+        final_PIMM = []
+        for sim_index, simulation in zip(self.simulation_indices,
+                                         self.simulations):
+            for partial_result in self.simulation_setup(simulation=simulation):
+                self.queue.put(
+                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS))
+                all_H_indx += 1
+                progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
+                self.progress.emit(progr)
+                final_PIMM.append(partial_result.PIMM.tolist()[0])
+            if not self.is_killed:
+                self.queue.put((sim_index, ..., SimulationStatus.DONE))
+        self.queue.put(({}, ..., SimulationStatus.ALL_DONE))
+

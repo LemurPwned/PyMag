@@ -120,7 +120,7 @@ class UIMainWindow(QMainWindow):
         self.ports = []
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.on_simulation_data_update)
-        self.timer.start(0)
+        self.timer.start(10)
 
         self.central_layout.load_dock_state()
         self.show()
