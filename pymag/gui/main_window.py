@@ -163,25 +163,30 @@ class UIMainWindow(QMainWindow):
 
     def on_simulation_data_update(self):
         try:
-            sim_indx, res, status = self.result_queue.get(block=False)
-            if status == SimulationStatus.ALL_DONE:
-                self.central_layout.set_btn_start_position()
-            elif status == SimulationStatus.DONE:
-                self.global_sim_manager.mark_as_done(sim_indx)
-            elif status == SimulationStatus.KILLED:
-                # now sim_indx is a list of the sim indices that were in the
-                # compute backend
-                for indx in sim_indx:
-                    self.global_sim_manager.reset_simulation_output(indx)
-                    self.global_sim_manager.update_status(
-                        indx, SimulationStatus.KILLED)
-                self.plot_manager.clear_simulation_plots()
-            elif status == SimulationStatus.IN_PROGRESS:
-                self.global_sim_manager.update_simulation_data(sim_indx, res)
+            updates = self.result_queue.get(block=False)
+            if isinstance(updates, list):
+                for (sim_indx, res, status) in updates:
+                    # update batch
+                    self.global_sim_manager.update_simulation_data(
+                        sim_indx, res)
                 self.plot_manager.plot_result(
                     self.global_sim_manager.get_simulation(sim_indx))
             else:
-                raise ValueError("Unknown simulation status received!")
-            self.simulation_manager.update_row(sim_indx)
+                (sim_indx, _, status) = updates
+                if status == SimulationStatus.ALL_DONE:
+                    self.central_layout.set_btn_start_position()
+                elif status == SimulationStatus.DONE:
+                    self.global_sim_manager.mark_as_done(sim_indx)
+                elif status == SimulationStatus.KILLED:
+                    # now sim_indx is a list of the sim indices that were in the
+                    # compute backend
+                    for indx in sim_indx:
+                        self.global_sim_manager.reset_simulation_output(indx)
+                        self.global_sim_manager.update_status(
+                            indx, SimulationStatus.KILLED)
+                    self.plot_manager.clear_simulation_plots()
+                else:
+                    raise ValueError("Unknown simulation status received!")
+                self.simulation_manager.update_row(sim_indx)
         except queue.Empty:
             logging.debug("Queue emptied!")

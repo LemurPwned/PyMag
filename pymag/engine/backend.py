@@ -7,7 +7,7 @@ from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 from PyQt5 import QtCore
 from scipy.fft import fft
 from typing import List
-
+from copy import deepcopy
 
 
 def compute_vsd_(stime, dynamicR, frequency, integration_step, dynamicI):
@@ -20,27 +20,6 @@ def compute_vsd_(stime, dynamicR, frequency, integration_step, dynamicI):
                                        order=3)
     return np.mean(SD_voltage)
 
-
-# def compute_vsd_AHE(stime, dynamicR, frequency, integration_step, dynamicI):
-
-#     SD = -dynamicI * dynamicR
-
-#     SD_voltage = butter_lowpass_filter(SD,
-#                                        cutoff=10e6,
-#                                        fs=1. / integration_step,
-#                                        order=3)
-#     return np.mean(SD_voltage)
-
-# def compute_2nd_harmonic(stime, dynamicR, frequency, integration_step):
-#     I_amp = 20000
-#     Isdd = (I_amp / 8) * np.sin(2 * np.pi * frequency * stime)
-
-#     SD = -Isdd * dynamicR
-#     SD_voltage = butter_lowpass_filter(SD,
-#                                        cutoff=10e6,
-#                                        fs=1. / integration_step,
-#                                        order=3)
-#     return np.mean(SD_voltage)
 
 # @numba.jit(nopython=True, parallel=False)
 def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
@@ -205,19 +184,20 @@ class SolverTask(QtCore.QThread):
                 ] for i in range(no_org_layers)])
 
                 dynamicRx, dynamicRy, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR,
-                                                      m, no_org_layers, l, w)
-                dynamicI = stimulus.I_dc + stimulus.I_rf * np.sin(2 * np.pi * frequency * np.asarray(log['time']))
+                                                               m, no_org_layers, l, w)
+                dynamicI = stimulus.I_dc + stimulus.I_rf * \
+                    np.sin(2 * np.pi * frequency * np.asarray(log['time']))
 
                 V_SD_FMR = compute_vsd_(stime=np.asarray(log['time']),
-                                    dynamicR=dynamicRx,
-                                    frequency=frequency,
-                                    integration_step=int_step, dynamicI = dynamicI)
+                                        dynamicR=dynamicRx,
+                                        frequency=frequency,
+                                        integration_step=int_step, dynamicI=dynamicI)
 
                 # dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
                 vmix_AHE = compute_vsd_(stime=np.asarray(log['time']),
-                                    dynamicR=dynamicRy,
-                                    frequency=frequency,
-                                    integration_step=int_step, dynamicI = dynamicI)
+                                        dynamicR=dynamicRy,
+                                        frequency=frequency,
+                                        integration_step=int_step, dynamicI=dynamicI)
 
                 # SD_results.append(vmix_AHE)
                 SD_results.append(V_SD_FMR)
@@ -288,37 +268,27 @@ class SolverTask(QtCore.QThread):
             for sim in self.simulations
         ])
         all_H_indx = 0
-        final_PIMM = []
+        batch_update = []
+        batch_update_count = 2  # how many steps per plot update?
         for sim_index, simulation in zip(self.simulation_indices,
                                          self.simulations):
             for partial_result in self.simulation_setup(simulation=simulation):
-                self.queue.put(
-                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS))
+                batch_update.append(
+                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS)
+                )
                 all_H_indx += 1
-                progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
+                progr = 100 * (all_H_indx + 1) / all_H_sweep_vals
                 self.progress.emit(progr)
-                final_PIMM.append(partial_result.PIMM.tolist()[0])
+                if len(batch_update) and ((len(batch_update) % batch_update_count) == 0):
+                    self.queue.put(deepcopy(batch_update))
+                    # clear
+                    batch_update.clear()
             if not self.is_killed:
+                # put the remaining batch if not empty
+                if len(batch_update):
+                    self.queue.put(
+                        deepcopy(batch_update))
+                    # clear
+                    batch_update.clear()
                 self.queue.put((sim_index, ..., SimulationStatus.DONE))
         self.queue.put(({}, ..., SimulationStatus.ALL_DONE))
-
-    def run_batch(self):
-        all_H_sweep_vals = sum([
-            len(sim.get_simulation_input().stimulus.H_sweep)
-            for sim in self.simulations
-        ])
-        all_H_indx = 0
-        final_PIMM = []
-        for sim_index, simulation in zip(self.simulation_indices,
-                                         self.simulations):
-            for partial_result in self.simulation_setup(simulation=simulation):
-                self.queue.put(
-                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS))
-                all_H_indx += 1
-                progr = 100 * (all_H_indx + 1) / (all_H_sweep_vals)
-                self.progress.emit(progr)
-                final_PIMM.append(partial_result.PIMM.tolist()[0])
-            if not self.is_killed:
-                self.queue.put((sim_index, ..., SimulationStatus.DONE))
-        self.queue.put(({}, ..., SimulationStatus.ALL_DONE))
-
