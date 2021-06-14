@@ -33,7 +33,7 @@ class UIMainWindow(QMainWindow):
         # main window properties
         self.setObjectName(__version__)
         self.setWindowTitle(__version__)
-        self.resize(1400, 900)
+        self.resize(1400, 800)
 
         # dock area as a central widget of GUI
         self.area = DockArea()
@@ -120,11 +120,7 @@ class UIMainWindow(QMainWindow):
         self.ports = []
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.on_simulation_data_update)
-<<<<<<< HEAD
         self.timer.start(10)
-=======
-        self.timer.start(500)
->>>>>>> 30f1d55b95a8251f7f71c2c1473c671f6d294e4b
 
         self.central_layout.load_dock_state()
         self.show()
