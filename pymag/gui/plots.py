@@ -16,21 +16,22 @@ class MultiplePlot():
         self.experimental_plots: List[pg.PlotDataItem] = []
         self.plots_to_clear: List[pg.PlotDataItem] = []
 
-        for i in range(0, number_of_plots):
+        for i in range(number_of_plots):
             self.plots.append(self.plot_area.addPlot())
             self.plots[i].setLabel('left', left[i], units=y_unit)
             self.plots[i].enableAutoRange('x', True)
             self.plots[i].showGrid(x=True, y=True, alpha=0.6)
             self.plot_area.nextRow()
             self.plots_to_clear.append(None)
+            self.experimental_plots.append(None)
 
     def clear_plots(self):
-        for i in range(0, self.number_of_plots):
+        for i in range(self.number_of_plots):
             self.plots[i].removeItem(self.plots_to_clear[i])
 
     def set_plots(self, X: list, Y: list, colors: list, left_caption,
                   left_units, bottom_caption, bottom_units):
-        for i in range(0, self.number_of_plots):
+        for i in range(self.number_of_plots):
             pointer = self.plots[i].plot(X, Y[i], pen=(colors[i]))
             self.plots_to_clear[i] = pointer
             self.plots[i].setLabel('left',
@@ -47,13 +48,11 @@ class MultiplePlot():
                                             np.asarray(Y),
                                             pen=pg.mkPen('r', width=1.2),
                                             alpha=0.6)
-        self.experimental_plots.append(pointer)
+        self.experimental_plots[n] = pointer
 
     def clear_experimental(self):
-        exp_plot: PlotDataItem
-        for i, exp_plot in enumerate(self.experimental_plots):
-            self.plots[i].removeItem(exp_plot)
-        self.experimental_plots.clear()
+        for i in range(self.number_of_plots):
+            self.plots[i].removeItem(self.experimental_plots[i])
 
 
 class SpectrogramPlot():

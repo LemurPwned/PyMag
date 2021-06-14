@@ -121,7 +121,7 @@ class PlotManager:
             if R:
                 self.resistance_plot.set_experimental(i, x, R)
 
-        x, Mx, My, Mz = data.get_r_series()
+        x, Mx, My, Mz = data.get_m_series()
         for i, M in enumerate((Mx, My, Mz)):
             if M:
                 self.magnetisation_plot.set_experimental(i, x, M)
