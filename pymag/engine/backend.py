@@ -26,9 +26,9 @@ def compute_vsd(frequency, dynamicR, integration_step, dynamicI) -> VoltageSpinD
         SD, pass_freq=frequency*2, fs=fs, order=3
     )
     return VoltageSpinDiodeData(
-        DC=np.mean(SD_dc).reshape(1, -1),
-        FHarmonic=np.mean(SD_first_harmonic).reshape(1, -1),
-        SHarmonic=np.mean(SD_second_harmonic).reshape(1, -1)
+        DC=np.mean(SD_dc).reshape(1, 1),
+        FHarmonic=np.mean(SD_first_harmonic).reshape(1, 1),
+        SHarmonic=np.mean(SD_second_harmonic).reshape(1, 1)
     )
 
 
@@ -126,6 +126,8 @@ class SolverTask(QtCore.QThread):
             if not self.handle_signals():
                 return
             SD_results = []
+            ensemble_vsd_data = None
+
             HDriver = cmtj.AxialDriver(
                 cmtj.ScalarDriver.getConstantDriver(Hval[0]),
                 cmtj.ScalarDriver.getConstantDriver(Hval[1]),
@@ -203,6 +205,10 @@ class SolverTask(QtCore.QThread):
                     frequency=frequency,
                     integration_step=int_step,
                     dynamicI=dynamicI)
+                if ensemble_vsd_data is None:
+                    ensemble_vsd_data = vsd_data
+                else:
+                    ensemble_vsd_data.merge_vsd(vsd_data, axis=1)
                 SD_results.append(vsd_data.DC)
             # run PIMM
             if not self.handle_signals():
@@ -218,7 +224,7 @@ class SolverTask(QtCore.QThread):
                                           m_avg=m_avg,
                                           m_traj=[0, 0, 0],
                                           PIMM=yf[:len(yf) // 2],
-                                          sd_data=vsd_data)
+                                          sd_data=ensemble_vsd_data)
             yield partial_result
 
     def configure_VSD_excitation(self, frequency: float,

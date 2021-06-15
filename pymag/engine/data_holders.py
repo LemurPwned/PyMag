@@ -104,15 +104,15 @@ class VoltageSpinDiodeData:
     FHarmonic: np.ndarray
     SHarmonic: np.ndarray
 
-    def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData') -> 'VoltageSpinDiodeData':
+    def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData', axis):
         self.DC = np.concatenate(
-            (self.DC, vsd_data.DC), axis=0
+            (self.DC, vsd_data.DC), axis=axis
         )
         self.FHarmonic = np.concatenate(
-            (self.FHarmonic, vsd_data.FHarmonic), axis=0
+            (self.FHarmonic, vsd_data.FHarmonic), axis=axis
         )
         self.SHarmonic = np.concatenate(
-            (self.SHarmonic, vsd_data.SHarmonic), axis=0
+            (self.SHarmonic, vsd_data.SHarmonic), axis=axis
         )
 
 
@@ -148,10 +148,7 @@ class ResultHolder(GenericHolder):
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
-        if not self.sd_data:
-            self.sd_data = self.sd_data.merge_vsd(result.sd_data)
-        else:
-            self.sd_data = result.sd_data
+        self.sd_data.merge_vsd(result.sd_data, axis=0)
         self.update_count += result.update_count
 
     def to_csv(self, filename) -> None:

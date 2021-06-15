@@ -40,7 +40,7 @@
                 "mode": "Integer",
                 "maximum": 100000000,
                 "minimum": 0,
-                "value": 100
+                "value": 30
             }
         },
         {

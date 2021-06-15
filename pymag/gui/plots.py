@@ -127,21 +127,21 @@ class SpectrogramPlot():
     def on_dc_selected(self):
         if self.VSD_holder:
             self.image_spectrum.setImage(
-                self.VSD_holder.DC, autoLevels=False
+                self.detrend_f_axis(self.VSD_holder.DC), autoLevels=False
             )
             self.image.updateImage()
 
     def on_first_har_selected(self):
         if self.VSD_holder:
             self.image_spectrum.setImage(
-                self.VSD_holder.FHarmonic, autoLevels=False
+                self.detrend_f_axis(self.VSD_holder.FHarmonic), autoLevels=False
             )
             self.image.updateImage()
 
     def on_second_har_selected(self):
         if self.VSD_holder:
             self.image_spectrum.setImage(
-                self.VSD_holder.SHarmonic, autoLevels=False
+                self.detrend_f_axis(self.VSD_holder.SHarmonic), autoLevels=False
             )
             self.image.updateImage()
 
