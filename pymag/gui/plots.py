@@ -1,8 +1,11 @@
+from numpy.lib.type_check import imag
+from pymag.engine.data_holders import VoltageSpinDiodeData
 from typing import List
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 import numpy as np
 from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
+from PyQt5.QtWidgets import QAction, QActionGroup
 
 
 class MultiplePlot():
@@ -61,10 +64,26 @@ class SpectrogramPlot():
         self.plot_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
         self.plot_image: pg.PlotItem = self.plot_view.addPlot()
         self.image = pg.ImageView()
+
         self.plot_view.setBackground('w')
         self.image_spectrum = self.image.getImageItem()
 
         self.plot_image.addItem(self.image_spectrum)
+
+        menu = self.plot_image.vb.menu
+        image_view_action_group = QActionGroup(menu)
+        image_view_action_group.setExclusive(True)
+
+        for n, ac in zip(["DC", "1st harmonic", "2nd harmonic"],
+                         [self.on_dc_selected,
+                         self.on_first_har_selected,
+                         self.on_second_har_selected]):
+            a = image_view_action_group.addAction(QAction(
+                n, menu, checkable=True))
+            a.triggered.connect(ac)
+            menu.addAction(a)
+        image_view_action_group.actions()[0].setChecked(True)
+
         self.plot_image.showGrid(x=True, y=True, alpha=0.6)
         self.image_spectrum.resetTransform()
         self.histogram_scale = pg.HistogramLUTItem()
@@ -97,14 +116,44 @@ class SpectrogramPlot():
         self.cross_section.setLabel('bottom', "Field", units="A/m")
         self.cross_section.setLabel('left', "Udc")
         self.cross_section.showGrid(x=True, y=True, alpha=0.6)
+        self.xrange = None
+        self.yrange = None
+
+        self.VSD_holder: VoltageSpinDiodeData = None
+
+    def set_VSD_holder(self, holder: VoltageSpinDiodeData):
+        self.VSD_holder = holder
+
+    def on_dc_selected(self):
+        if self.VSD_holder:
+            self.image_spectrum.setImage(
+                self.VSD_holder.DC, autoLevels=False
+            )
+            self.image.updateImage()
+
+    def on_first_har_selected(self):
+        if self.VSD_holder:
+            self.image_spectrum.setImage(
+                self.VSD_holder.FHarmonic, autoLevels=False
+            )
+            self.image.updateImage()
+
+    def on_second_har_selected(self):
+        if self.VSD_holder:
+            self.image_spectrum.setImage(
+                self.VSD_holder.SHarmonic, autoLevels=False
+            )
+            self.image.updateImage()
 
     def update_axis(self, left_caption, left_units, bottom_caption,
                     bottom_units):
         self.plot_image.setLabel('left', left_caption, units=left_units)
-        self.plot_image.setLabel('bottom', bottom_caption, units=bottom_units)
+        self.plot_image.setLabel(
+            'bottom', bottom_caption, units=bottom_units)
 
     def update(self, xrange, yrange, values):
-
+        self.xrange = xrange
+        self.yrange = yrange
         self.image_spectrum.resetTransform()
         self.image_spectrum.translate(min(xrange), min(yrange))
         self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),

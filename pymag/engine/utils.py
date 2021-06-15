@@ -2,9 +2,6 @@ import numpy as np
 from scipy.signal import butter, lfilter
 from numpy.linalg import norm
 
-PyMagVersion = "PyMag v. 2.1"
-PyMagDate = "28 Oct 2020"
-H_unit = "A/m"
 
 gamma = 1.76e11  # 1/(Ts)
 mu0 = 1.255e-6  # N/A^2
@@ -71,15 +68,25 @@ def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, 
     return np.vstack((Hx, Hy, Hz)).T, Hmag
 
 
-def butter_lowpass(cutoff, fs, order=5):
+def butter_bandpass_filter(data, pass_freq, fs, order=5):
     nyq = 0.5 * fs
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    return b, a
+    if pass_freq == 0:
+        pass_freq = 0.1
+    try:
+        b, a = butter(order, [
+            0.9*pass_freq/nyq, pass_freq/nyq
+        ], btype='bandpass', analog=False)
+    except ValueError:
+        print(fs, pass_freq, nyq, 0.9*pass_freq/nyq, pass_freq/nyq)
+        raise ValueError("Error in filtering")
+    y = lfilter(b, a, data, zi=None)
+    return y
 
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
-    b, a = butter_lowpass(cutoff, fs, order=order)
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
     y = lfilter(b, a, data, zi=None)
     return y
 

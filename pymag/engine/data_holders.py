@@ -1,5 +1,6 @@
 import json
 import os
+from dataclasses import dataclass
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Dict, List
 
@@ -97,9 +98,27 @@ class ExperimentData(GenericHolder, BaseModel):
         return self.x, self.f
 
 
+@dataclass
+class VoltageSpinDiodeData:
+    DC: np.ndarray
+    FHarmonic: np.ndarray
+    SHarmonic: np.ndarray
+
+    def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData') -> 'VoltageSpinDiodeData':
+        self.DC = np.concatenate(
+            (self.DC, vsd_data.DC), axis=0
+        )
+        self.FHarmonic = np.concatenate(
+            (self.FHarmonic, vsd_data.FHarmonic), axis=0
+        )
+        self.SHarmonic = np.concatenate(
+            (self.SHarmonic, vsd_data.SHarmonic), axis=0
+        )
+
+
 class ResultHolder(GenericHolder):
     def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs, SD,
-                 SD_freqs, Rx, Ry, Rz) -> None:
+                 SD_freqs, Rx, Ry, Rz, sd_data: VoltageSpinDiodeData = None) -> None:
         self.mode = mode
         self.H_mag = H_mag
         self.m_avg = np.expand_dims(m_avg, axis=0)
@@ -116,6 +135,7 @@ class ResultHolder(GenericHolder):
         self.PIMM_freqs = PIMM_freqs
         self.m_traj = m_traj
         self.update_count = 1
+        self.sd_data = sd_data
 
     def merge_result(self, result: 'ResultHolder'):
         self.SD = np.concatenate((self.SD, np.asarray(result.SD)), axis=0)
@@ -128,6 +148,10 @@ class ResultHolder(GenericHolder):
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
+        if not self.sd_data:
+            self.sd_data = self.sd_data.merge_vsd(result.sd_data)
+        else:
+            self.sd_data = result.sd_data
         self.update_count += result.update_count
 
     def to_csv(self, filename) -> None:

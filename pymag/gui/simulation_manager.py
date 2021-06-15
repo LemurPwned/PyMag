@@ -1,4 +1,3 @@
-from os import stat
 from multiprocessing import Queue
 from typing import List, Set, Union
 

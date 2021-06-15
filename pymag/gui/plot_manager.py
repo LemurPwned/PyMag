@@ -178,7 +178,7 @@ class PlotManager:
                 self.SD_plot.update(result_holder.H_mag[:lim],
                                     result_holder.SD_freqs,
                                     self.SD_plot.detrend_f_axis(result_holder.SD))
-
+                self.SD_plot.set_VSD_holder(result_holder.sd_data)
                 self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
                                          left_units="Hz",
                                          bottom_caption=str(

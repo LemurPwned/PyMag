@@ -1,8 +1,10 @@
 import time
+
+from numpy.core.fromnumeric import mean
 import cmtj
 import numpy as np
-from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject
-from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
+from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject, VoltageSpinDiodeData
+from pymag.engine.utils import SimulationStatus, butter_bandpass_filter, butter_lowpass_filter
 # import numba
 from PyQt5 import QtCore
 from scipy.fft import fft
@@ -10,15 +12,24 @@ from typing import List
 from copy import deepcopy
 
 
-def compute_vsd_(stime, dynamicR, frequency, integration_step, dynamicI):
-
+def compute_vsd(frequency, dynamicR, integration_step, dynamicI) -> VoltageSpinDiodeData:
     SD = -dynamicI * dynamicR
-
-    SD_voltage = butter_lowpass_filter(SD,
-                                       cutoff=10e6,
-                                       fs=1. / integration_step,
-                                       order=3)
-    return np.mean(SD_voltage)
+    fs = 1.0/integration_step
+    SD_dc = butter_lowpass_filter(SD,
+                                  cutoff=10e6,
+                                  fs=fs,
+                                  order=3)
+    SD_first_harmonic = butter_bandpass_filter(
+        SD, pass_freq=frequency, fs=fs, order=3
+    )
+    SD_second_harmonic = butter_bandpass_filter(
+        SD, pass_freq=frequency*2, fs=fs, order=3
+    )
+    return VoltageSpinDiodeData(
+        DC=np.mean(SD_dc).reshape(1, -1),
+        FHarmonic=np.mean(SD_first_harmonic).reshape(1, -1),
+        SHarmonic=np.mean(SD_second_harmonic).reshape(1, -1)
+    )
 
 
 # @numba.jit(nopython=True, parallel=False)
@@ -27,7 +38,6 @@ def calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, number_of_layers, l, w):
     R_AP = Ry0[0]
 
     if m.ndim == 2:
-
         SxAll = np.zeros((number_of_layers, ))
         SyAll = np.zeros((number_of_layers, ))
 
@@ -75,7 +85,7 @@ class SolverTask(QtCore.QThread):
 
         s_time = stimulus.LLG_time
         int_step = s_time / stimulus.LLG_steps
-        org_layers = sim_input.layers
+        org_layers: List[Layer] = sim_input.layers
 
         Rx0 = np.asarray([l.Rx0 for l in org_layers])
         Ry0 = np.asarray([l.Ry0 for l in org_layers])
@@ -139,7 +149,7 @@ class SolverTask(QtCore.QThread):
                     org_layer_strs[i])
             log = junction.getLog()
             mixed = np.mean([
-                np.asarray(log[f"{org_layer_strs[i]}_mz"])
+                np.asarray(log[f"{org_layer_strs[i]}_mz"])*org_layers[i].Ms
                 for i in range(no_org_layers)
             ],
                 axis=0)
@@ -188,19 +198,12 @@ class SolverTask(QtCore.QThread):
                 dynamicI = stimulus.I_dc + stimulus.I_rf * \
                     np.sin(2 * np.pi * frequency * np.asarray(log['time']))
 
-                V_SD_FMR = compute_vsd_(stime=np.asarray(log['time']),
-                                        dynamicR=dynamicRx,
-                                        frequency=frequency,
-                                        integration_step=int_step, dynamicI=dynamicI)
-
-                # dynamicR, _, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
-                vmix_AHE = compute_vsd_(stime=np.asarray(log['time']),
-                                        dynamicR=dynamicRy,
-                                        frequency=frequency,
-                                        integration_step=int_step, dynamicI=dynamicI)
-
-                # SD_results.append(vmix_AHE)
-                SD_results.append(V_SD_FMR)
+                vsd_data = compute_vsd(
+                    dynamicR=dynamicRx,
+                    frequency=frequency,
+                    integration_step=int_step,
+                    dynamicI=dynamicI)
+                SD_results.append(vsd_data.DC)
             # run PIMM
             if not self.handle_signals():
                 return
@@ -214,7 +217,8 @@ class SolverTask(QtCore.QThread):
                                           Rz=Rz,
                                           m_avg=m_avg,
                                           m_traj=[0, 0, 0],
-                                          PIMM=yf[:len(yf) // 2])
+                                          PIMM=yf[:len(yf) // 2],
+                                          sd_data=vsd_data)
             yield partial_result
 
     def configure_VSD_excitation(self, frequency: float,
