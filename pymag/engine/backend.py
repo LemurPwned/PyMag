@@ -1,6 +1,7 @@
 import time
 
 from numpy.core.fromnumeric import mean
+from numpy.fft import fftfreq
 import cmtj
 import numpy as np
 from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject, VoltageSpinDiodeData
@@ -19,16 +20,25 @@ def compute_vsd(frequency, dynamicR, integration_step, dynamicI) -> VoltageSpinD
                                   cutoff=10e6,
                                   fs=fs,
                                   order=3)
-    SD_first_harmonic = butter_bandpass_filter(
-        SD, pass_freq=frequency, fs=fs, order=3
-    )
-    SD_second_harmonic = butter_bandpass_filter(
-        SD, pass_freq=frequency*2, fs=fs, order=3
-    )
+    SD_fft = fft(SD)[:len(SD)//2]
+    freqs = fftfreq(len(SD), integration_step)[:len(SD)//2]
+    amplitude = np.abs(SD_fft)
+    phase = np.angle(SD_fft)
+
+    # first harmonic
+    # argmax in range frequency
+    fhar_index = np.argsort(np.abs(freqs - frequency))[:5]  # neighbourhood
+    max_fhar_amp_indx = np.argmax(SD_fft[fhar_index])
+    # second harmonic
+    # argmax in range 2*frequency
+    shar_index = np.argsort(np.abs(freqs - 2*frequency))[:5]  # neighbourhood
+    max_shar_amp_indx = np.argmax(SD_fft[shar_index])
     return VoltageSpinDiodeData(
         DC=np.mean(SD_dc).reshape(1, 1),
-        FHarmonic=np.mean(SD_first_harmonic).reshape(1, 1),
-        SHarmonic=np.mean(SD_second_harmonic).reshape(1, 1)
+        FHarmonic=amplitude[fhar_index][max_fhar_amp_indx].reshape(1, 1),
+        SHarmonic=amplitude[shar_index][max_shar_amp_indx].reshape(1, 1),
+        FHarmonic_phase=phase[fhar_index][max_fhar_amp_indx].reshape(1, 1),
+        SHarmonic_phase=phase[shar_index][max_shar_amp_indx].reshape(1, 1)
     )
 
 

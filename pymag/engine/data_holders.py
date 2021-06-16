@@ -103,6 +103,8 @@ class VoltageSpinDiodeData:
     DC: np.ndarray
     FHarmonic: np.ndarray
     SHarmonic: np.ndarray
+    FHarmonic_phase: np.ndarray
+    SHarmonic_phase: np.ndarray
 
     def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData', axis):
         self.DC = np.concatenate(
@@ -113,6 +115,13 @@ class VoltageSpinDiodeData:
         )
         self.SHarmonic = np.concatenate(
             (self.SHarmonic, vsd_data.SHarmonic), axis=axis
+        )
+
+        self.FHarmonic_phase = np.concatenate(
+            (self.FHarmonic_phase, vsd_data.FHarmonic_phase), axis=axis
+        )
+        self.SHarmonic_phase = np.concatenate(
+            (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis
         )
 
 

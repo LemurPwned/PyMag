@@ -59,7 +59,7 @@ class MultiplePlot():
 
 
 class SpectrogramPlot():
-    def __init__(self):
+    def __init__(self, spectrum_enabled=False):
         self.plot_view = pg.GraphicsLayoutWidget()
         self.plot_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
         self.plot_image: pg.PlotItem = self.plot_view.addPlot()
@@ -69,20 +69,6 @@ class SpectrogramPlot():
         self.image_spectrum = self.image.getImageItem()
 
         self.plot_image.addItem(self.image_spectrum)
-
-        menu = self.plot_image.vb.menu
-        image_view_action_group = QActionGroup(menu)
-        image_view_action_group.setExclusive(True)
-
-        for n, ac in zip(["DC", "1st harmonic", "2nd harmonic"],
-                         [self.on_dc_selected,
-                         self.on_first_har_selected,
-                         self.on_second_har_selected]):
-            a = image_view_action_group.addAction(QAction(
-                n, menu, checkable=True))
-            a.triggered.connect(ac)
-            menu.addAction(a)
-        image_view_action_group.actions()[0].setChecked(True)
 
         self.plot_image.showGrid(x=True, y=True, alpha=0.6)
         self.image_spectrum.resetTransform()
@@ -118,32 +104,59 @@ class SpectrogramPlot():
         self.cross_section.showGrid(x=True, y=True, alpha=0.6)
         self.xrange = None
         self.yrange = None
-
         self.VSD_holder: VoltageSpinDiodeData = None
+        self.construct_qmenu(spectrum_enabled)
+
+    def construct_qmenu(self, spectrum_enabled):
+        menu = self.plot_image.vb.menu
+        for action in menu.actions():
+            action.setVisible(False)
+        if spectrum_enabled:
+            submenu = menu.addMenu("Spectrum")
+            harmonic_group = QActionGroup(submenu)
+            harmonic_group.setExclusive(True)
+
+            for n, ac in zip(["DC", "1st harmonic", "2nd harmonic",
+                              "1st harmonic phase",
+                              "2nd harmonic phase"],
+                             ["DC", "FHarmonic", "SHarmonic",
+                             "FHarmonic_phase", "SHarmonic_phase"]):
+
+                a = harmonic_group.addAction(QAction(
+                    n, menu, checkable=True))
+                a.triggered.connect(self.action_menu_generator(ac))
+                submenu.addAction(a)
+            harmonic_group.actions()[0].setChecked(True)
+
+        # submenu_rx_ry = menu.addMenu("Resistance")
+        # for n, ac in zip(["Rxx", "Rxy"],
+        #                  [self.on_rxx_selected,
+        #                  self.on_rxy_selected]):
+        #     a = harmonic_group.addAction(QAction(
+        #         n, menu, checkable=True))
+        #     a.triggered.connect(ac)
+        #     submenu_rx_ry.addAction(a)
+
+    def on_rxx_selected(self, holder: VoltageSpinDiodeData):
+        ...
+
+    def on_rxy_selected(self, holder: VoltageSpinDiodeData):
+        ...
 
     def set_VSD_holder(self, holder: VoltageSpinDiodeData):
         self.VSD_holder = holder
 
-    def on_dc_selected(self):
-        if self.VSD_holder:
-            self.image_spectrum.setImage(
-                self.detrend_f_axis(self.VSD_holder.DC), autoLevels=False
-            )
-            self.image.updateImage()
-
-    def on_first_har_selected(self):
-        if self.VSD_holder:
-            self.image_spectrum.setImage(
-                self.detrend_f_axis(self.VSD_holder.FHarmonic), autoLevels=False
-            )
-            self.image.updateImage()
-
-    def on_second_har_selected(self):
-        if self.VSD_holder:
-            self.image_spectrum.setImage(
-                self.detrend_f_axis(self.VSD_holder.SHarmonic), autoLevels=False
-            )
-            self.image.updateImage()
+    def action_menu_generator(self, property):
+        def menu_action():
+            if self.VSD_holder:
+                self.image_spectrum.setImage(
+                    self.detrend_f_axis(
+                        getattr(self.VSD_holder, property)
+                    ), autoLevels=False
+                )
+                self.image.updateImage()
+                self.update_roi()
+        return menu_action
 
     def update_axis(self, left_caption, left_units, bottom_caption,
                     bottom_units):
@@ -151,9 +164,25 @@ class SpectrogramPlot():
         self.plot_image.setLabel(
             'bottom', bottom_caption, units=bottom_units)
 
-    def update(self, xrange, yrange, values):
+    def update_roi(self):
+        if not (self.xrange is None):
+            cross_section = int(self.inf_line.value() / self.deltaf)
+            if cross_section >= self.image_spectrum.image.shape[
+                    1] or cross_section < 0:
+                return
+            self.cross_section.clear()
+            self.cross_section.plot(
+                self.xrange,
+                self.image_spectrum.image[:,
+                                          int(self.inf_line.value() /
+                                              self.deltaf)],
+                pen=pg.mkPen('b', width=5))
+
+    def update(self, xrange, yrange, values, deltaf):
         self.xrange = xrange
         self.yrange = yrange
+        self.deltaf = deltaf
+
         self.image_spectrum.resetTransform()
         self.image_spectrum.translate(min(xrange), min(yrange))
         self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),

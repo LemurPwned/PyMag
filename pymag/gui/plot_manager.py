@@ -5,9 +5,6 @@ from pymag.gui.simulation_manager import Simulation
 import queue
 from typing import List, Union
 
-import pyqtgraph as pg
-
-
 class PlotManager:
     """
     Plot Manager manages all plot updates in the dock
@@ -47,31 +44,10 @@ class PlotManager:
         self.PIMM_deltaf = 0
 
     def PIMM_update_roi_loc(self):
-        if not (self.H is None):
-            cross_section = int(self.PIMM_plot.inf_line.value() /
-                                self.PIMM_deltaf)
-            if cross_section >= self.spectrogram_PIMM.shape[
-                    1] or cross_section < 0:
-                return
-            self.PIMM_plot.cross_section.clear()
-            self.PIMM_plot.cross_section.plot(
-                self.H,
-                self.spectrogram_PIMM[:, cross_section],
-                pen=pg.mkPen('b', width=5))
+        self.PIMM_plot.update_roi()
 
     def SD_update_roi_loc(self):
-        if not (self.H is None):
-            cross_section = int(self.SD_plot.inf_line.value() / self.SD_deltaf)
-            if cross_section >= self.spectrogram_SD.shape[
-                    1] or cross_section < 0:
-                return
-            self.SD_plot.cross_section.clear()
-            self.SD_plot.cross_section.plot(
-                self.H,
-                self.spectrogram_SD[:,
-                                    int(self.SD_plot.inf_line.value() /
-                                        self.SD_deltaf)],
-                pen=pg.mkPen('b', width=5))
+        self.SD_plot.update_roi()
 
     def clear_simulation_plots(self):
         self.resistance_plot.clear_plots()
@@ -162,7 +138,9 @@ class PlotManager:
 
         if lim >= 2:
             self.PIMM_plot.update(result_holder.H_mag[:lim],
-                                  result_holder.PIMM_freqs, result_holder.PIMM)
+                                  result_holder.PIMM_freqs,
+                                  result_holder.PIMM,
+                                  self.PIMM_deltaf)
 
             self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
                                        left_units="Hz",
@@ -177,7 +155,9 @@ class PlotManager:
                     result_holder.SD_freqs[0]
                 self.SD_plot.update(result_holder.H_mag[:lim],
                                     result_holder.SD_freqs,
-                                    self.SD_plot.detrend_f_axis(result_holder.SD))
+                                    self.SD_plot.detrend_f_axis(
+                                        result_holder.SD),
+                                    self.SD_deltaf)
                 self.SD_plot.set_VSD_holder(result_holder.sd_data)
                 self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
                                          left_units="Hz",

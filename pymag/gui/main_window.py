@@ -40,8 +40,8 @@ class UIMainWindow(QMainWindow):
         self.setCentralWidget(self.area)
 
         # define classes
-        self.SD_plot = SpectrogramPlot()
-        self.PIMM_plot = SpectrogramPlot()
+        self.SD_plot = SpectrogramPlot(spectrum_enabled=True)
+        self.PIMM_plot = SpectrogramPlot(spectrum_enabled=False)
 
         self.res_plot = MultiplePlot(left=["Rxx", "Rxy", "Rzz"],
                                      number_of_plots=3)
