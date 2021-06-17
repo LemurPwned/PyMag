@@ -104,7 +104,14 @@ class SpectrogramPlot():
         self.cross_section.showGrid(x=True, y=True, alpha=0.6)
         self.xrange = None
         self.yrange = None
-        self.VSD_holder: VoltageSpinDiodeData = None
+
+        # only for VSD
+        self.Rxx_holder: VoltageSpinDiodeData = None
+        self.Rxy_holder: VoltageSpinDiodeData = None
+
+        # starting values
+        self.resistance_mode = "Rxx"
+        self.current_action = "DC"
         self.construct_qmenu(spectrum_enabled)
 
     def construct_qmenu(self, spectrum_enabled):
@@ -123,39 +130,52 @@ class SpectrogramPlot():
                              "FHarmonic_phase", "SHarmonic_phase"]):
 
                 a = harmonic_group.addAction(QAction(
-                    n, menu, checkable=True))
+                    n, submenu, checkable=True))
                 a.triggered.connect(self.action_menu_generator(ac))
                 submenu.addAction(a)
             harmonic_group.actions()[0].setChecked(True)
 
-        # submenu_rx_ry = menu.addMenu("Resistance")
-        # for n, ac in zip(["Rxx", "Rxy"],
-        #                  [self.on_rxx_selected,
-        #                  self.on_rxy_selected]):
-        #     a = harmonic_group.addAction(QAction(
-        #         n, menu, checkable=True))
-        #     a.triggered.connect(ac)
-        #     submenu_rx_ry.addAction(a)
+            submenu_rxx_rxy = menu.addMenu("Resistance")
+            resistance_group = QActionGroup(submenu_rxx_rxy)
+            resistance_group.setExclusive(True)
+            for n, ac in zip(["Rxx", "Rxy"],
+                             [self.on_Rxx_selected, self.on_Rxy_selected]):
+                a = resistance_group.addAction(QAction(
+                    n, submenu_rxx_rxy, checkable=True))
+                a.triggered.connect(ac)
+                submenu_rxx_rxy.addAction(a)
+                resistance_group.actions()[0].setChecked(True)
 
-    def on_rxx_selected(self, holder: VoltageSpinDiodeData):
-        ...
+    def on_Rxx_selected(self):
+        self.resistance_mode = "Rxx"
+        if self.current_action:
+            self.action_menu_generator(self.current_action)()
 
-    def on_rxy_selected(self, holder: VoltageSpinDiodeData):
-        ...
+    def on_Rxy_selected(self):
+        self.resistance_mode = "Rxy"
+        if self.current_action:
+            self.action_menu_generator(self.current_action)()
 
-    def set_VSD_holder(self, holder: VoltageSpinDiodeData):
-        self.VSD_holder = holder
+    def set_VSD_holders(self, Rxx_holder: VoltageSpinDiodeData,
+                        Rxy_holder: VoltageSpinDiodeData):
+        self.Rxx_holder = Rxx_holder
+        self.Rxy_holder = Rxy_holder
+
+    def update_action(self, action):
+        self.current_action = action
 
     def action_menu_generator(self, property):
         def menu_action():
-            if self.VSD_holder:
+            holder = getattr(self, self.resistance_mode + "_holder")
+            if holder:
                 self.image_spectrum.setImage(
                     self.detrend_f_axis(
-                        getattr(self.VSD_holder, property)
+                        getattr(holder, property)
                     ), autoLevels=False
                 )
                 self.image.updateImage()
                 self.update_roi()
+                self.update_action(property)
         return menu_action
 
     def update_axis(self, left_caption, left_units, bottom_caption,
@@ -190,6 +210,18 @@ class SpectrogramPlot():
         self.image_spectrum.setImage(values, autoLevels=False)
         self.image.updateImage()
 
+    def update_image(self, xrange, yrange, deltaf):
+        self.xrange = xrange
+        self.yrange = yrange
+        self.deltaf = deltaf
+
+        self.image_spectrum.resetTransform()
+        self.image_spectrum.translate(min(xrange), min(yrange))
+        self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
+                                  (max(yrange) - min(yrange)) / len(yrange))
+        self.action_menu_generator(self.current_action)()
+        self.image.updateImage()
+
     def update_plot(self, x, y):
         self.plot_image.scatterPlot(x,
                                     y,
@@ -205,5 +237,4 @@ class SpectrogramPlot():
     def clear_plots(self):
         self.image_spectrum.clear()
         self.cross_section.clear()
-        # self.plot_image.clear()
         return

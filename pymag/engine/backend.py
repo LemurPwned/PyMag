@@ -5,7 +5,7 @@ from numpy.fft import fftfreq
 import cmtj
 import numpy as np
 from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject, VoltageSpinDiodeData
-from pymag.engine.utils import SimulationStatus, butter_bandpass_filter, butter_lowpass_filter
+from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 # import numba
 from PyQt5 import QtCore
 from scipy.fft import fft
@@ -135,9 +135,8 @@ class SolverTask(QtCore.QThread):
         for Hval in stimulus.H_sweep:
             if not self.handle_signals():
                 return
-            SD_results = []
-            ensemble_vsd_data = None
-
+            Rx_vsd = None
+            Ry_vsd = None
             HDriver = cmtj.AxialDriver(
                 cmtj.ScalarDriver.getConstantDriver(Hval[0]),
                 cmtj.ScalarDriver.getConstantDriver(Hval[1]),
@@ -210,16 +209,22 @@ class SolverTask(QtCore.QThread):
                 dynamicI = stimulus.I_dc + stimulus.I_rf * \
                     np.sin(2 * np.pi * frequency * np.asarray(log['time']))
 
-                vsd_data = compute_vsd(
+                Rxx_vsd_data = compute_vsd(
                     dynamicR=dynamicRx,
                     frequency=frequency,
                     integration_step=int_step,
                     dynamicI=dynamicI)
-                if ensemble_vsd_data is None:
-                    ensemble_vsd_data = vsd_data
+                Rxy_vsd_data = compute_vsd(
+                    dynamicR=dynamicRy,
+                    frequency=frequency,
+                    integration_step=int_step,
+                    dynamicI=dynamicI)
+                if Rx_vsd is None:
+                    Rx_vsd = Rxx_vsd_data
+                    Ry_vsd = Rxy_vsd_data
                 else:
-                    ensemble_vsd_data.merge_vsd(vsd_data, axis=1)
-                SD_results.append(vsd_data.DC)
+                    Rx_vsd.merge_vsd(Rxx_vsd_data, axis=1)
+                    Ry_vsd.merge_vsd(Rxy_vsd_data, axis=1)
             # run PIMM
             if not self.handle_signals():
                 return
@@ -227,14 +232,14 @@ class SolverTask(QtCore.QThread):
                                           H_mag=stimulus.sweep,
                                           PIMM_freqs=stimulus.PIMM_freqs,
                                           SD_freqs=stimulus.SD_freqs,
-                                          SD=SD_results,
                                           Rx=Rx,
                                           Ry=Ry,
                                           Rz=Rz,
                                           m_avg=m_avg,
                                           m_traj=[0, 0, 0],
                                           PIMM=yf[:len(yf) // 2],
-                                          sd_data=ensemble_vsd_data)
+                                          Rxx_vsd=Rx_vsd,
+                                          Rxy_vsd=Ry_vsd)
             yield partial_result
 
     def configure_VSD_excitation(self, frequency: float,

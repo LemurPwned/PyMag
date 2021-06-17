@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Dict, List
 
+from numpy.core.shape_base import vstack
+
 import cmtj
 import numpy as np
 import pandas as pd
@@ -64,7 +66,6 @@ class ExperimentData(GenericHolder, BaseModel):
     Mx: List[float] = []
     My: List[float] = []
     Mz: List[float] = []
-
     x: List[float] = []
 
     @staticmethod
@@ -106,7 +107,7 @@ class VoltageSpinDiodeData:
     FHarmonic_phase: np.ndarray
     SHarmonic_phase: np.ndarray
 
-    def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData', axis):
+    def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData', axis: int):
         self.DC = np.concatenate(
             (self.DC, vsd_data.DC), axis=axis
         )
@@ -124,10 +125,25 @@ class VoltageSpinDiodeData:
             (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis
         )
 
+    def to_csv(self, filename: str, index: List[str], columns: List[str]):
+        for name, values in zip(["DC", "First_harmonic",
+                                 "Second_harmonic",
+                                 "First_harmonic_phase",
+                                 "Second_harmonic_phase"],
+                                [self.DC,
+                                 self.FHarmonic, self.SHarmonic,
+                                 self.FHarmonic_phase, self.SHarmonic_phase]):
+            df = pd.DataFrame(data=values,
+                              columns=columns,
+                              index=index)
+            df.to_csv(f"{name}_{filename}.csv", index=True)
+
 
 class ResultHolder(GenericHolder):
-    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs, SD,
-                 SD_freqs, Rx, Ry, Rz, sd_data: VoltageSpinDiodeData = None) -> None:
+    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs,
+                 SD_freqs, Rx, Ry, Rz,
+                 Rxx_vsd: VoltageSpinDiodeData,
+                 Rxy_vsd: VoltageSpinDiodeData) -> None:
         self.mode = mode
         self.H_mag = H_mag
         self.m_avg = np.expand_dims(m_avg, axis=0)
@@ -135,19 +151,15 @@ class ResultHolder(GenericHolder):
         self.Rx = [Rx]
         self.Ry = [Ry]
         self.Rz = [Rz]
-        if len(SD):
-            self.SD = np.asarray(SD).reshape(-1, len(SD_freqs))
-        else:
-            self.SD = np.asarray(SD)
         self.SD_freqs = SD_freqs
         self.PIMM = np.asarray(PIMM).reshape(1, -1)
         self.PIMM_freqs = PIMM_freqs
         self.m_traj = m_traj
         self.update_count = 1
-        self.sd_data = sd_data
+        self.Rxx_vsd = Rxx_vsd
+        self.Rxy_vsd = Rxy_vsd
 
     def merge_result(self, result: 'ResultHolder'):
-        self.SD = np.concatenate((self.SD, np.asarray(result.SD)), axis=0)
         self.PIMM = np.concatenate((self.PIMM, np.asarray(result.PIMM)),
                                    axis=0)
         self.m_avg = np.concatenate((self.m_avg, np.asarray(result.m_avg)),
@@ -157,7 +169,8 @@ class ResultHolder(GenericHolder):
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
-        self.sd_data.merge_vsd(result.sd_data, axis=0)
+        self.Rxx_vsd.merge_vsd(result.Rxx_vsd, axis=0)
+        self.Rxy_vsd.merge_vsd(result.Rxy_vsd, axis=0)
         self.update_count += result.update_count
 
     def to_csv(self, filename) -> None:
@@ -184,12 +197,17 @@ class ResultHolder(GenericHolder):
             print(f"Failed to export dynamics: {e}")
 
         try:
-            spin_diode = pd.DataFrame(data=self.SD,
-                                      columns=self.SD_freqs,
-                                      index=self.H_mag)
-            spin_diode.to_csv(filename + "_SD.csv", index=True)
+            self.Rxx_vsd.to_csv(filename=filename+"_SD_Rxx.csv",
+                                index=self.H_mag,
+                                columns=self.SD_freqs)
         except Exception as e:
-            print(f"Failed to export spin diode: {e}")
+            print(f"Failed to export Rxx spin diode: {e}")
+        try:
+            self.Rxy_vsd.to_csv(filename=filename+"_SD_Rxy.csv",
+                                index=self.H_mag,
+                                columns=self.SD_freqs)
+        except Exception as e:
+            print(f"Failed to export Rxy spin diode: {e}")
         try:
             pimm = pd.DataFrame(data=self.PIMM,
                                 columns=self.PIMM_freqs[:self.PIMM.shape[1]],

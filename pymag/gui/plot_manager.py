@@ -5,6 +5,7 @@ from pymag.gui.simulation_manager import Simulation
 import queue
 from typing import List, Union
 
+
 class PlotManager:
     """
     Plot Manager manages all plot updates in the dock
@@ -38,8 +39,6 @@ class PlotManager:
         units_SI = {"H": "A/m", "Theta": "deg", "Phi": "deg", "f": "Hz"}
         self.units = units_SI
         self.H = None
-        self.spectrogram_SD = None
-        self.spectrogram_PIMM = None
         self.SD_deltaf = 0
         self.PIMM_deltaf = 0
 
@@ -116,8 +115,6 @@ class PlotManager:
 
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
-        self.spectrogram_SD = result_holder.SD
-        self.spectrogram_PIMM = result_holder.PIMM
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
 
@@ -153,12 +150,13 @@ class PlotManager:
             if len(result_holder.SD_freqs) > 1:
                 self.SD_deltaf = result_holder.SD_freqs[1] - \
                     result_holder.SD_freqs[0]
-                self.SD_plot.update(result_holder.H_mag[:lim],
-                                    result_holder.SD_freqs,
-                                    self.SD_plot.detrend_f_axis(
-                                        result_holder.SD),
-                                    self.SD_deltaf)
-                self.SD_plot.set_VSD_holder(result_holder.sd_data)
+                self.SD_plot.set_VSD_holders(
+                    result_holder.Rxx_vsd, result_holder.Rxy_vsd)
+                self.SD_plot.update_image(
+                    result_holder.H_mag[:lim],
+                    result_holder.SD_freqs,
+                    self.SD_deltaf
+                )
                 self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
                                          left_units="Hz",
                                          bottom_caption=str(
