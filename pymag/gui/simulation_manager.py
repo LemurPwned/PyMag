@@ -156,6 +156,7 @@ class SimulationManager(GeneralManager):
     def mark_as_done(self, indx: int):
         self.items[indx].simulated = True
         self.update_status(indx, SimulationStatus.DONE)
+        self.remove_from_selected(indx=indx)
 
     def simulate_selected(self):
         self.backend.start_simulations(self.selected_indices,

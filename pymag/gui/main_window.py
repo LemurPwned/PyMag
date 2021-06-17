@@ -169,6 +169,10 @@ class UIMainWindow(QMainWindow):
                     # update batch
                     self.global_sim_manager.update_simulation_data(
                         sim_indx, res)
+                    self.global_sim_manager.update_status(
+                        sim_indx, status
+                    )
+                    self.simulation_manager.update_row(sim_indx)
                 self.plot_manager.plot_result(
                     self.global_sim_manager.get_simulation(sim_indx))
             else:
@@ -177,6 +181,7 @@ class UIMainWindow(QMainWindow):
                     self.central_layout.set_btn_start_position()
                 elif status == SimulationStatus.DONE:
                     self.global_sim_manager.mark_as_done(sim_indx)
+                    self.simulation_manager.update_list()
                 elif status == SimulationStatus.KILLED:
                     # now sim_indx is a list of the sim indices that were in the
                     # compute backend
