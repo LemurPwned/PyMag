@@ -24,3 +24,4 @@ yapf==0.30.0
 cmtj
 pydantic
 numba
+click
