@@ -211,7 +211,7 @@ class SolverTask(QtCore.QThread):
                     np.sin(2 * np.pi * frequency * np.asarray(log['time']))
 
                 vsd_data = compute_vsd(
-                    dynamicR=dynamicRx,
+                    dynamicR=dynamicRy,
                     frequency=frequency,
                     integration_step=int_step,
                     dynamicI=dynamicI)
