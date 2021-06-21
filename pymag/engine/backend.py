@@ -295,8 +295,8 @@ class SolverTask(QtCore.QThread):
         all_H_indx = 0
         batch_update = []
         batch_update_count = 2  # how many steps per plot update?
-        for sim_index, simulation in zip(self.simulation_indices,
-                                         self.simulations):
+        for sim_index, simulation in zip(self.simulation_indices.copy(),
+                                         self.simulations.copy()):
             for partial_result in self.simulation_setup(simulation=simulation):
                 batch_update.append(
                     (sim_index, partial_result, SimulationStatus.IN_PROGRESS)
