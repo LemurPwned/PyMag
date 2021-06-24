@@ -125,7 +125,7 @@ class VoltageSpinDiodeData:
             (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis
         )
 
-    def to_csv(self, filename: str, index: List[str], columns: List[str]):
+    def to_csv(self, folder: str, prefix: str, index: List[str], columns: List[str]):
         for name, values in zip(["DC", "First_harmonic",
                                  "Second_harmonic",
                                  "First_harmonic_phase",
@@ -136,7 +136,8 @@ class VoltageSpinDiodeData:
             df = pd.DataFrame(data=values,
                               columns=columns,
                               index=index)
-            df.to_csv(f"{name}_{filename}.csv", index=True)
+            fpath = os.path.join(folder, f"{prefix}_{name}.csv")
+            df.to_csv(fpath, index=True)
 
 
 class ResultHolder(GenericHolder):
@@ -197,13 +198,15 @@ class ResultHolder(GenericHolder):
             print(f"Failed to export dynamics: {e}")
 
         try:
-            self.Rxx_vsd.to_csv(filename=filename+"_SD_Rxx.csv",
+            self.Rxx_vsd.to_csv(folder=os.path.dirname(filename),
+                                prefix="SD_Rxy",
                                 index=self.H_mag,
                                 columns=self.SD_freqs)
         except Exception as e:
             print(f"Failed to export Rxx spin diode: {e}")
         try:
-            self.Rxy_vsd.to_csv(filename=filename+"_SD_Rxy.csv",
+            self.Rxy_vsd.to_csv(folder=os.path.dirname(filename),
+                                prefix="SD_Rxx",
                                 index=self.H_mag,
                                 columns=self.SD_freqs)
         except Exception as e:
@@ -266,7 +269,7 @@ class Layer(GenericHolder, GUIObject):
             self.p = self.p.tolist()
         else:
             self.p = p
-        self.zeta_dl = float(zeta_dl)
+        self.zeta_dl = float()
         self.zeta_fl = float(zeta_fl)
         self.T = float(T)
         self.Hoe = float(Hoe)
