@@ -235,9 +235,8 @@ class Layer(GenericHolder, GUIObject):
                  w,
                  l,
                  p,
-                 lam,
-                 beta,
-                 eng,
+                 zeta_dl,
+                 zeta_fl,
                  Hoe,
                  Hoedir,
                  T=0.0,
@@ -267,9 +266,8 @@ class Layer(GenericHolder, GUIObject):
             self.p = self.p.tolist()
         else:
             self.p = p
-        self.lam = float(lam)
-        self.beta = float(beta)
-        self.eng = float(eng)
+        self.zeta_dl = float(zeta_dl)
+        self.zeta_fl = float(zeta_fl)
         self.T = float(T)
         self.Hoe = float(Hoe)
         self.Hoedir = [int(x) for x in Hoedir]
@@ -280,16 +278,14 @@ class Layer(GenericHolder, GUIObject):
             cmtj.CVector(0, self.N[1], 0),
             cmtj.CVector(0, 0, self.N[2])
         ]
-        if self.beta == 0 and self.eng == 0 and self.lam == 0:
-            stt_params = {'includeSTT': False}
-        else:
+
+        stt_params = {}
+        if self.zeta_dl or self.zeta_fl:
             stt_params = {
-                "SlonczewskiSpacerLayerParameter": self.lam,
-                "includeSTT": True,
-                "beta": self.beta,
-                "spinPolarisation": self.eng
+                "fieldLikeSpinHallAngle": self.zeta_fl,
+                "dampingLikeSpinHallAngle": self.zeta_dl
             }
-        clayer = cmtj.Layer(
+        clayer = cmtj.Layer.createSOTLayer(
             id=str(self.layer),
             mag=cmtj.CVector(*self.mag),
             anis=cmtj.CVector(*self.Kdir.tolist()),
@@ -324,9 +320,8 @@ class Layer(GenericHolder, GUIObject):
                  w,
                  l,
                  p,
-                 lam,
-                 beta,
-                 eng,
+                 zeta_dl,
+                 zeta_fl,
                  Hoe,
                  Hoedir,
                  T=0.0,
@@ -352,9 +347,8 @@ class Layer(GenericHolder, GUIObject):
                    w=w,
                    l=l,
                    p=parsed_p,
-                   lam=lam,
-                   beta=beta,
-                   eng=eng,
+                   zeta_dl=zeta_dl,
+                   zeta_fl=zeta_fl,
                    Hoe=Hoe,
                    Hoedir=parsed_Hoedir,
                    T=T,
@@ -364,7 +358,7 @@ class Layer(GenericHolder, GUIObject):
     def to_gui(self):
         headers = [
             "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
-            "AHE", "Rx0", "Ry0", "w", "l", "p", "lam", "beta", "eng", "Hoe", "Hoedir"
+            "AHE", "Rx0", "Ry0", "w", "l", "p", "zeta_dl", "zeta_fl", "Hoe", "Hoedir"
         ]
         res = {}
         for itm in headers:

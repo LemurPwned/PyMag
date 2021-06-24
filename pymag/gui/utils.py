@@ -5,7 +5,9 @@ unicode_subs = {
     "phi": "\u03C6",
     "lam": "\u03BB",
     "beta": "\u03B2",
-    "eng": "\u014B"
+    "eng": "\u014B",
+    "zeta_fl": "\u03B6 FL",
+    "zeta_dl": "\u03B6 DL"
 }
 inverse_subs = {v: k for k, v in unicode_subs.items()}
 
