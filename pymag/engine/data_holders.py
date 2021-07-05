@@ -238,8 +238,8 @@ class Layer(GenericHolder, GUIObject):
                  w,
                  l,
                  p,
-                 zeta_dl,
-                 zeta_fl,
+                 h_dl,
+                 h_fl,
                  Hoe,
                  Hoedir,
                  T=0.0,
@@ -269,8 +269,8 @@ class Layer(GenericHolder, GUIObject):
             self.p = self.p.tolist()
         else:
             self.p = p
-        self.zeta_dl = float()
-        self.zeta_fl = float(zeta_fl)
+        self.h_dl = float(h_dl)
+        self.h_fl = float(h_fl)
         self.T = float(T)
         self.Hoe = float(Hoe)
         self.Hoedir = [int(x) for x in Hoedir]
@@ -283,10 +283,10 @@ class Layer(GenericHolder, GUIObject):
         ]
 
         stt_params = {}
-        if self.zeta_dl or self.zeta_fl:
+        if self.h_dl or self.h_fl:
             stt_params = {
-                "fieldLikeSpinHallAngle": self.zeta_fl,
-                "dampingLikeSpinHallAngle": self.zeta_dl
+                "fieldLikeTorque": self.h_fl,
+                "dampingLikeTorque": self.h_dl
             }
         clayer = cmtj.Layer.createSOTLayer(
             id=str(self.layer),
@@ -323,8 +323,8 @@ class Layer(GenericHolder, GUIObject):
                  w,
                  l,
                  p,
-                 zeta_dl,
-                 zeta_fl,
+                 h_dl,
+                 h_fl,
                  Hoe,
                  Hoedir,
                  T=0.0,
@@ -350,8 +350,8 @@ class Layer(GenericHolder, GUIObject):
                    w=w,
                    l=l,
                    p=parsed_p,
-                   zeta_dl=zeta_dl,
-                   zeta_fl=zeta_fl,
+                   h_dl=h_dl,
+                   h_fl=h_fl,
                    Hoe=Hoe,
                    Hoedir=parsed_Hoedir,
                    T=T,
@@ -361,7 +361,7 @@ class Layer(GenericHolder, GUIObject):
     def to_gui(self):
         headers = [
             "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
-            "AHE", "Rx0", "Ry0", "w", "l", "p", "zeta_dl", "zeta_fl", "Hoe", "Hoedir"
+            "AHE", "Rx0", "Ry0", "w", "l", "p", "h_dl", "h_fl", "Hoe", "Hoedir"
         ]
         res = {}
         for itm in headers:

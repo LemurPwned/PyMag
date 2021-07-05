@@ -1,6 +1,5 @@
 import time
 
-from numpy.core.fromnumeric import mean
 from numpy.fft import fftfreq
 import cmtj
 import numpy as np
@@ -272,7 +271,7 @@ class SolverTask(QtCore.QThread):
             elif stimulus.I_dir == [0, 1, 0]:
                 area = org_layers[i].l*org_layers[i].th
             else:
-                area = org_layers[i].w*org_layers[i].l
+                area = org_layers[i].w*org_layers[i].l*1e-6
             junction.setLayerCurrentDriver(org_layers_strs[i],
                                            cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area,
                                            stimulus.I_rf/area, frequency, 0))

@@ -88,7 +88,7 @@
                 "mode": "Integer",
                 "maximum": 100000000,
                 "minimum": 0,
-                "value": 100
+                "value": 40
             }
         },
         {
@@ -174,7 +174,7 @@
                 "mode": "Integer",
                 "maximum": 100,
                 "minimum": 0,
-                "value": 44
+                "value": 20
             }
         },
         {
@@ -184,7 +184,7 @@
                 "mode": "Double",
                 "maximum": 100.0,
                 "minimum": 0.0,
-                "value": 44.0
+                "value": 0.01
             }
         },
         {
@@ -230,7 +230,7 @@
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": 0.0,
-                "value": 1.1
+                "value": 1.0
             }
         },
         {

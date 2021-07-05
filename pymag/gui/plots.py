@@ -164,6 +164,9 @@ class SpectrogramPlot():
     def update_action(self, action):
         self.current_action = action
 
+    def on_clicked(self, event):
+        print(event.pos())
+
     def action_menu_generator(self, property):
         def menu_action():
             holder = getattr(self, self.resistance_mode + "_holder")
