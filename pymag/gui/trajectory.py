@@ -6,8 +6,10 @@ import pyqtgraph as pg
 class TrajectoryPlot():
     def __init__(self):
         self.w = gl.GLViewWidget()
+        g = gl.GLGridItem()
+        self.w.addItem(g)
         self.init_GL_settings()
-        self.w.setBackgroundColor('w')
+        # self.w.setBackgroundColor('w')
 
     def init_GL_settings(self):
         self.w.opts['distance'] = 3
@@ -29,20 +31,20 @@ class TrajectoryPlot():
         md = gl.MeshData.sphere(rows=20, cols=20)
         m1 = gl.GLMeshItem(meshdata=md,
                            smooth=True,
-                           color=(0.7, 0.7, 0.7, 0.7),
-                           shader='balloon')  #, glOptions='additive'
+                           color=(0.7, 0.7, 0.7, 0.2),
+                           shader='balloon', glOptions='additive')
         m1.translate(0, 0, 0)
         m1.scale(1, 1, 1)
         self.w.addItem(m1)
 
-    def plt_traj(self, traj, colory):
-        plt = gl.GLLinePlotItem(pos=np.array(traj),
-                                color=pg.glColor(colory),
-                                width=(0 + 1) / 10.,
+    def draw_trajectory(self, traj, color):
+        plt = gl.GLLinePlotItem(pos=np.asarray(traj),
+                                color=color,
+                                width=5,
                                 antialias=True)
         self.w.addItem(plt)
 
-    def plt_point(self, x, y, z):
+    def draw_point(self, x, y, z):
         md = gl.MeshData.sphere(rows=10, cols=10)
         m1 = gl.GLMeshItem(meshdata=md,
                            smooth=True,

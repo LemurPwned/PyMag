@@ -5,6 +5,8 @@ from pymag.gui.simulation_manager import Simulation
 import queue
 from typing import List, Union
 
+from pymag.gui.trajectory import TrajectoryPlot
+
 
 class PlotManager:
     """
@@ -13,7 +15,7 @@ class PlotManager:
 
     def __init__(self, magnetisation_plot: MultiplePlot,
                  resistance_plot: MultiplePlot, SD_plot: SpectrogramPlot,
-                 PIMM_plot: SpectrogramPlot) -> None:
+                 PIMM_plot: SpectrogramPlot, trajectory_plot: TrajectoryPlot) -> None:
         """
         :param magnetisation_plot
         :param resistance_plot
@@ -25,7 +27,7 @@ class PlotManager:
         """
         self.queue_history = []
         self.result_queue = queue.Queue()
-
+        self.trajectory_plot = trajectory_plot
         self.magnetisation_plot = magnetisation_plot
         self.resistance_plot = resistance_plot
         self.SD_plot = SD_plot
@@ -101,6 +103,18 @@ class PlotManager:
             if M:
                 self.magnetisation_plot.set_experimental(i, x, M)
 
+    def plot_trajectory(self, result_holder: ResultHolder):
+        """
+        Update the trajectory on the OpenGL widget
+        """
+        self.trajectory_plot.clear()
+        self.trajectory_plot.draw_trajectory(
+            result_holder.m_avg,
+            color=(1, 0, 0, 1)
+        )
+        # self.trajectory_plot.w
+        self.trajectory_plot.w.update()
+
     def plot_simulation(self, result_holder: ResultHolder):
         """
         :param result_holder
@@ -112,7 +126,7 @@ class PlotManager:
         lim = result_holder.update_count
         if lim == 1:
             return
-
+        self.plot_trajectory(result_holder=result_holder)
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
         self.PIMM_deltaf = result_holder.PIMM_freqs[

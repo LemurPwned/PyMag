@@ -295,8 +295,6 @@ class Layer(GenericHolder, GUIObject):
             Ms=self.Ms,
             thickness=self.th,
             cellSurface=0,
-            temperature=self.T,
-            dipoleTensor=[cmtj.CVector(*self.dipole[i]) for i in range(3)],
             demagTensor=N,
             damping=self.alpha,
             **stt_params)
