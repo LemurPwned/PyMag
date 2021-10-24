@@ -6,8 +6,8 @@ import pyqtgraph as pg
 class TrajectoryPlot():
     def __init__(self):
         self.w = gl.GLViewWidget()
-        g = gl.GLGridItem()
-        self.w.addItem(g)
+        # g = gl.GLGridItem()
+        # self.w.addItem(g)
         self.init_GL_settings()
         # self.w.setBackgroundColor('w')
 

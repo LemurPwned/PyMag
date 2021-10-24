@@ -1,3 +1,4 @@
+from numpy.core.numeric import cross
 from numpy.lib.type_check import imag
 from pymag.engine.data_holders import VoltageSpinDiodeData
 from typing import List
@@ -81,6 +82,7 @@ class SpectrogramPlot():
         cmap = pg.ColorMap(pos=np.linspace(0.0, 1.0, 9), color=colors)
         self.image.setColorMap(cmap)
         self.histogram_scale.gradient.setColorMap(cm=cmap)
+        # that's a frequency view -- horizontal line
         self.inf_line = pg.InfiniteLine(movable=True,
                                         angle=0,
                                         label='x={value:0.2f}',
@@ -92,7 +94,20 @@ class SpectrogramPlot():
                                             'fill': (200, 200, 200, 50),
                                             'movable': True
                                         })
+        # designate vertical position of H field
+        self.inf_line_H = pg.InfiniteLine(movable=True,
+                                          angle=90,
+                                          label='x={value:0.2f}',
+                                          pos=[0, 0],
+                                          bounds=[-100e4, 100e4],
+                                          labelOpts={
+                                              'position': 5e9,
+                                              'color': (200, 200, 100),
+                                              'fill': (200, 200, 200, 50),
+                                              'movable': True
+                                          })
         self.plot_image.addItem(self.inf_line)
+        self.plot_image.addItem(self.inf_line_H)
 
         self.experimental_overlay = pg.PlotCurveItem()
         self.image.addItem(self.experimental_overlay)
@@ -165,7 +180,8 @@ class SpectrogramPlot():
         self.current_action = action
 
     def on_clicked(self, event):
-        print(event.pos())
+        # print(event.pos())
+        ...
 
     def action_menu_generator(self, property):
         def menu_action():
@@ -200,6 +216,14 @@ class SpectrogramPlot():
                                           int(self.inf_line.value() /
                                               self.deltaf)],
                 pen=pg.mkPen('b', width=5))
+
+    def get_current_field_cross_section(self, delta):
+        if not (self.yrange is None):
+            cross_section = int(self.inf_line_H.value()/delta)
+            if cross_section >= self.image_spectrum.image.shape[
+                    0] or cross_section < 0:
+                return
+            return cross_section
 
     def update(self, xrange, yrange, values, deltaf):
         self.xrange = xrange

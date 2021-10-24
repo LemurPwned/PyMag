@@ -6,6 +6,12 @@ import queue
 from typing import List, Union
 
 from pymag.gui.trajectory import TrajectoryPlot
+import colorsys
+
+N = 5
+HSV_tuples = [(x / N, 0.5, 0.5) for x in range(N)]
+RGB_tuples = list(map(lambda x: (*colorsys.hsv_to_rgb(*x), 1.0), HSV_tuples))
+print(RGB_tuples)
 
 
 class PlotManager:
@@ -25,8 +31,6 @@ class PlotManager:
         :param trajectory_plot
         Plot manager requires all individual plots
         """
-        self.queue_history = []
-        self.result_queue = queue.Queue()
         self.trajectory_plot = trajectory_plot
         self.magnetisation_plot = magnetisation_plot
         self.resistance_plot = resistance_plot
@@ -38,17 +42,31 @@ class PlotManager:
         self.PIMM_plot.inf_line.sigPositionChanged.connect(
             self.PIMM_update_roi_loc)
 
+        self.PIMM_plot.inf_line_H.sigPositionChanged.connect(
+            self.H_update_roi_loc
+        )
+
         units_SI = {"H": "A/m", "Theta": "deg", "Phi": "deg", "f": "Hz"}
         self.units = units_SI
         self.H = None
         self.SD_deltaf = 0
         self.PIMM_deltaf = 0
+        self.deltaH = 0
+
+        self.H_select = 0
+        self.trajectory_store = None
 
     def PIMM_update_roi_loc(self):
         self.PIMM_plot.update_roi()
 
     def SD_update_roi_loc(self):
         self.SD_plot.update_roi()
+
+    def H_update_roi_loc(self):
+        if self.deltaH > 0:
+            self.H_select = self.PIMM_plot.get_current_field_cross_section(
+                self.deltaH)
+            self.plot_trajectory(self.trajectory_store)
 
     def clear_simulation_plots(self):
         self.resistance_plot.clear_plots()
@@ -103,16 +121,17 @@ class PlotManager:
             if M:
                 self.magnetisation_plot.set_experimental(i, x, M)
 
-    def plot_trajectory(self, result_holder: ResultHolder):
+    def plot_trajectory(self, m_trajectories: np.ndarray):
         """
         Update the trajectory on the OpenGL widget
         """
         self.trajectory_plot.clear()
-        self.trajectory_plot.draw_trajectory(
-            result_holder.m_avg,
-            color=(1, 0, 0, 1)
-        )
-        # self.trajectory_plot.w
+        for i in range(m_trajectories.shape[1]):  # iterate over layers
+            X = m_trajectories[self.H_select, i, :, :].transpose().squeeze()
+            self.trajectory_plot.draw_trajectory(
+                X,
+                color=(1, 0, 0, 1)
+            )
         self.trajectory_plot.w.update()
 
     def plot_simulation(self, result_holder: ResultHolder):
@@ -126,12 +145,13 @@ class PlotManager:
         lim = result_holder.update_count
         if lim == 1:
             return
-        self.plot_trajectory(result_holder=result_holder)
+        self.trajectory_store = result_holder.m_traj
+        self.plot_trajectory(m_trajectories=self.trajectory_store)
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
-
+        self.deltaH = result_holder.H_mag[1] - result_holder.H_mag[0]
         self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]

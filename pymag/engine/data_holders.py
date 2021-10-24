@@ -155,7 +155,8 @@ class ResultHolder(GenericHolder):
         self.SD_freqs = SD_freqs
         self.PIMM = np.asarray(PIMM).reshape(1, -1)
         self.PIMM_freqs = PIMM_freqs
-        self.m_traj = m_traj
+        # make place for next ones
+        self.m_traj = np.expand_dims(m_traj, axis=0)
         self.update_count = 1
         self.Rxx_vsd = Rxx_vsd
         self.Rxy_vsd = Rxy_vsd
@@ -165,7 +166,7 @@ class ResultHolder(GenericHolder):
                                    axis=0)
         self.m_avg = np.concatenate((self.m_avg, np.asarray(result.m_avg)),
                                     axis=0)
-
+        self.m_traj = np.concatenate((self.m_traj, result.m_traj), axis=0)
         # take 0 because Rx is an expanding list
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])

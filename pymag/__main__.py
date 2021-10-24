@@ -18,7 +18,7 @@ def run_pymag():
     app.setOrganizationName("PyMag")
     app.setApplicationName(__version__)
     main_window = UIMainWindow()
-    main_window.showMaximized()
+    # main_window.showMaximized()
     exit_code = app.exec_()
     main_window.save_before_exit()
     sys.exit(exit_code)

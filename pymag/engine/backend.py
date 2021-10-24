@@ -166,16 +166,18 @@ class SolverTask(QtCore.QThread):
             mixed = np.squeeze(mixed)
             yf = np.abs(fft(mixed))
             # take last m step
-            m = np.asarray([[
-                log[f'{org_layer_strs[i]}_mx'][-1],
-                log[f'{org_layer_strs[i]}_my'][-1],
-                log[f'{org_layer_strs[i]}_mz'][-1]
-            ] for i in range(no_org_layers)])
+            m_traj = np.asarray(
+                [[log[f'{org_layer_strs[i]}_mx'],
+                 log[f'{org_layer_strs[i]}_my'],
+                 log[f'{org_layer_strs[i]}_mz']]
+                 for i in range(no_org_layers)]
+            )
+            m = m_traj[:, :, -1]  # all layers, all x, y, z, last timestamp
+            m_avg = np.mean(m, axis=0)  # average over layers
             Rx, Ry, Rz = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m,
                                               no_org_layers, l, w)
-            m_avg = np.mean(m, axis=0)
             """
-            Secondary VSD loop 
+            Secondary VSD loop
             """
             for frequency in stimulus.SD_freqs:
                 if not self.handle_signals():
@@ -235,7 +237,7 @@ class SolverTask(QtCore.QThread):
                                           Ry=Ry,
                                           Rz=Rz,
                                           m_avg=m_avg,
-                                          m_traj=[0, 0, 0],
+                                          m_traj=m_traj,
                                           PIMM=yf[:len(yf) // 2],
                                           Rxx_vsd=Rx_vsd,
                                           Rxy_vsd=Ry_vsd)
