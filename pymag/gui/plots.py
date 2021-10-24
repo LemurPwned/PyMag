@@ -1,11 +1,8 @@
-from numpy.core.numeric import cross
-from numpy.lib.type_check import imag
 from pymag.engine.data_holders import VoltageSpinDiodeData
 from typing import List
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 import numpy as np
-from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
 from PyQt5.QtWidgets import QAction, QActionGroup
 
 

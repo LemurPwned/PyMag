@@ -16,7 +16,8 @@ from pymag.gui.plot_manager import PlotManager
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
                                           SimulationManager)
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QLayout
+
 from pyqtgraph.dockarea import Dock, DockArea
 
 PRESET_DIR = os.path.abspath(os.path.join(
@@ -50,7 +51,11 @@ class UIMainWindow(QMainWindow):
         self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"],
                                      number_of_plots=3)
 
-        self.traj_plot = TrajectoryPlot()
+        self.traj_plot = QLayout.VBoxLayout()
+        self.traj_plot.addWidget(TrajectoryPlot())
+        self.traj_plot.addWidget(MultiplePlot(left=["mx", "my", "mz"],
+                                              number_of_plots=3))
+        # (TrajectoryPlot()
 
         self.plot_manager = PlotManager(magnetisation_plot=self.mag_plot,
                                         resistance_plot=self.res_plot,

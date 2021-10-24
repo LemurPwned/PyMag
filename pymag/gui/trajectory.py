@@ -61,3 +61,16 @@ class TrajectoryPlot():
         self.w.items = []
         self.w.update()
         self.init_GL_settings()
+
+
+RES = "resistance"
+MAG = "magnetisation"
+
+
+class CoordinatePlot:
+    def __init__(self) -> None:
+        self.plot_type = RES
+
+
+    def plot_coordinates():
+        ... 
