@@ -11,7 +11,7 @@ import colorsys
 N = 5
 HSV_tuples = [(x / N, 0.5, 0.5) for x in range(N)]
 RGB_tuples = list(map(lambda x: (*colorsys.hsv_to_rgb(*x), 1.0), HSV_tuples))
-print(RGB_tuples)
+# print(RGB_tuples)
 
 
 class PlotManager:
@@ -130,7 +130,7 @@ class PlotManager:
             X = m_trajectories[self.H_select, i, :, :].transpose().squeeze()
             self.trajectory_plot.draw_trajectory(
                 X,
-                color=(1, 0, 0, 1)
+                color=RGB_tuples[i]  # (1, 0, 0, 1)
             )
         self.trajectory_plot.w.update()
 
@@ -149,6 +149,9 @@ class PlotManager:
         self.plot_trajectory(m_trajectories=self.trajectory_store)
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
+        # adapt PIMM bounds
+        self.PIMM_plot.inf_line_H.bounds = [min(self.H), max(self.H)]
+
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
         self.deltaH = result_holder.H_mag[1] - result_holder.H_mag[0]

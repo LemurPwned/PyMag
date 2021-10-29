@@ -5,7 +5,7 @@ import queue
 import sys
 
 import pandas as pd
-from pymag.gui.trajectory import TrajectoryPlot
+from pymag.gui.trajectory import TrajectoryPlot, TrajectoryWidget
 import pyqtgraph as pg
 from pymag import __version__
 from pymag.engine.data_holders import Layer, SimulationInput
@@ -16,7 +16,7 @@ from pymag.gui.plot_manager import PlotManager
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
                                           SimulationManager)
-from PyQt5.QtWidgets import QMainWindow, QLayout
+from PyQt5.QtWidgets import QMainWindow
 
 from pyqtgraph.dockarea import Dock, DockArea
 
@@ -51,17 +51,13 @@ class UIMainWindow(QMainWindow):
         self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"],
                                      number_of_plots=3)
 
-        self.traj_plot = QLayout.VBoxLayout()
-        self.traj_plot.addWidget(TrajectoryPlot())
-        self.traj_plot.addWidget(MultiplePlot(left=["mx", "my", "mz"],
-                                              number_of_plots=3))
-        # (TrajectoryPlot()
+        self.traj_widget = TrajectoryPlot(self)
 
         self.plot_manager = PlotManager(magnetisation_plot=self.mag_plot,
                                         resistance_plot=self.res_plot,
                                         SD_plot=self.SD_plot,
                                         PIMM_plot=self.PIMM_plot,
-                                        trajectory_plot=self.traj_plot)
+                                        trajectory_plot=self.traj_widget)
         self.result_queue = mp.Queue()
         self.central_layout = AddMenuBar(parent=self, docks=self.area)
 
@@ -113,7 +109,7 @@ class UIMainWindow(QMainWindow):
             self.simulation_manager.central_widget,
             self.widget_layer_params.central_widget,
 
-            self.traj_plot.w,
+            self.traj_widget.w,
 
         ]
         # no size here

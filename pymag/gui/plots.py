@@ -4,10 +4,12 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
 import numpy as np
 from PyQt5.QtWidgets import QAction, QActionGroup
+from PyQt5.QtWidgets import QWidget
 
 
-class MultiplePlot():
+class MultiplePlot(QWidget):
     def __init__(self, left, number_of_plots, y_unit='\u03A9'):
+        QWidget.__init__(self, None)
         self.number_of_plots = number_of_plots
         self.plot_area = pg.GraphicsLayoutWidget()
         self.plot_area.setGeometry(QtCore.QRect(0, 0, 600, 300))
@@ -96,7 +98,7 @@ class SpectrogramPlot():
                                           angle=90,
                                           label='x={value:0.2f}',
                                           pos=[0, 0],
-                                          bounds=[-100e4, 100e4],
+                                          bounds=[-800e3, 800e3],
                                           labelOpts={
                                               'position': 5e9,
                                               'color': (200, 200, 100),

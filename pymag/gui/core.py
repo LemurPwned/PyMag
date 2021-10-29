@@ -77,9 +77,9 @@ class SimulationParameters():
     def add_layer(self):
         layer_no = self.table_layer_params.rowCount() + 1
         self.table_layer_params.addRow([
-            layer_no, 1.6, 3000, "[1 0 0]", -
-            1e-5, 0.01, 1e-9, "[0 1 0]", 0.02, 0.01,
-            0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, 0, [0, 0, 0]
+            layer_no, 1.6, 3000, [1, 0, 0],
+            1e-5, 0.01, [0, 1, 0], 1e-9, 0.02, 0.01,
+            0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, [0, 0, 0]
         ])
 
     def remove_layer(self):
@@ -92,7 +92,6 @@ class SimulationParameters():
         self.table_layer_params.setData([{str(key): str(
             value) for key, value in layer_params[i].items()} for i in range(len(layer_params))])
         self.stimulus_GUI.set_stimulus(stimulus_params)
-
 
 
 class ResultsTable():
