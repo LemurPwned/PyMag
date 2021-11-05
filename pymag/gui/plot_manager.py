@@ -2,7 +2,7 @@ import numpy as np
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.engine.data_holders import ExperimentData, ResultHolder
 from pymag.gui.simulation_manager import Simulation
-import queue
+import math
 from typing import List, Union
 
 from pymag.gui.trajectory import TrajectoryPlot
@@ -51,7 +51,6 @@ class PlotManager:
         self.H = None
         self.SD_deltaf = 0
         self.PIMM_deltaf = 0
-        self.deltaH = 0
 
         self.H_select = 0
         self.trajectory_store = None
@@ -63,9 +62,9 @@ class PlotManager:
         self.SD_plot.update_roi()
 
     def H_update_roi_loc(self):
-        if self.deltaH > 0:
-            self.H_select = self.PIMM_plot.get_current_field_cross_section(
-                self.deltaH)
+        if self.H is not None:
+            H_select_val = self.PIMM_plot.get_current_field_cross_section()
+            self.H_select = np.abs(np.asarray(self.H) - H_select_val).argmin()
             self.plot_trajectory(self.trajectory_store)
 
     def clear_simulation_plots(self):
@@ -125,6 +124,10 @@ class PlotManager:
         """
         Update the trajectory on the OpenGL widget
         """
+        if self.trajectory_store is None:
+            # happens at first call
+            return
+
         self.trajectory_plot.clear()
         for i in range(m_trajectories.shape[1]):  # iterate over layers
             X = m_trajectories[self.H_select, i, :, :].transpose().squeeze()
@@ -145,16 +148,19 @@ class PlotManager:
         lim = result_holder.update_count
         if lim == 1:
             return
-        self.trajectory_store = result_holder.m_traj
-        self.plot_trajectory(m_trajectories=self.trajectory_store)
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
+        self.PIMM_plot.inf_line_H.setBounds(
+            (min(self.H), max(self.H)))
+        self.trajectory_store = result_holder.m_traj
+        self.plot_trajectory(m_trajectories=self.trajectory_store)
+
         # adapt PIMM bounds
-        self.PIMM_plot.inf_line_H.bounds = [min(self.H), max(self.H)]
+        # self.PIMM_plot.inf_line_H.bounds = [min(self.H), max(self.H)]
 
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
-        self.deltaH = result_holder.H_mag[1] - result_holder.H_mag[0]
+
         self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]

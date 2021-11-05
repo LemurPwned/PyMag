@@ -216,13 +216,8 @@ class SpectrogramPlot():
                                               self.deltaf)],
                 pen=pg.mkPen('b', width=5))
 
-    def get_current_field_cross_section(self, delta):
-        if not (self.yrange is None):
-            cross_section = int(self.inf_line_H.value()/delta)
-            if cross_section >= self.image_spectrum.image.shape[
-                    0] or cross_section < 0:
-                return
-            return cross_section
+    def get_current_field_cross_section(self):
+        return self.inf_line_H.value()
 
     def update(self, xrange, yrange, values, deltaf):
         self.xrange = xrange
@@ -240,7 +235,6 @@ class SpectrogramPlot():
         self.xrange = xrange
         self.yrange = yrange
         self.deltaf = deltaf
-
         self.image_spectrum.resetTransform()
         self.image_spectrum.translate(min(xrange), min(yrange))
         self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
