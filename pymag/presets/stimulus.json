@@ -18,8 +18,8 @@
             "params": {
                 "label": "H (kA/m)",
                 "mode": "Double",
-                "maximum": 1000.0,
-                "minimum": -1000.0,
+                "maximum": 10000.0,
+                "minimum": -10000.0,
                 "value": 800.0
             }
         },
@@ -28,9 +28,9 @@
             "params": {
                 "label": "HMin (kA/m)",
                 "mode": "Double",
-                "maximum": 1000.0,
-                "minimum": -1000.0,
-                "value": -800.0
+                "maximum": 10000.0,
+                "minimum": -10000.0,
+                "value": -1500.0
             }
         },
         {
@@ -40,7 +40,7 @@
                 "mode": "Integer",
                 "maximum": 100000000,
                 "minimum": 0,
-                "value": 30
+                "value": 100
             }
         },
         {
@@ -48,9 +48,9 @@
             "params": {
                 "label": "HMax (kA/m)",
                 "mode": "Double",
-                "maximum": 1000.0,
-                "minimum": -1000.0,
-                "value": 800.0
+                "maximum": 10000.0,
+                "minimum": -10000.0,
+                "value": 1500.0
             }
         },
         {
@@ -68,7 +68,7 @@
                 "mode": "Double",
                 "maximum": 360.0,
                 "minimum": -360.0,
-                "value": 0.0
+                "value": 45.0
             }
         },
         {
@@ -174,7 +174,7 @@
                 "mode": "Integer",
                 "maximum": 100,
                 "minimum": 0,
-                "value": 20
+                "value": 22
             }
         },
         {
@@ -184,7 +184,7 @@
                 "mode": "Double",
                 "maximum": 100.0,
                 "minimum": 0.0,
-                "value": 0.01
+                "value": 44.0
             }
         },
         {
@@ -230,7 +230,7 @@
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": 0.0,
-                "value": 1.0
+                "value": 3.0
             }
         },
         {
@@ -240,7 +240,7 @@
                 "mode": "Double",
                 "maximum": 100.0,
                 "minimum": 1.0,
-                "value": 8.0
+                "value": 10.0
             }
         },
         {
@@ -250,7 +250,7 @@
                 "mode": "Integer",
                 "maximum": 1000000000,
                 "minimum": 100,
-                "value": 2000
+                "value": 10000
             }
         },
         {

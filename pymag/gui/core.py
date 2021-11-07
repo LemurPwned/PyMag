@@ -76,11 +76,20 @@ class SimulationParameters():
 
     def add_layer(self):
         layer_no = self.table_layer_params.rowCount() + 1
-        self.table_layer_params.addRow([
-            layer_no, 1.6, 3000, [1, 0, 0],
-            1e-5, 0.01, [0, 1, 0], 1e-9, 0.02, 0.01,
-            0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, [0, 0, 0]
-        ])
+        # copy the last layer
+        if (layer_no-1):  # if there are layers to copy at all
+            # 1, column count because we should skip the first
+            self.table_layer_params.addRow([
+                layer_no, *
+                [self.table_layer_params.item(layer_no-2, i).text()
+                 for i in range(1, self.table_layer_params.columnCount())]
+            ])
+        else:  # there's no layer so just add a default one
+            self.table_layer_params.addRow([
+                layer_no, 1.6, 3000, [1, 0, 0],
+                1e-5, 1e-6, 0.01, [0, 1, 0], 1e-9, 0.02, 0.01,
+                0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, [0, 0, 0]
+            ])
 
     def remove_layer(self):
         self.table_layer_params.removeRow(self.table_layer_params.currentRow())

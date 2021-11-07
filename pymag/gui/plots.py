@@ -1,10 +1,10 @@
 from pymag.engine.data_holders import VoltageSpinDiodeData
 from typing import List
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
+from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 from PyQt5.QtWidgets import QAction, QActionGroup
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QSpinBox
 
 
 class MultiplePlot(QWidget):
@@ -64,7 +64,6 @@ class SpectrogramPlot():
         self.plot_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
         self.plot_image: pg.PlotItem = self.plot_view.addPlot()
         self.image = pg.ImageView()
-
         self.plot_view.setBackground('w')
         self.image_spectrum = self.image.getImageItem()
 
@@ -123,6 +122,13 @@ class SpectrogramPlot():
         self.Rxx_holder: VoltageSpinDiodeData = None
         self.Rxy_holder: VoltageSpinDiodeData = None
 
+        # range slider for PIMM
+        self.range_slider = QSpinBox(self.image)
+        self.range_slider.setMaximum(100)
+        self.range_slider.setMinimum(0)
+        self.range_slider.setValue(100)
+        self.range_slider.setObjectName("Y range slider")
+
         # starting values
         self.resistance_mode = "Rxx"
         self.current_action = "DC"
@@ -133,6 +139,9 @@ class SpectrogramPlot():
         for action in menu.actions():
             action.setVisible(False)
         if spectrum_enabled:
+            """
+            This is just for the VSD plots
+            """
             submenu = menu.addMenu("Spectrum")
             harmonic_group = QActionGroup(submenu)
             harmonic_group.setExclusive(True)
@@ -159,6 +168,17 @@ class SpectrogramPlot():
                 a.triggered.connect(ac)
                 submenu_rxx_rxy.addAction(a)
                 resistance_group.actions()[0].setChecked(True)
+        else:
+            """
+            This is only for the PIMM plots
+            """
+            submenu = menu.addMenu("FFT Y axis scale")
+            fft_group = QActionGroup(submenu)
+            action = QtGui.QWidgetAction(submenu)
+            action.setDefaultWidget(self.range_slider)
+            self.range_slider.valueChanged.connect(self.on_slider_change)
+            a = fft_group.addAction(action)
+            submenu.addAction(a)
 
     def on_Rxx_selected(self):
         self.resistance_mode = "Rxx"
@@ -178,9 +198,13 @@ class SpectrogramPlot():
     def update_action(self, action):
         self.current_action = action
 
-    def on_clicked(self, event):
-        # print(event.pos())
-        ...
+    def on_slider_change(self, new_value):
+        if self.yrange is not None and self.xrange is not None:
+            self.image_spectrum.resetTransform()
+            self.image_spectrum.translate(min(self.xrange), min(self.yrange))
+            self.image_spectrum.scale((max(self.xrange) - min(self.xrange)) / len(self.xrange),
+                                      new_value*(max(self.yrange) - min(self.yrange)) / len(self.yrange))
+            self.image.updateImage()
 
     def action_menu_generator(self, property):
         def menu_action():

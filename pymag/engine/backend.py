@@ -116,7 +116,9 @@ class SolverTask(QtCore.QThread):
             junction.setIECDriver(
                 org_layer_strs[i], org_layer_strs[i + 1],
                 cmtj.ScalarDriver.getConstantDriver(org_layers[i].J))
-
+            junction.setQuadIECDriver(
+                org_layer_strs[i], org_layer_strs[i + 1],
+                cmtj.ScalarDriver.getConstantDriver(org_layers[i].J2))
         # initialise the magnetisation vectors
         m_init_PIMM = [
             cmtj.CVector(*(stimulus.H_sweep[0] /
@@ -209,7 +211,6 @@ class SolverTask(QtCore.QThread):
                                                                m, no_org_layers, l, w)
                 dynamicI = stimulus.I_dc + stimulus.I_rf * \
                     np.sin(2 * np.pi * frequency * np.asarray(log['time']))
-
                 Rxx_vsd_data = compute_vsd(
                     dynamicR=dynamicRx,
                     frequency=frequency,
@@ -273,7 +274,7 @@ class SolverTask(QtCore.QThread):
             elif stimulus.I_dir == [0, 1, 0]:
                 area = org_layers[i].l*org_layers[i].th
             else:
-                area = org_layers[i].w*org_layers[i].l*1e-6
+                area = org_layers[i].w*org_layers[i].l*1e-6*1e-6
             junction.setLayerCurrentDriver(org_layers_strs[i],
                                            cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area,
                                            stimulus.I_rf/area, frequency, 0))

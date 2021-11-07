@@ -229,6 +229,7 @@ class Layer(GenericHolder, GUIObject):
                  Ku,
                  Ms,
                  J,
+                 J2,
                  N,
                  th,
                  AMR,
@@ -253,6 +254,7 @@ class Layer(GenericHolder, GUIObject):
         self.Kdir = np.asarray(self.Kdir) / np.linalg.norm(self.Kdir)
         self.Ku = float(Ku)
         self.J = float(J)
+        self.J2 = float(J2)
         self.Ms = float(Ms)
         self.th = float(th)
         self.N = np.asarray(N)
@@ -312,6 +314,7 @@ class Layer(GenericHolder, GUIObject):
                  Ku,
                  Ms,
                  J,
+                 J2,
                  N,
                  th,
                  AMR,
@@ -339,6 +342,7 @@ class Layer(GenericHolder, GUIObject):
                    Ku=Ku,
                    Ms=Ms,
                    J=J,
+                   J2=J2,
                    N=parsed_N,
                    th=th,
                    AMR=AMR,
@@ -359,7 +363,7 @@ class Layer(GenericHolder, GUIObject):
 
     def to_gui(self):
         headers = [
-            "layer", "Ms", "Ku", "Kdir", "J", "alpha", "N", "th", "AMR", "SMR",
+            "layer", "Ms", "Ku", "Kdir", "J", "J2", "alpha", "N", "th", "AMR", "SMR",
             "AHE", "Rx0", "Ry0", "w", "l", "p", "h_dl", "h_fl", "Hoe", "Hoedir"
         ]
         res = {}
