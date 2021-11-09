@@ -122,13 +122,6 @@ class SpectrogramPlot():
         self.Rxx_holder: VoltageSpinDiodeData = None
         self.Rxy_holder: VoltageSpinDiodeData = None
 
-        # range slider for PIMM
-        self.range_slider = QSpinBox(self.image)
-        self.range_slider.setMaximum(100)
-        self.range_slider.setMinimum(0)
-        self.range_slider.setValue(100)
-        self.range_slider.setObjectName("Y range slider")
-
         # starting values
         self.resistance_mode = "Rxx"
         self.current_action = "DC"
@@ -168,17 +161,6 @@ class SpectrogramPlot():
                 a.triggered.connect(ac)
                 submenu_rxx_rxy.addAction(a)
                 resistance_group.actions()[0].setChecked(True)
-        else:
-            """
-            This is only for the PIMM plots
-            """
-            submenu = menu.addMenu("FFT Y axis scale")
-            fft_group = QActionGroup(submenu)
-            action = QtGui.QWidgetAction(submenu)
-            action.setDefaultWidget(self.range_slider)
-            self.range_slider.valueChanged.connect(self.on_slider_change)
-            a = fft_group.addAction(action)
-            submenu.addAction(a)
 
     def on_Rxx_selected(self):
         self.resistance_mode = "Rxx"
@@ -198,23 +180,19 @@ class SpectrogramPlot():
     def update_action(self, action):
         self.current_action = action
 
-    def on_slider_change(self, new_value):
-        if self.yrange is not None and self.xrange is not None:
-            self.image_spectrum.resetTransform()
-            self.image_spectrum.translate(min(self.xrange), min(self.yrange))
-            self.image_spectrum.scale((max(self.xrange) - min(self.xrange)) / len(self.xrange),
-                                      new_value*(max(self.yrange) - min(self.yrange)) / len(self.yrange))
-            self.image.updateImage()
-
     def action_menu_generator(self, property):
         def menu_action():
             holder = getattr(self, self.resistance_mode + "_holder")
             if holder:
-                self.image_spectrum.setImage(
-                    self.detrend_f_axis(
-                        getattr(holder, property)
-                    ), autoLevels=False
+                vals = self.detrend_f_axis(
+                    getattr(holder, property)
                 )
+                self.image_spectrum.setImage(
+                    vals, autoLevels=False
+                )
+                mean, std = self.compute_histogram_fadeout(vals)
+                self.image.getHistogramWidget().setLevels(
+                    mean-0.6*std, mean+0.6*std)
                 self.image.updateImage()
                 self.update_roi()
                 self.update_action(property)
@@ -244,6 +222,9 @@ class SpectrogramPlot():
         return self.inf_line_H.value()
 
     def update(self, xrange, yrange, values, deltaf):
+        """ 
+        PIMM update
+        """
         self.xrange = xrange
         self.yrange = yrange
         self.deltaf = deltaf
@@ -253,9 +234,26 @@ class SpectrogramPlot():
         self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
                                   (max(yrange) - min(yrange)) / len(yrange))
         self.image_spectrum.setImage(values, autoLevels=False)
+        _, std = self.compute_histogram_fadeout(values)
+        self.image.getHistogramWidget().setLevels(
+            0, 0.6*std)  # is not symmetric -- due to FFT
         self.image.updateImage()
 
+    def compute_histogram_fadeout(self, values):
+        """ 
+        We need to construct the histogram of values for the image 
+        and then discount for least interesting
+        """
+        # try with the quantiles as well
+        values = np.asarray(values) - np.mean(values)
+        hist, bins = np.histogram(values)
+        # return np.mean(values), np.quantile(hist, 0.25)
+        return np.mean(values), np.std(values)
+
     def update_image(self, xrange, yrange, deltaf):
+        """
+        Voltage spin diode update
+        """
         self.xrange = xrange
         self.yrange = yrange
         self.deltaf = deltaf

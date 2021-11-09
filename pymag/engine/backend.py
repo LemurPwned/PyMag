@@ -151,7 +151,7 @@ class SolverTask(QtCore.QThread):
 
             HoeDriver = cmtj.AxialDriver(
                 cmtj.NullDriver(), cmtj.NullDriver(),
-                cmtj.ScalarDriver.getStepDriver(0, 1000, 0.0, 1e-11))
+                cmtj.ScalarDriver.getStepDriver(0, 50, 0.0, int_step*3))
             junction.setLayerOerstedFieldDriver("all", HoeDriver)
             junction.setLayerCurrentDriver("all", cmtj.NullDriver())
 

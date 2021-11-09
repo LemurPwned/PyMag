@@ -186,7 +186,6 @@ class PlotManager:
                                            result_holder.mode)])
 
             self.PIMM_update_roi_loc()
-
             if len(result_holder.SD_freqs) > 1:
                 self.SD_deltaf = result_holder.SD_freqs[1] - \
                     result_holder.SD_freqs[0]

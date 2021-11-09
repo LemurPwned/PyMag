@@ -30,7 +30,7 @@
                 "mode": "Double",
                 "maximum": 10000.0,
                 "minimum": -10000.0,
-                "value": -1500.0
+                "value": -300.0
             }
         },
         {
@@ -40,7 +40,7 @@
                 "mode": "Integer",
                 "maximum": 100000000,
                 "minimum": 0,
-                "value": 100
+                "value": 30
             }
         },
         {
@@ -50,7 +50,7 @@
                 "mode": "Double",
                 "maximum": 10000.0,
                 "minimum": -10000.0,
-                "value": 1500.0
+                "value": 300.0
             }
         },
         {
@@ -116,7 +116,7 @@
                 "mode": "Double",
                 "maximum": 360.0,
                 "minimum": -360.0,
-                "value": 90.0
+                "value": 89.0
             }
         },
         {
@@ -230,7 +230,7 @@
                 "mode": "Double",
                 "maximum": 1000.0,
                 "minimum": 0.0,
-                "value": 3.0
+                "value": 0.01
             }
         },
         {
@@ -240,7 +240,7 @@
                 "mode": "Double",
                 "maximum": 100.0,
                 "minimum": 1.0,
-                "value": 10.0
+                "value": 12.0
             }
         },
         {
@@ -250,7 +250,7 @@
                 "mode": "Integer",
                 "maximum": 1000000000,
                 "minimum": 100,
-                "value": 10000
+                "value": 2000
             }
         },
         {
