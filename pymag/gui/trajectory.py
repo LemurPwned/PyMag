@@ -1,27 +1,15 @@
 import pyqtgraph.opengl as gl
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from pyqtgraph.widgets.GraphicsLayoutWidget import GraphicsLayoutWidget
-
-
-class TrajectoryWidget(GraphicsLayoutWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self.trajectory_gl = TrajectoryPlot(parent=self)
-
-        self.addPlot(
-            self.trajectory_gl.w, row=0, col=0
-        )
 
 
 class TrajectoryPlot:
     def __init__(self, parent=None):
         self.w = gl.GLViewWidget()
+        # the grid is unecessary for now
         # g = gl.GLGridItem()
         # self.w.addItem(g)
         self.init_GL_settings()
-        # self.w.setBackgroundColor('w')
 
     def init_GL_settings(self):
         self.w.opts['distance'] = 3
@@ -73,15 +61,3 @@ class TrajectoryPlot:
         self.w.items = []
         self.w.update()
         self.init_GL_settings()
-
-
-RES = "resistance"
-MAG = "magnetisation"
-
-
-class CoordinatePlot:
-    def __init__(self) -> None:
-        self.plot_type = RES
-
-    def plot_coordinates():
-        ...

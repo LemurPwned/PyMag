@@ -8,7 +8,7 @@ from pydantic.types import Json
 from pymag.engine.data_holders import StimulusObject
 from pymag.engine.utils import SweepMode, get_stimulus
 from .utils import Labelled
-from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 
 
 class StimulusGUI():
@@ -17,13 +17,7 @@ class StimulusGUI():
             os.path.dirname(__file__), '..', 'presets', "stimulus.json"))
 
         self.__dynamic_constructor(preset_file=self.preset_file)
-        self.stimulus_layout = QtGui.QGridLayout()
-        self.LLGError_threshold = Labelled(var_name="LLGError_threshold",
-                                           label="Max dm error",
-                                           minimum=-360,
-                                           maximum=360,
-                                           value=0.0)
-
+        self.stimulus_layout = QtWidgets.QGridLayout()
         self.stimulus_objects = [self.HMode,
                                  self.H,
                                  self.HMin,
@@ -48,8 +42,7 @@ class StimulusGUI():
                                  self.Idc,
                                  self.Iac,
                                  self.LLGtime,
-                                 self.LLGsteps,
-                                 self.LLGError_threshold]
+                                 self.LLGsteps]
 
         self.HMode.Value.currentIndexChanged.connect(self.H_mode_changed)
 

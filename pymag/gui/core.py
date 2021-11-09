@@ -12,7 +12,7 @@ from pymag.gui.plot_manager import PlotManager
 from pymag.gui.simulation_manager import (ExperimentManager, GeneralManager,
                                           Simulation)
 from pymag.gui.utils import unicode_subs, inverse_subs
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtWidgets
 from pymag.gui.stimulus import StimulusGUI
 
 
@@ -42,15 +42,15 @@ class SimulationParameters():
             unicode_subs[c] if c in unicode_subs else c
             for c in layer_parameters.columns
         ])
-        self.central_widget = QtGui.QWidget()
-        self.central_layout = QtGui.QVBoxLayout()
+        self.central_widget = QtWidgets.QWidget()
+        self.central_layout = QtWidgets.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.table_layer_params)
 
         self.stimulus_GUI = StimulusGUI()
         self.central_layout.addLayout(self.stimulus_GUI.stimulus_layout)
 
-        self.btn_layout = QtGui.QHBoxLayout()
+        self.btn_layout = QtWidgets.QHBoxLayout()
         self.btn_layout.addWidget(self.add_btn)
         self.btn_layout.addWidget(self.remove_button)
         self.btn_layout.addWidget(self.add_simulation)
@@ -132,8 +132,8 @@ class ResultsTable():
         self.export_btn = QtWidgets.QPushButton()
         self.export_btn.setText("Export selected to .csv")
         self.export_btn.clicked.connect(self.export_selected)
-        self.central_widget = QtGui.QWidget()
-        self.central_layout = QtGui.QVBoxLayout()
+        self.central_widget = QtWidgets.QWidget()
+        self.central_layout = QtWidgets.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.results_table)
         self.central_layout.addWidget(self.remove_btn)
@@ -255,13 +255,13 @@ class AddMenuBar():
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
 
-        self.central_widget = QtGui.QWidget()
-        self.central_layout = QtGui.QVBoxLayout()
+        self.central_widget = QtWidgets.QWidget()
+        self.central_layout = QtWidgets.QVBoxLayout()
         self.central_widget.setLayout(self.central_layout)
         self.central_layout.addWidget(self.menubar)
         self.central_layout.addWidget(self.progress)
 
-        self.btn_layout = QtGui.QHBoxLayout()
+        self.btn_layout = QtWidgets.QHBoxLayout()
         self.btn_layout.addWidget(self.start_btn)
 
         self.central_layout.addLayout(self.btn_layout)
@@ -326,7 +326,7 @@ class AddMenuBar():
         self.start_btn.setStyleSheet("background-color : lightgreen")
 
 
-class About(QtGui.QDialog):
+class About(QtWidgets.QDialog):
     def __init__(self):
         super(About, self).__init__()
         self.setWindowTitle("About pyMag")

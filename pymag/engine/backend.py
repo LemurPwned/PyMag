@@ -178,6 +178,12 @@ class SolverTask(QtCore.QThread):
             m_avg = np.mean(m, axis=0)  # average over layers
             Rx, Ry, Rz = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m,
                                               no_org_layers, l, w)
+
+            # compute the L2 convergence over last 100 iterations
+            # just take the first layer
+            k = min(101, m_traj.shape[-1])
+            l1 = m_traj[0, :, -k:]
+            dmdt = np.linalg.norm((l1 - np.roll(l1, shift=1))[1:]).mean()
             """
             Secondary VSD loop
             """
@@ -239,6 +245,7 @@ class SolverTask(QtCore.QThread):
                                           Rz=Rz,
                                           m_avg=m_avg,
                                           m_traj=m_traj,
+                                          L2convergence_dm=dmdt,
                                           PIMM=yf[:len(yf) // 2],
                                           Rxx_vsd=Rx_vsd,
                                           Rxy_vsd=Ry_vsd)

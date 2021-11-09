@@ -143,6 +143,7 @@ class VoltageSpinDiodeData:
 class ResultHolder(GenericHolder):
     def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs,
                  SD_freqs, Rx, Ry, Rz,
+                 L2convergence_dm,
                  Rxx_vsd: VoltageSpinDiodeData,
                  Rxy_vsd: VoltageSpinDiodeData) -> None:
         self.mode = mode
@@ -160,6 +161,7 @@ class ResultHolder(GenericHolder):
         self.update_count = 1
         self.Rxx_vsd = Rxx_vsd
         self.Rxy_vsd = Rxy_vsd
+        self.L2convergence_dm = [L2convergence_dm]
 
     def merge_result(self, result: 'ResultHolder'):
         self.PIMM = np.concatenate((self.PIMM, np.asarray(result.PIMM)),
@@ -171,6 +173,7 @@ class ResultHolder(GenericHolder):
         self.Rx.append(result.Rx[0])
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
+        self.L2convergence_dm.append(result.L2convergence_dm[0])
         self.Rxx_vsd.merge_vsd(result.Rxx_vsd, axis=0)
         self.Rxy_vsd.merge_vsd(result.Rxy_vsd, axis=0)
         self.update_count += result.update_count

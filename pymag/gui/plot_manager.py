@@ -2,7 +2,6 @@ import numpy as np
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.engine.data_holders import ExperimentData, ResultHolder
 from pymag.gui.simulation_manager import Simulation
-import math
 from typing import List, Union
 
 from pymag.gui.trajectory import TrajectoryPlot
@@ -11,7 +10,6 @@ import colorsys
 N = 5
 HSV_tuples = [(x / N, 0.5, 0.5) for x in range(N)]
 RGB_tuples = list(map(lambda x: (*colorsys.hsv_to_rgb(*x), 0.4), HSV_tuples))
-# print(RGB_tuples)
 
 
 class PlotManager:
@@ -20,11 +18,15 @@ class PlotManager:
     """
 
     def __init__(self, magnetisation_plot: MultiplePlot,
-                 resistance_plot: MultiplePlot, SD_plot: SpectrogramPlot,
-                 PIMM_plot: SpectrogramPlot, trajectory_plot: TrajectoryPlot) -> None:
+                 resistance_plot: MultiplePlot,
+                 convergence_plot: MultiplePlot,
+                 SD_plot: SpectrogramPlot,
+                 PIMM_plot: SpectrogramPlot,
+                 trajectory_plot: TrajectoryPlot) -> None:
         """
         :param magnetisation_plot
         :param resistance_plot
+        :param convergence_plot
         :param SD_plot
         :param SD_lines
         :param PIMM_plot
@@ -33,6 +35,7 @@ class PlotManager:
         """
         self.trajectory_plot = trajectory_plot
         self.magnetisation_plot = magnetisation_plot
+        self.convergence_plot = convergence_plot
         self.resistance_plot = resistance_plot
         self.SD_plot = SD_plot
         self.SD_plot.inf_line.sigPositionChanged.connect(
@@ -70,6 +73,7 @@ class PlotManager:
     def clear_simulation_plots(self):
         self.resistance_plot.clear_plots()
         self.magnetisation_plot.clear_plots()
+        self.convergence_plot.clear_plots()
         self.PIMM_plot.clear_plots()
         self.SD_plot.clear_plots()
 
@@ -173,6 +177,14 @@ class PlotManager:
             [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
             ["Rxx", "Rxy", "Rzz"], ["\u03A9", "\u03A9", "\u03A9"],
             str(result_holder.mode), self.units[str(result_holder.mode)])
+
+        self.convergence_plot.set_plots(
+            result_holder.H_mag[:lim],
+            [result_holder.L2convergence_dm],
+            [[0, 0, 0]], ["L2 convergence"], ["a.u."],
+            str(result_holder.mode),
+            self.units[str(result_holder.mode)])
+
         if lim >= 2:
             self.PIMM_plot.update(result_holder.H_mag[:lim],
                                   result_holder.PIMM_freqs,

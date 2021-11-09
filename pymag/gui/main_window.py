@@ -5,7 +5,7 @@ import queue
 import sys
 
 import pandas as pd
-from pymag.gui.trajectory import TrajectoryPlot, TrajectoryWidget
+from pymag.gui.trajectory import TrajectoryPlot
 import pyqtgraph as pg
 from pymag import __version__
 from pymag.engine.data_holders import Layer, SimulationInput
@@ -51,13 +51,16 @@ class UIMainWindow(QMainWindow):
         self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"],
                                      number_of_plots=3)
 
-        self.traj_widget = TrajectoryPlot(self)
+        self.convergence_plot = MultiplePlot(
+            left=["L2 convergence"], number_of_plots=1)
 
+        self.traj_widget = TrajectoryPlot(self)
         self.plot_manager = PlotManager(magnetisation_plot=self.mag_plot,
                                         resistance_plot=self.res_plot,
                                         SD_plot=self.SD_plot,
                                         PIMM_plot=self.PIMM_plot,
-                                        trajectory_plot=self.traj_widget)
+                                        trajectory_plot=self.traj_widget,
+                                        convergence_plot=self.convergence_plot)
         self.result_queue = mp.Queue()
         self.central_layout = AddMenuBar(parent=self, docks=self.area)
 
@@ -90,28 +93,36 @@ class UIMainWindow(QMainWindow):
 
         self.d = []
         dock_titles = [
-            "Control panel", "PIMM-FMR", "Magnetization",
+            "Control panel",
+            "PIMM-FMR",
+            "Magnetization",
             "Resistance",
+            "Convergence",
 
-            "SD-FMR", "Measurement manager",
-            "Simulation manager", "Simulation parameters",
+            "SD-FMR",
+            "Measurement manager",
+            "Simulation manager",
+            "Simulation parameters",
             "Trajectories"
         ]
 
         self.central_widget = self.central_layout.central_widget
         dock_contents = [
-            self.central_widget, self.PIMM_plot.plot_view,
-            self.mag_plot.plot_area,
-            self.res_plot.plot_area,
+            self.central_widget,  # 0
+            self.PIMM_plot.plot_view,  # 1
+            self.mag_plot.plot_area,  # 2
+            self.res_plot.plot_area,  # 3
+            self.convergence_plot.plot_area,  # 4
 
-            self.SD_plot.plot_view,
-            self.measurement_manager.central_widget,
-            self.simulation_manager.central_widget,
-            self.widget_layer_params.central_widget,
+            self.SD_plot.plot_view,  # 5
+            self.measurement_manager.central_widget,  # 6
+            self.simulation_manager.central_widget,  # 7
+            self.widget_layer_params.central_widget,  # 8
 
-            self.traj_widget.w,
+            self.traj_widget.w,  # 9
 
         ]
+        print(len(dock_contents))
         # no size here
         for i in range(0, len(dock_titles)):
             self.d.append(Dock(dock_titles[i]))
@@ -121,6 +132,7 @@ class UIMainWindow(QMainWindow):
                     (self.d[5], 'right', self.d[0]),
                     (self.d[1], 'right', self.d[0]),
                     (self.d[8], 'left', self.d[1]),
+                    (self.d[9], 'left', self.d[8]),
                     (self.d[2], 'bottom', self.d[1]),
                     (self.d[3], 'above', self.d[2]),
                     (self.d[4], 'above', self.d[1]),

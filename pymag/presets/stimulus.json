@@ -250,17 +250,7 @@
                 "mode": "Integer",
                 "maximum": 1000000000,
                 "minimum": 100,
-                "value": 2000
-            }
-        },
-        {
-            "name": "LLGError_threshold",
-            "params": {
-                "label": "Max dm error",
-                "mode": "Double",
-                "maximum": 360.0,
-                "minimum": -360.0,
-                "value": 0.0
+                "value": 22000
             }
         }
     ]

@@ -28,6 +28,11 @@
                                 "dock",
                                 "Trajectories",
                                 {}
+                            ],
+                            [
+                                "dock",
+                                "Convergence",
+                                {}
                             ]
                         ],
                         {
