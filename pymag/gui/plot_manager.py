@@ -139,24 +139,22 @@ class PlotManager:
         self.trajectory_plot.clear()
         self.trajectory_components.nuke_plots()
         for i in range(m_trajectories.shape[1]):  # iterate over layers
-            X = m_trajectories[self.H_select, i, :, :].transpose().squeeze()
+            X = m_trajectories[self.H_select, i, :, :]
             c = RGB_tuples[i]
             cplot = [[p*255 for p in RGB_tuples[i][:-1]] for _ in range(3)]
             self.trajectory_plot.draw_trajectory(
-                X,
+                X.transpose().squeeze(),
                 color=c  # (1, 0, 0, 1)
             )
             self.trajectory_components.set_plots(t,
-                                                 m_trajectories[self.H_select,
-                                                                i, :, :],
+                                                 X,
                                                  cplot,
 
                                                  ["m_x", "m_y", "m_z"],
-                                                 ["norm.", "norm.", "norm."],
+                                                 [None, None, None],
                                                  'Time',
-                                                 "n.u")
+                                                 "[it]")
         self.trajectory_plot.w.update()
-# 100000
 
     def plot_simulation(self, result_holder: ResultHolder):
         """
@@ -174,7 +172,6 @@ class PlotManager:
         self.PIMM_plot.inf_line_H.setBounds(
             (min(self.H), max(self.H)))
         self.trajectory_store = result_holder.m_traj
-        self.plot_trajectory(m_trajectories=self.trajectory_store)
 
         # adapt PIMM bounds
         self.PIMM_deltaf = result_holder.PIMM_freqs[
@@ -184,7 +181,7 @@ class PlotManager:
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]
         ], [[255, 0, 0], [0, 255, 0], [0, 0, 255]], ["Mx", "My", "Mz"],
-            ["norm.", "norm.", "norm."],
+            [None, None, None],
             str(result_holder.mode),
             self.units[str(result_holder.mode)])
 
