@@ -22,6 +22,7 @@ class PlotManager:
                  convergence_plot: MultiplePlot,
                  SD_plot: SpectrogramPlot,
                  PIMM_plot: SpectrogramPlot,
+                 trajectory_components: SpectrogramPlot,
                  trajectory_plot: TrajectoryPlot) -> None:
         """
         :param magnetisation_plot
@@ -37,6 +38,7 @@ class PlotManager:
         self.magnetisation_plot = magnetisation_plot
         self.convergence_plot = convergence_plot
         self.resistance_plot = resistance_plot
+        self.trajectory_components = trajectory_components
         self.SD_plot = SD_plot
         self.SD_plot.inf_line.sigPositionChanged.connect(
             self.SD_update_roi_loc)
@@ -87,7 +89,7 @@ class PlotManager:
                                                        ExperimentData]]):
         """
         :param simulation_list
-            Plot active simulations 
+            Plot active simulations
         """
         for plotable_obj in obj_list:
             self.plot_result(plotable_obj)
@@ -132,14 +134,29 @@ class PlotManager:
             # happens at first call
             return
 
+        t = np.arange(m_trajectories.shape[-1])
+
         self.trajectory_plot.clear()
+        self.trajectory_components.nuke_plots()
         for i in range(m_trajectories.shape[1]):  # iterate over layers
             X = m_trajectories[self.H_select, i, :, :].transpose().squeeze()
+            c = RGB_tuples[i]
+            cplot = [[p*255 for p in RGB_tuples[i][:-1]] for _ in range(3)]
             self.trajectory_plot.draw_trajectory(
                 X,
-                color=RGB_tuples[i]  # (1, 0, 0, 1)
+                color=c  # (1, 0, 0, 1)
             )
+            self.trajectory_components.set_plots(t,
+                                                 m_trajectories[self.H_select,
+                                                                i, :, :],
+                                                 cplot,
+
+                                                 ["m_x", "m_y", "m_z"],
+                                                 ["norm.", "norm.", "norm."],
+                                                 'Time',
+                                                 "n.u")
         self.trajectory_plot.w.update()
+# 100000
 
     def plot_simulation(self, result_holder: ResultHolder):
         """
@@ -163,7 +180,7 @@ class PlotManager:
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
 
-        self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
+        self.magnetisation_plot.set_plots(result_holder.H_mag[: lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]
         ], [[255, 0, 0], [0, 255, 0], [0, 0, 255]], ["Mx", "My", "Mz"],
@@ -193,7 +210,8 @@ class PlotManager:
 
             self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
                                        left_units="Hz",
-                                       bottom_caption=str(result_holder.mode),
+                                       bottom_caption=str(
+                                           result_holder.mode),
                                        bottom_units=self.units[str(
                                            result_holder.mode)])
 

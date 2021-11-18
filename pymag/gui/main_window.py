@@ -49,8 +49,13 @@ class UIMainWindow(QMainWindow):
                                      number_of_plots=3)
 
         self.mag_plot = MultiplePlot(left=["Mx", "My", "Mz"],
+                                     y_unit="n.u.",
                                      number_of_plots=3)
 
+        self.trajectory_components = MultiplePlot(
+            left=["m_x", "m_y", "m_z"], y_unit="n.u.",
+            number_of_plots=3
+        )
         self.convergence_plot = MultiplePlot(
             left=["L2 convergence"], number_of_plots=1)
 
@@ -60,6 +65,7 @@ class UIMainWindow(QMainWindow):
                                         SD_plot=self.SD_plot,
                                         PIMM_plot=self.PIMM_plot,
                                         trajectory_plot=self.traj_widget,
+                                        trajectory_components=self.trajectory_components,
                                         convergence_plot=self.convergence_plot)
         self.result_queue = mp.Queue()
         self.central_layout = AddMenuBar(parent=self, docks=self.area)
@@ -103,7 +109,8 @@ class UIMainWindow(QMainWindow):
             "Measurement manager",
             "Simulation manager",
             "Simulation parameters",
-            "Trajectories"
+            "Trajectories",
+            "Components"
         ]
 
         self.central_widget = self.central_layout.central_widget
@@ -120,7 +127,7 @@ class UIMainWindow(QMainWindow):
             self.widget_layer_params.central_widget,  # 8
 
             self.traj_widget.w,  # 9
-
+            self.trajectory_components.plot_area  # 10
         ]
         print(len(dock_contents))
         # no size here
@@ -133,6 +140,7 @@ class UIMainWindow(QMainWindow):
                     (self.d[1], 'right', self.d[0]),
                     (self.d[8], 'left', self.d[1]),
                     (self.d[9], 'left', self.d[8]),
+                    (self.d[10], 'left', self.d[8]),
                     (self.d[2], 'bottom', self.d[1]),
                     (self.d[3], 'above', self.d[2]),
                     (self.d[4], 'above', self.d[1]),

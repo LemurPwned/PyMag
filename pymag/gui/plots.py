@@ -32,6 +32,10 @@ class MultiplePlot(QWidget):
         for i in range(self.number_of_plots):
             self.plots[i].removeItem(self.plots_to_clear[i])
 
+    def nuke_plots(self):
+        for i in range(self.number_of_plots):
+            self.plots[i].clear()
+
     def set_plots(self, X: list, Y: list, colors: list, left_caption,
                   left_units, bottom_caption, bottom_units):
         for i in range(self.number_of_plots):

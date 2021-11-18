@@ -33,6 +33,11 @@
                                 "dock",
                                 "Convergence",
                                 {}
+                            ],
+                            [
+                                "dock",
+                                "Components",
+                                {}
                             ]
                         ],
                         {
