@@ -194,9 +194,9 @@ class SpectrogramPlot():
                 self.image_spectrum.setImage(
                     vals, autoLevels=False
                 )
-                mean, std = self.compute_histogram_fadeout(vals)
-                self.image.getHistogramWidget().setLevels(
-                    mean-0.6*std, mean+0.6*std)
+                # mean, std = self.compute_histogram_fadeout(vals)
+                # self.image.getHistogramWidget().setLevels(
+                #     mean-0.6*std, mean+0.6*std)
                 self.image.updateImage()
                 self.update_roi()
                 self.update_action(property)
@@ -238,9 +238,9 @@ class SpectrogramPlot():
         self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
                                   (max(yrange) - min(yrange)) / len(yrange))
         self.image_spectrum.setImage(values, autoLevels=False)
-        _, std = self.compute_histogram_fadeout(values)
-        self.image.getHistogramWidget().setLevels(
-            0, 0.6*std)  # is not symmetric -- due to FFT
+        # _, std = self.compute_histogram_fadeout(values)
+        # self.image.getHistogramWidget().setLevels(
+        #     0, 0.6*std)  # is not symmetric -- due to FFT
         self.image.updateImage()
 
     def compute_histogram_fadeout(self, values):

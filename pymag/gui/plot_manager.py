@@ -149,11 +149,10 @@ class PlotManager:
             self.trajectory_components.set_plots(t,
                                                  X,
                                                  cplot,
-
                                                  ["m_x", "m_y", "m_z"],
                                                  [None, None, None],
-                                                 'Time',
-                                                 "[it]")
+                                                 'Iterations',
+                                                 None)
         self.trajectory_plot.w.update()
 
     def plot_simulation(self, result_holder: ResultHolder):

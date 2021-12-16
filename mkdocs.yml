@@ -1,0 +1,6 @@
+site_name: PyMag
+theme:
+  name: material
+
+plugins:
+  - search

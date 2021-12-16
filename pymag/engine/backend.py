@@ -120,18 +120,20 @@ class SolverTask(QtCore.QThread):
                 org_layer_strs[i], org_layer_strs[i + 1],
                 cmtj.ScalarDriver.getConstantDriver(org_layers[i].J2))
         # initialise the magnetisation vectors
-        m_init_PIMM = [
-            cmtj.CVector(*(stimulus.H_sweep[0] /
-                           np.linalg.norm(stimulus.H_sweep[0])))
-            for _ in range(len(layers))
-        ]
-        m_init_VSD = [
-            cmtj.CVector(*(stimulus.H_sweep[0] /
-                           np.linalg.norm(stimulus.H_sweep[0])))
-            for _ in range(len(layers))
-        ]
+        m_init_PIMM = []
+        m_init_VSD = []
+        for i in range(len(layers)):
+            # normally align with field
+            if np.linalg.norm(stimulus.H_sweep[0]):
+                vinit = cmtj.CVector(*(stimulus.H_sweep[0] /
+                                       np.linalg.norm(stimulus.H_sweep[0])))
+            else:
+                # we have a 0 vector, align with Kdir
+                vinit = cmtj.CVector(*org_layers[i].Kdir)
+            m_init_VSD.append(vinit)
+            m_init_PIMM.append(vinit)
         """
-        Primary PIMM loop
+        Primary loop -- PIMM
         """
         for Hval in stimulus.H_sweep:
             if not self.handle_signals():
@@ -185,7 +187,7 @@ class SolverTask(QtCore.QThread):
             l1 = m_traj[0, :, -k:]
             dmdt = np.linalg.norm((l1 - np.roll(l1, shift=1))[1:]).mean()
             """
-            Secondary VSD loop
+            Secondary loop -- VSD
             """
             for frequency in stimulus.SD_freqs:
                 if not self.handle_signals():
