@@ -1,16 +1,16 @@
 import json
 import os
-from dataclasses import dataclass
 from abc import ABC, abstractclassmethod, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Dict, List
-
-from numpy.core.shape_base import vstack
 
 import cmtj
 import numpy as np
 import pandas as pd
+from numpy.core.shape_base import vstack
 from pydantic import BaseModel
 from pydantic.types import Json
+
 from pymag.engine.utils import get_stimulus
 from pymag.gui.utils import unicode_subs
 
@@ -178,7 +178,7 @@ class ResultHolder(GenericHolder):
         Save results:
         Dynamics
         Spin Diode
-        PIMM 
+        PIMM
         to a file
         """
         try:

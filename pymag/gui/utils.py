@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QLabel, QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox
 from typing import Any, Dict
+
+from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QLabel,
+                             QSpinBox)
 
 unicode_subs = {
     "theta": "\u03B8",

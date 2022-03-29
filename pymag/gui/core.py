@@ -1,19 +1,19 @@
 import json
 import os
-
 from functools import partial
 from typing import List, Tuple, Union
 
 import pandas as pd
 import pyqtgraph as pg
+from PyQt5 import QtCore, QtWidgets
+
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
 from pymag.gui.plot_manager import PlotManager
 from pymag.gui.simulation_manager import (ExperimentManager, GeneralManager,
                                           Simulation)
-from pymag.gui.utils import unicode_subs, inverse_subs
-from PyQt5 import QtCore, QtWidgets, QtWidgets
 from pymag.gui.stimulus import StimulusGUI
+from pymag.gui.utils import inverse_subs, unicode_subs
 
 
 class SimulationParameters():

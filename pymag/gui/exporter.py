@@ -1,10 +1,12 @@
 import os
 import pickle
-from pymag.engine.data_holders import ExperimentData
 from typing import List, Tuple
 
-from pymag.gui.simulation_manager import ExperimentManager, Simulation, SimulationManager
 from PyQt5.QtWidgets import QFileDialog, QWidget
+
+from pymag.engine.data_holders import ExperimentData
+from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
+                                          SimulationManager)
 
 
 class Exporter:
@@ -36,7 +38,7 @@ class Exporter:
 
     def load_experimental_data(self):
         """
-        Adds experiment data to experiment manager 
+        Adds experiment data to experiment manager
         and updates the plots
         """
         file_paths, _ = self.open_multiple_file_dialog("Open experiment files")

@@ -5,8 +5,10 @@ import queue
 import sys
 
 import pandas as pd
-from pymag.gui.trajectory import TrajectoryPlot
 import pyqtgraph as pg
+from PyQt5.QtWidgets import QMainWindow
+from pyqtgraph.dockarea import Dock, DockArea
+
 from pymag import __version__
 from pymag.engine.data_holders import Layer, SimulationInput
 from pymag.engine.utils import SimulationStatus
@@ -16,9 +18,7 @@ from pymag.gui.plot_manager import PlotManager
 from pymag.gui.plots import MultiplePlot, SpectrogramPlot
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,
                                           SimulationManager)
-from PyQt5.QtWidgets import QMainWindow
-
-from pyqtgraph.dockarea import Dock, DockArea
+from pymag.gui.trajectory import TrajectoryPlot
 
 PRESET_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'presets'))

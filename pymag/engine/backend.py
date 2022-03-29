@@ -1,15 +1,17 @@
 import time
+from copy import deepcopy
+from typing import List
 
-from numpy.fft import fftfreq
 import cmtj
 import numpy as np
-from pymag.engine.data_holders import Layer, ResultHolder, StimulusObject, VoltageSpinDiodeData
-from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
+from numpy.fft import fftfreq
 # import numba
 from PyQt5 import QtCore
 from scipy.fft import fft
-from typing import List
-from copy import deepcopy
+
+from pymag.engine.data_holders import (Layer, ResultHolder, StimulusObject,
+                                       VoltageSpinDiodeData)
+from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 
 
 def compute_vsd(frequency, dynamicR, integration_step,

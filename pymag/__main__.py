@@ -1,10 +1,11 @@
 import sys
+
+import click
 from pydantic import main
 from pyqtgraph.Qt import QtGui
-from pymag.gui.main_window import UIMainWindow
-import click
 
 from pymag import __version__
+from pymag.gui.main_window import UIMainWindow
 
 
 @click.group()

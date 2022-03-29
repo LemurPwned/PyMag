@@ -1,7 +1,6 @@
 import numpy as np
-from scipy.signal import butter, lfilter
 from numpy.linalg import norm
-
+from scipy.signal import butter, lfilter
 
 gamma = 1.76e11  # 1/(Ts)
 mu0 = 1.255e-6  # N/A^2

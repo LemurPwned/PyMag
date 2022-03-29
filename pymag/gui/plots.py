@@ -1,10 +1,11 @@
-from pymag.engine.data_holders import VoltageSpinDiodeData
 from typing import List
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
+
 import numpy as np
-from PyQt5.QtWidgets import QAction, QActionGroup
-from PyQt5.QtWidgets import QWidget, QSpinBox
+import pyqtgraph as pg
+from PyQt5.QtWidgets import QAction, QActionGroup, QSpinBox, QWidget
+from pyqtgraph.Qt import QtCore, QtGui
+
+from pymag.engine.data_holders import VoltageSpinDiodeData
 
 
 class MultiplePlot(QWidget):
@@ -226,7 +227,7 @@ class SpectrogramPlot():
         return self.inf_line_H.value()
 
     def update(self, xrange, yrange, values, deltaf):
-        """ 
+        """
         PIMM update
         """
         self.xrange = xrange
@@ -244,8 +245,8 @@ class SpectrogramPlot():
         self.image.updateImage()
 
     def compute_histogram_fadeout(self, values):
-        """ 
-        We need to construct the histogram of values for the image 
+        """
+        We need to construct the histogram of values for the image
         and then discount for least interesting
         """
         # try with the quantiles as well

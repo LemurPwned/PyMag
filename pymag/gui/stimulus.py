@@ -5,10 +5,12 @@ from typing import List
 
 import numpy as np
 from pydantic.types import Json
+from PyQt5 import QtWidgets
+
 from pymag.engine.data_holders import StimulusObject
 from pymag.engine.utils import SweepMode, get_stimulus
+
 from .utils import Labelled
-from PyQt5 import QtWidgets
 
 
 class StimulusGUI():
@@ -93,8 +95,8 @@ class StimulusGUI():
 
     def get_stimulus_object(self) -> StimulusObject:
         """
-        Parse the GUI object to the corresponding backend 
-        object. 
+        Parse the GUI object to the corresponding backend
+        object.
         Calculates the values necessary for calculation while parsing as well.
         """
         mode = self.HMode.Value.currentText()

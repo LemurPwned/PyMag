@@ -1,11 +1,12 @@
-import numpy as np
-from pymag.gui.plots import MultiplePlot, SpectrogramPlot
-from pymag.engine.data_holders import ExperimentData, ResultHolder
-from pymag.gui.simulation_manager import Simulation
+import colorsys
 from typing import List, Union
 
+import numpy as np
+
+from pymag.engine.data_holders import ExperimentData, ResultHolder
+from pymag.gui.plots import MultiplePlot, SpectrogramPlot
+from pymag.gui.simulation_manager import Simulation
 from pymag.gui.trajectory import TrajectoryPlot
-import colorsys
 
 N = 5
 HSV_tuples = [(x / N, 0.5, 0.5) for x in range(N)]
