@@ -12,15 +12,13 @@ from typing import List
 from copy import deepcopy
 
 
-def compute_vsd(frequency, dynamicR, integration_step, dynamicI) -> VoltageSpinDiodeData:
+def compute_vsd(frequency, dynamicR, integration_step,
+                dynamicI) -> VoltageSpinDiodeData:
     SD = -dynamicI * dynamicR
-    fs = 1.0/integration_step
-    SD_dc = butter_lowpass_filter(SD,
-                                  cutoff=10e6,
-                                  fs=fs,
-                                  order=3)
-    SD_fft = fft(SD)[:len(SD)//2]
-    freqs = fftfreq(len(SD), integration_step)[:len(SD)//2]
+    fs = 1.0 / integration_step
+    SD_dc = butter_lowpass_filter(SD, cutoff=10e6, fs=fs, order=3)
+    SD_fft = fft(SD)[:len(SD) // 2]
+    freqs = fftfreq(len(SD), integration_step)[:len(SD) // 2]
     amplitude = np.abs(SD_fft)
     phase = np.angle(SD_fft)
 
@@ -30,15 +28,14 @@ def compute_vsd(frequency, dynamicR, integration_step, dynamicI) -> VoltageSpinD
     max_fhar_amp_indx = np.argmax(SD_fft[fhar_index])
     # second harmonic
     # argmax in range 2*frequency
-    shar_index = np.argsort(np.abs(freqs - 2*frequency))[:5]  # neighbourhood
+    shar_index = np.argsort(np.abs(freqs - 2 * frequency))[:5]  # neighbourhood
     max_shar_amp_indx = np.argmax(SD_fft[shar_index])
     return VoltageSpinDiodeData(
         DC=np.mean(SD_dc).reshape(1, 1),
         FHarmonic=amplitude[fhar_index][max_fhar_amp_indx].reshape(1, 1),
         SHarmonic=amplitude[shar_index][max_shar_amp_indx].reshape(1, 1),
         FHarmonic_phase=phase[fhar_index][max_fhar_amp_indx].reshape(1, 1),
-        SHarmonic_phase=phase[shar_index][max_shar_amp_indx].reshape(1, 1)
-    )
+        SHarmonic_phase=phase[shar_index][max_shar_amp_indx].reshape(1, 1))
 
 
 # @numba.jit(nopython=True, parallel=False)
@@ -110,7 +107,7 @@ class SolverTask(QtCore.QThread):
             f"{str(org_layers[i].layer)}" for i in range(no_org_layers)
         ]
         layers = [layer.to_cmtj() for layer in org_layers]
-        junction = cmtj.Junction(filename="", layers=layers)
+        junction = cmtj.Junction(layers=layers)
         # assign IEC interacton
         for i in range(no_org_layers - 1):
             junction.setIECDriver(
@@ -153,7 +150,7 @@ class SolverTask(QtCore.QThread):
 
             HoeDriver = cmtj.AxialDriver(
                 cmtj.NullDriver(), cmtj.NullDriver(),
-                cmtj.ScalarDriver.getStepDriver(0, 50, 0.0, int_step*3))
+                cmtj.ScalarDriver.getStepDriver(0, 50, 0.0, int_step * 3))
             junction.setLayerOerstedFieldDriver("all", HoeDriver)
             junction.setLayerCurrentDriver("all", cmtj.NullDriver())
 
@@ -163,19 +160,17 @@ class SolverTask(QtCore.QThread):
                     org_layer_strs[i])
             log = junction.getLog()
             mixed = np.mean([
-                np.asarray(log[f"{org_layer_strs[i]}_mz"])*org_layers[i].Ms
+                np.asarray(log[f"{org_layer_strs[i]}_mz"]) * org_layers[i].Ms
                 for i in range(no_org_layers)
             ],
-                axis=0)
+                            axis=0)
             mixed = np.squeeze(mixed)
             yf = np.abs(fft(mixed))
             # take last m step
-            m_traj = np.asarray(
-                [[log[f'{org_layer_strs[i]}_mx'],
-                 log[f'{org_layer_strs[i]}_my'],
-                 log[f'{org_layer_strs[i]}_mz']]
-                 for i in range(no_org_layers)]
-            )
+            m_traj = np.asarray([[
+                log[f'{org_layer_strs[i]}_mx'], log[f'{org_layer_strs[i]}_my'],
+                log[f'{org_layer_strs[i]}_mz']
+            ] for i in range(no_org_layers)])
             m = m_traj[:, :, -1]  # all layers, all x, y, z, last timestamp
             m_avg = np.mean(m, axis=0)  # average over layers
             Rx, Ry, Rz = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR, m,
@@ -197,13 +192,11 @@ class SolverTask(QtCore.QThread):
                     junction.setLayerMagnetisation(org_layer_strs[i],
                                                    m_init_VSD[i])
 
-                self.configure_VSD_excitation(
-                    frequency=frequency,
-                    org_layers_strs=org_layer_strs,
-                    org_layers=org_layers,
-                    junction=junction,
-                    stimulus=stimulus
-                )
+                self.configure_VSD_excitation(frequency=frequency,
+                                              org_layers_strs=org_layer_strs,
+                                              org_layers=org_layers,
+                                              junction=junction,
+                                              stimulus=stimulus)
                 junction.runSimulation(s_time, int_step, int_step)
                 for i in range(len(layers)):
                     m_init_VSD[i] = junction.getLayerMagnetisation(
@@ -215,20 +208,18 @@ class SolverTask(QtCore.QThread):
                     log[f'{org_layer_strs[i]}_mz']
                 ] for i in range(no_org_layers)])
 
-                dynamicRx, dynamicRy, _ = calculate_resistance(Rx0, Ry0, AMR, AHE, SMR,
-                                                               m, no_org_layers, l, w)
+                dynamicRx, dynamicRy, _ = calculate_resistance(
+                    Rx0, Ry0, AMR, AHE, SMR, m, no_org_layers, l, w)
                 dynamicI = stimulus.I_dc + stimulus.I_rf * \
                     np.sin(2 * np.pi * frequency * np.asarray(log['time']))
-                Rxx_vsd_data = compute_vsd(
-                    dynamicR=dynamicRx,
-                    frequency=frequency,
-                    integration_step=int_step,
-                    dynamicI=dynamicI)
-                Rxy_vsd_data = compute_vsd(
-                    dynamicR=dynamicRy,
-                    frequency=frequency,
-                    integration_step=int_step,
-                    dynamicI=dynamicI)
+                Rxx_vsd_data = compute_vsd(dynamicR=dynamicRx,
+                                           frequency=frequency,
+                                           integration_step=int_step,
+                                           dynamicI=dynamicI)
+                Rxy_vsd_data = compute_vsd(dynamicR=dynamicRy,
+                                           frequency=frequency,
+                                           integration_step=int_step,
+                                           dynamicI=dynamicI)
                 if Rx_vsd is None:
                     Rx_vsd = Rxx_vsd_data
                     Ry_vsd = Rxy_vsd_data
@@ -265,28 +256,33 @@ class SolverTask(QtCore.QThread):
         """
         HoeDrivers: List[cmtj.AxialDriver] = [
             cmtj.AxialDriver(
-                cmtj.ScalarDriver.getSineDriver(
-                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_rf, frequency, 0),
-                cmtj.ScalarDriver.getSineDriver(
-                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_rf, frequency, 0),
-                cmtj.ScalarDriver.getSineDriver(
-                    l.Hoe*stimulus.I_dc, l.Hoe*stimulus.I_dc, frequency, 0))
-            for l in org_layers]
+                cmtj.ScalarDriver.getSineDriver(l.Hoe * stimulus.I_dc,
+                                                l.Hoe * stimulus.I_rf,
+                                                frequency, 0),
+                cmtj.ScalarDriver.getSineDriver(l.Hoe * stimulus.I_dc,
+                                                l.Hoe * stimulus.I_rf,
+                                                frequency, 0),
+                cmtj.ScalarDriver.getSineDriver(l.Hoe * stimulus.I_dc,
+                                                l.Hoe * stimulus.I_dc,
+                                                frequency, 0))
+            for l in org_layers
+        ]
         for i in range(len(org_layers)):
             driver = HoeDrivers[i]
             driver.applyMask(org_layers[i].Hoedir)
-            junction.setLayerOerstedFieldDriver(
-                org_layers_strs[i], driver)
+            junction.setLayerOerstedFieldDriver(org_layers_strs[i], driver)
             # for converting to current density
             if stimulus.I_dir == [1, 0, 0]:
-                area = org_layers[i].w*org_layers[i].th
+                area = org_layers[i].w * org_layers[i].th
             elif stimulus.I_dir == [0, 1, 0]:
-                area = org_layers[i].l*org_layers[i].th
+                area = org_layers[i].l * org_layers[i].th
             else:
-                area = org_layers[i].w*org_layers[i].l*1e-6*1e-6
-            junction.setLayerCurrentDriver(org_layers_strs[i],
-                                           cmtj.ScalarDriver.getSineDriver(stimulus.I_dc/area,
-                                           stimulus.I_rf/area, frequency, 0))
+                area = org_layers[i].w * org_layers[i].l * 1e-6 * 1e-6
+            junction.setLayerCurrentDriver(
+                org_layers_strs[i],
+                cmtj.ScalarDriver.getSineDriver(stimulus.I_dc / area,
+                                                stimulus.I_rf / area,
+                                                frequency, 0))
 
     def handle_signals(self):
         if self.is_killed:
@@ -310,20 +306,19 @@ class SolverTask(QtCore.QThread):
                                          self.simulations.copy()):
             for partial_result in self.simulation_setup(simulation=simulation):
                 batch_update.append(
-                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS)
-                )
+                    (sim_index, partial_result, SimulationStatus.IN_PROGRESS))
                 all_H_indx += 1
                 progr = 100 * (all_H_indx + 1) / all_H_sweep_vals
                 self.progress.emit(progr)
-                if len(batch_update) and ((len(batch_update) % batch_update_count) == 0):
+                if len(batch_update) and ((len(batch_update) %
+                                           batch_update_count) == 0):
                     self.queue.put(deepcopy(batch_update))
                     # clear
                     batch_update.clear()
             if not self.is_killed:
                 # put the remaining batch if not empty
                 if len(batch_update):
-                    self.queue.put(
-                        deepcopy(batch_update))
+                    self.queue.put(deepcopy(batch_update))
                     # clear
                     batch_update.clear()
                 self.queue.put((sim_index, ..., SimulationStatus.DONE))

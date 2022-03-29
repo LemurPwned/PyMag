@@ -16,6 +16,7 @@ from pymag.gui.utils import unicode_subs
 
 
 class GUIObject(ABC):
+
     @abstractclassmethod
     def from_gui(cls, **kwargs):
         ...
@@ -26,6 +27,7 @@ class GUIObject(ABC):
 
 
 class GenericHolder:
+
     def to_json(self, json_file) -> None:
         json.dump(self.to_dict(), open(json_file, "w"))
 
@@ -108,43 +110,35 @@ class VoltageSpinDiodeData:
     SHarmonic_phase: np.ndarray
 
     def merge_vsd(self, vsd_data: 'VoltageSpinDiodeData', axis: int):
-        self.DC = np.concatenate(
-            (self.DC, vsd_data.DC), axis=axis
-        )
-        self.FHarmonic = np.concatenate(
-            (self.FHarmonic, vsd_data.FHarmonic), axis=axis
-        )
-        self.SHarmonic = np.concatenate(
-            (self.SHarmonic, vsd_data.SHarmonic), axis=axis
-        )
+        self.DC = np.concatenate((self.DC, vsd_data.DC), axis=axis)
+        self.FHarmonic = np.concatenate((self.FHarmonic, vsd_data.FHarmonic),
+                                        axis=axis)
+        self.SHarmonic = np.concatenate((self.SHarmonic, vsd_data.SHarmonic),
+                                        axis=axis)
 
         self.FHarmonic_phase = np.concatenate(
-            (self.FHarmonic_phase, vsd_data.FHarmonic_phase), axis=axis
-        )
+            (self.FHarmonic_phase, vsd_data.FHarmonic_phase), axis=axis)
         self.SHarmonic_phase = np.concatenate(
-            (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis
-        )
+            (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis)
 
-    def to_csv(self, folder: str, prefix: str, index: List[str], columns: List[str]):
-        for name, values in zip(["DC", "First_harmonic",
-                                 "Second_harmonic",
-                                 "First_harmonic_phase",
-                                 "Second_harmonic_phase"],
-                                [self.DC,
-                                 self.FHarmonic, self.SHarmonic,
-                                 self.FHarmonic_phase, self.SHarmonic_phase]):
-            df = pd.DataFrame(data=values,
-                              columns=columns,
-                              index=index)
+    def to_csv(self, folder: str, prefix: str, index: List[str],
+               columns: List[str]):
+        for name, values in zip([
+                "DC", "First_harmonic", "Second_harmonic",
+                "First_harmonic_phase", "Second_harmonic_phase"
+        ], [
+                self.DC, self.FHarmonic, self.SHarmonic, self.FHarmonic_phase,
+                self.SHarmonic_phase
+        ]):
+            df = pd.DataFrame(data=values, columns=columns, index=index)
             fpath = os.path.join(folder, f"{prefix}_{name}.csv")
             df.to_csv(fpath, index=True)
 
 
 class ResultHolder(GenericHolder):
-    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs,
-                 SD_freqs, Rx, Ry, Rz,
-                 L2convergence_dm,
-                 Rxx_vsd: VoltageSpinDiodeData,
+
+    def __init__(self, mode, H_mag, m_avg, m_traj, PIMM, PIMM_freqs, SD_freqs,
+                 Rx, Ry, Rz, L2convergence_dm, Rxx_vsd: VoltageSpinDiodeData,
                  Rxy_vsd: VoltageSpinDiodeData) -> None:
         self.mode = mode
         self.H_mag = H_mag
@@ -225,6 +219,7 @@ class ResultHolder(GenericHolder):
 
 
 class Layer(GenericHolder, GUIObject):
+
     def __init__(self,
                  layer,
                  alpha,
@@ -271,7 +266,7 @@ class Layer(GenericHolder, GUIObject):
         self.w = float(w)
         self.l = float(l)
         if any(p):
-            self.p = np.asarray(p)/np.linalg.norm(p)
+            self.p = np.asarray(p) / np.linalg.norm(p)
             self.p = self.p.tolist()
         else:
             self.p = p
@@ -300,7 +295,7 @@ class Layer(GenericHolder, GUIObject):
             anis=cmtj.CVector(*self.Kdir.tolist()),
             Ms=self.Ms,
             thickness=self.th,
-            cellSurface=0,
+            cellSurface=10e-18,
             demagTensor=N,
             damping=self.alpha,
             **stt_params)
@@ -366,8 +361,9 @@ class Layer(GenericHolder, GUIObject):
 
     def to_gui(self):
         headers = [
-            "layer", "Ms", "Ku", "Kdir", "J", "J2", "alpha", "N", "th", "AMR", "SMR",
-            "AHE", "Rx0", "Ry0", "w", "l", "p", "h_dl", "h_fl", "Hoe", "Hoedir"
+            "layer", "Ms", "Ku", "Kdir", "J", "J2", "alpha", "N", "th", "AMR",
+            "SMR", "AHE", "Rx0", "Ry0", "w", "l", "p", "h_dl", "h_fl", "Hoe",
+            "Hoedir"
         ]
         res = {}
         for itm in headers:
@@ -419,6 +415,7 @@ class StimulusObject(BaseModel):
 
 
 class SimulationInput(GenericHolder):
+
     def __init__(self, layers: List[Layer], stimulus: StimulusObject) -> None:
         self.layers = layers
         self.stimulus = stimulus
