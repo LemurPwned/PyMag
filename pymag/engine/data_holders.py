@@ -121,8 +121,7 @@ class VoltageSpinDiodeData:
         self.SHarmonic_phase = np.concatenate(
             (self.SHarmonic_phase, vsd_data.SHarmonic_phase), axis=axis)
 
-    def to_csv(self, folder: str, prefix: str, index: List[str],
-               columns: List[str]):
+    def to_csv(self, filename, index: List[str], columns: List[str]):
         for name, values in zip([
                 "DC", "First_harmonic", "Second_harmonic",
                 "First_harmonic_phase", "Second_harmonic_phase"
@@ -131,8 +130,7 @@ class VoltageSpinDiodeData:
                 self.SHarmonic_phase
         ]):
             df = pd.DataFrame(data=values, columns=columns, index=index)
-            fpath = os.path.join(folder, f"{prefix}_{name}.csv")
-            df.to_csv(fpath, index=True)
+            df.to_csv(f"{filename}_{name}.csv", index=True)
 
 
 class ResultHolder(GenericHolder):
@@ -196,15 +194,13 @@ class ResultHolder(GenericHolder):
             print(f"Failed to export dynamics: {e}")
 
         try:
-            self.Rxx_vsd.to_csv(folder=os.path.dirname(filename),
-                                prefix="SD_Rxy",
+            self.Rxx_vsd.to_csv(filename=filename + "SD_Rxx",
                                 index=self.H_mag,
                                 columns=self.SD_freqs)
         except Exception as e:
             print(f"Failed to export Rxx spin diode: {e}")
         try:
-            self.Rxy_vsd.to_csv(folder=os.path.dirname(filename),
-                                prefix="SD_Rxx",
+            self.Rxy_vsd.to_csv(filename=filename + "SD_Rxx",
                                 index=self.H_mag,
                                 columns=self.SD_freqs)
         except Exception as e:
