@@ -182,8 +182,8 @@ class ResultHolder(GenericHolder):
         try:
             dynamics = pd.DataFrame.from_dict({
                 "mx": self.m_avg[:, 0],
-                "my": self.m_avg[:, 0],
-                "mz": self.m_avg[:, 0],
+                "my": self.m_avg[:, 1],
+                "mz": self.m_avg[:, 2],
                 "Rx": self.Rx,
                 "Ry": self.Ry,
                 "Rz": self.Rz,
