@@ -5,13 +5,14 @@ from typing import List
 import cmtj
 import numpy as np
 from numpy.fft import fftfreq
+from pymag.engine.data_holders import (Layer, ResultHolder, StimulusObject,
+                                       VoltageSpinDiodeData)
+from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
 # import numba
 from PyQt5 import QtCore
 from scipy.fft import fft
 
-from pymag.engine.data_holders import (Layer, ResultHolder, StimulusObject,
-                                       VoltageSpinDiodeData)
-from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
+from ..config import DataConfig
 
 
 def compute_vsd(frequency, dynamicR, integration_step,
@@ -228,23 +229,36 @@ class SolverTask(QtCore.QThread):
                 else:
                     Rx_vsd.merge_vsd(Rxx_vsd_data, axis=1)
                     Ry_vsd.merge_vsd(Rxy_vsd_data, axis=1)
-            # run PIMM
+
+            yf, pimm_freqs = self.limit_frequencies(yf, int_step)
             if not self.handle_signals():
                 return
-            partial_result = ResultHolder(mode=stimulus.mode,
-                                          H_mag=stimulus.sweep,
-                                          PIMM_freqs=stimulus.PIMM_freqs,
-                                          SD_freqs=stimulus.SD_freqs,
-                                          Rx=Rx,
-                                          Ry=Ry,
-                                          Rz=Rz,
-                                          m_avg=m_avg,
-                                          m_traj=m_traj,
-                                          L2convergence_dm=dmdt,
-                                          PIMM=yf[:len(yf) // 2],
-                                          Rxx_vsd=Rx_vsd,
-                                          Rxy_vsd=Ry_vsd)
+            partial_result = ResultHolder(
+                mode=stimulus.mode,
+                H_mag=stimulus.sweep,
+                PIMM_freqs=pimm_freqs,
+                SD_freqs=stimulus.SD_freqs,
+                Rx=Rx,
+                Ry=Ry,
+                Rz=Rz,
+                m_avg=m_avg,
+                m_traj=m_traj[::DataConfig.TRAJECTORY_SUBSAMPLE],
+                L2convergence_dm=dmdt,
+                PIMM=yf,
+                Rxx_vsd=Rx_vsd,
+                Rxy_vsd=Ry_vsd)
             yield partial_result
+
+    def limit_frequencies(self, pimm_spectrum, int_step):
+        """Limit spectral frequencies in order to reduce memory footprint
+        """
+        # limit PIMM
+        pimm_freqs = fftfreq(len(pimm_spectrum), d=int_step)
+        pimm_freqs = pimm_freqs[:len(pimm_freqs) // 2]
+        pimm_spectrum = pimm_spectrum[:len(pimm_spectrum) // 2]
+        freq_index = np.argwhere(
+            pimm_freqs <= DataConfig.PIMM_MAX_FREQUENCY_GHZ * 1e9)
+        return pimm_spectrum[freq_index], pimm_freqs[freq_index]
 
     def configure_VSD_excitation(self, frequency: float,
                                  org_layers_strs: List[str],
@@ -303,7 +317,6 @@ class SolverTask(QtCore.QThread):
         ])
         all_H_indx = 0
         batch_update = []
-        batch_update_count = 2  # how many steps per plot update?
         for sim_index, simulation in zip(self.simulation_indices.copy(),
                                          self.simulations.copy()):
             for partial_result in self.simulation_setup(simulation=simulation):
@@ -312,8 +325,8 @@ class SolverTask(QtCore.QThread):
                 all_H_indx += 1
                 progr = 100 * (all_H_indx + 1) / all_H_sweep_vals
                 self.progress.emit(progr)
-                if len(batch_update) and ((len(batch_update) %
-                                           batch_update_count) == 0):
+                if len(batch_update) and (
+                    (len(batch_update) % DataConfig.BATCH_UPDATE_COUNT) == 0):
                     self.queue.put(deepcopy(batch_update))
                     # clear
                     batch_update.clear()
