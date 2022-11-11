@@ -6,7 +6,7 @@ import sys
 
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QMainWindow
 from pyqtgraph.dockarea import Dock, DockArea
 
 from pymag import __version__

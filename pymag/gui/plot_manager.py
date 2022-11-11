@@ -19,10 +19,8 @@ class PlotManager:
     """
 
     def __init__(self, magnetisation_plot: MultiplePlot,
-                 resistance_plot: MultiplePlot,
-                 convergence_plot: MultiplePlot,
-                 SD_plot: SpectrogramPlot,
-                 PIMM_plot: SpectrogramPlot,
+                 resistance_plot: MultiplePlot, convergence_plot: MultiplePlot,
+                 SD_plot: SpectrogramPlot, PIMM_plot: SpectrogramPlot,
                  trajectory_components: SpectrogramPlot,
                  trajectory_plot: TrajectoryPlot) -> None:
         """
@@ -49,8 +47,7 @@ class PlotManager:
             self.PIMM_update_roi_loc)
 
         self.PIMM_plot.inf_line_H.sigPositionChanged.connect(
-            self.H_update_roi_loc
-        )
+            self.H_update_roi_loc)
 
         units_SI = {"H": "A/m", "Theta": "deg", "Phi": "deg", "f": "Hz"}
         self.units = units_SI
@@ -142,18 +139,15 @@ class PlotManager:
         for i in range(m_trajectories.shape[1]):  # iterate over layers
             X = m_trajectories[self.H_select, i, :, :]
             c = RGB_tuples[i]
-            cplot = [[p*255 for p in RGB_tuples[i][:-1]] for _ in range(3)]
+            cplot = [[p * 255 for p in RGB_tuples[i][:-1]] for _ in range(3)]
             self.trajectory_plot.draw_trajectory(
                 X.transpose().squeeze(),
                 color=c  # (1, 0, 0, 1)
             )
-            self.trajectory_components.set_plots(t,
-                                                 X,
-                                                 cplot,
+            self.trajectory_components.set_plots(t, X, cplot,
                                                  ["m_x", "m_y", "m_z"],
                                                  [None, None, None],
-                                                 'Iterations',
-                                                 None)
+                                                 'Iterations', None)
         self.trajectory_plot.w.update()
 
     def plot_simulation(self, result_holder: ResultHolder):
@@ -169,21 +163,20 @@ class PlotManager:
             return
         # save for update ROI
         self.H = result_holder.H_mag[:lim]
-        self.PIMM_plot.inf_line_H.setBounds(
-            (min(self.H), max(self.H)))
+        self.PIMM_plot.inf_line_H.setBounds((min(self.H), max(self.H)))
         self.trajectory_store = result_holder.m_traj
 
         # adapt PIMM bounds
         self.PIMM_deltaf = result_holder.PIMM_freqs[
             1] - result_holder.PIMM_freqs[0]
 
-        self.magnetisation_plot.set_plots(result_holder.H_mag[: lim], [
+        self.magnetisation_plot.set_plots(result_holder.H_mag[:lim], [
             result_holder.m_avg[:, 0], result_holder.m_avg[:, 1],
             result_holder.m_avg[:, 2]
         ], [[255, 0, 0], [0, 255, 0], [0, 0, 255]], ["Mx", "My", "Mz"],
-            [None, None, None],
-            str(result_holder.mode),
-            self.units[str(result_holder.mode)])
+                                          [None, None, None],
+                                          str(result_holder.mode),
+                                          self.units[str(result_holder.mode)])
 
         self.resistance_plot.set_plots(
             result_holder.H_mag[:lim],
@@ -192,23 +185,20 @@ class PlotManager:
             ["Rxx", "Rxy", "Rzz"], ["\u03A9", "\u03A9", "\u03A9"],
             str(result_holder.mode), self.units[str(result_holder.mode)])
 
-        self.convergence_plot.set_plots(
-            result_holder.H_mag[:lim],
-            [result_holder.L2convergence_dm],
-            [[0, 0, 0]], ["L2 convergence"], ["a.u."],
-            str(result_holder.mode),
-            self.units[str(result_holder.mode)])
+        self.convergence_plot.set_plots(result_holder.H_mag[:lim],
+                                        [result_holder.L2convergence_dm],
+                                        [[0, 0, 0]], ["L2 convergence"],
+                                        ["a.u."], str(result_holder.mode),
+                                        self.units[str(result_holder.mode)])
 
         if lim >= 2:
             self.PIMM_plot.update(result_holder.H_mag[:lim],
-                                  result_holder.PIMM_freqs,
-                                  result_holder.PIMM,
+                                  result_holder.PIMM_freqs, result_holder.PIMM,
                                   self.PIMM_deltaf)
 
             self.PIMM_plot.update_axis(left_caption="PIMM-FMR Frequency",
                                        left_units="Hz",
-                                       bottom_caption=str(
-                                           result_holder.mode),
+                                       bottom_caption=str(result_holder.mode),
                                        bottom_units=self.units[str(
                                            result_holder.mode)])
 
@@ -216,17 +206,14 @@ class PlotManager:
             if len(result_holder.SD_freqs) > 1:
                 self.SD_deltaf = result_holder.SD_freqs[1] - \
                     result_holder.SD_freqs[0]
-                self.SD_plot.set_VSD_holders(
-                    result_holder.Rxx_vsd, result_holder.Rxy_vsd)
-                self.SD_plot.update_image(
-                    result_holder.H_mag[:lim],
-                    result_holder.SD_freqs,
-                    self.SD_deltaf
-                )
-                self.SD_plot.update_axis(left_caption="SD-FMR Frequency",
-                                         left_units="Hz",
-                                         bottom_caption=str(
-                                             result_holder.mode),
-                                         bottom_units=self.units[str(
-                                             result_holder.mode)])
+                self.SD_plot.set_VSD_holders(result_holder.Rxx_vsd,
+                                             result_holder.Rxy_vsd)
+                self.SD_plot.update_image(result_holder.H_mag[:lim],
+                                          result_holder.SD_freqs,
+                                          self.SD_deltaf)
+                self.SD_plot.update_axis(
+                    left_caption="SD-FMR Frequency",
+                    left_units="Hz",
+                    bottom_caption=str(result_holder.mode),
+                    bottom_units=self.units[str(result_holder.mode)])
                 self.SD_update_roi_loc()

@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Tuple
 
-from PyQt5.QtWidgets import QFileDialog, QWidget
+from PyQt6.QtWidgets import QFileDialog, QWidget
 
 from pymag.engine.data_holders import ExperimentData
 from pymag.gui.simulation_manager import (ExperimentManager, Simulation,

@@ -5,12 +5,13 @@ from typing import List
 import cmtj
 import numpy as np
 from numpy.fft import fftfreq
+# import numba
+from PyQt6 import QtCore
+from scipy.fft import fft
+
 from pymag.engine.data_holders import (Layer, ResultHolder, StimulusObject,
                                        VoltageSpinDiodeData)
 from pymag.engine.utils import SimulationStatus, butter_lowpass_filter
-# import numba
-from PyQt5 import QtCore
-from scipy.fft import fft
 
 from ..config import DataConfig
 
@@ -95,7 +96,8 @@ class SolverTask(QtCore.QThread):
         s_time = stimulus.LLG_time
         int_step = s_time / stimulus.LLG_steps
         org_layers: List[Layer] = sim_input.layers
-
+        Rx_vsd = None
+        Ry_vsd = None
         Rx0 = np.asarray([l.Rx0 for l in org_layers])
         Ry0 = np.asarray([l.Ry0 for l in org_layers])
         SMR = np.asarray([l.SMR for l in org_layers])
