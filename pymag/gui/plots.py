@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtWidgets import QWidget
 from pyqtgraph.Qt import QtCore, QtGui
 
 from pymag.engine.data_holders import VoltageSpinDiodeData

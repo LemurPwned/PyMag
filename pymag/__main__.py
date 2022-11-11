@@ -2,6 +2,7 @@ import sys
 
 import click
 from PyQt6.QtWidgets import QApplication
+
 from pymag import __version__
 from pymag.gui.main_window import UIMainWindow
 
