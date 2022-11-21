@@ -186,7 +186,7 @@ class ResultsTable():
         itm = self.manager.get_item(row)
         if status_item:
             status_item.setText(itm.status)
-        if item.checkState() == QtCore.Qt.Checked:
+        if item.checkState() == QtCore.Qt.CheckState.Checked:
             self.manager.add_to_selected(row)
         else:
             self.manager.remove_from_selected(row)

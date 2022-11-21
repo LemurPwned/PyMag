@@ -4,7 +4,7 @@ from typing import List
 
 import numpy as np
 from pydantic.types import Json
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from pymag.engine.data_holders import StimulusObject
 from pymag.engine.utils import SweepMode, get_stimulus
@@ -86,13 +86,16 @@ class StimulusGUI():
         mode = self.HMode.Value.currentText()
         if mode == SweepMode.H:
             steps = int(self.HSteps.Value.value())
-            back = self.HBack.Value.checkState()
+            back = (
+                self.HBack.Value.checkState() == QtCore.Qt.CheckState.Checked)
         if mode == SweepMode.PHI:
             steps = int(self.HPhiSteps.Value.value())
-            back = self.HPhiBack.Value.checkState()
+            back = (self.HPhiBack.Value.checkState() ==
+                    QtCore.Qt.CheckState.Checked)
         if mode == SweepMode.THETA:
             steps = int(self.HThetaSteps.Value.value())
-            back = self.HThetaBack.Value.checkState()
+            back = (self.HThetaBack.Value.checkState() ==
+                    QtCore.Qt.CheckState.Checked)
         # convert H from kA/m -> A/m
         H_sweep, sweep = get_stimulus(self.H.Value.value() * 1e3,
                                       self.HMin.Value.value() * 1e3,
