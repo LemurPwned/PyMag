@@ -24,7 +24,6 @@ class SweepMode:
 
 def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax,
                  STEPS, back, mode):
-    print("BACK", back)
     st = np.sin(np.deg2rad(theta))
     ct = np.cos(np.deg2rad(theta))
     sp = np.sin(np.deg2rad(phi))
