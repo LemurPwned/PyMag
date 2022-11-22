@@ -1,8 +1,7 @@
 import sys
 
 import click
-from pydantic import main
-from pyqtgraph.Qt import QtGui
+from PyQt6.QtWidgets import QApplication
 
 from pymag import __version__
 from pymag.gui.main_window import UIMainWindow
@@ -15,13 +14,13 @@ def cli():
 
 @cli.command(name='run', help='Run Pymag application')
 def run_pymag():
-    app = QtGui.QApplication([])
+    app = QApplication([])
     app.setOrganizationName("PyMag")
     app.setApplicationName(__version__)
     main_window = UIMainWindow()
     # main_window.showMaximized()
-    exit_code = app.exec_()
-    main_window.save_before_exit()
+    exit_code = app.exec()
+    # main_window.save_before_exit()
     sys.exit(exit_code)
 
 

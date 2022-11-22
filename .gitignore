@@ -3,7 +3,7 @@ build/
 .egg/
 var/
 *.callgrind.*
-*.sh 
+*.sh
 *.ipynb
 *.npy
 *.egg-info/
@@ -13,6 +13,10 @@ __pycache__/
 .vscode
 .pymag
 *.so
-nowesrodowisko/
-pymag/new_venv
+experiment/
+*.json
 *.csv
+ogl/
+run_test.py
+.gitignore
+*.json

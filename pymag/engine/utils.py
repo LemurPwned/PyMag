@@ -22,8 +22,8 @@ class SweepMode:
     THETA = "Theta"
 
 
-def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax, STEPS, back,
-                 mode):
+def get_stimulus(H, Hmin, Hmax, theta, ThetaMin, ThetaMax, phi, PhiMin, PhiMax,
+                 STEPS, back, mode):
     st = np.sin(np.deg2rad(theta))
     ct = np.cos(np.deg2rad(theta))
     sp = np.sin(np.deg2rad(phi))
@@ -72,11 +72,11 @@ def butter_bandpass_filter(data, pass_freq, fs, order=5):
     if pass_freq == 0:
         pass_freq = 0.1
     try:
-        b, a = butter(order, [
-            0.9*pass_freq/nyq, pass_freq/nyq
-        ], btype='bandpass', analog=False)
+        b, a = butter(order, [0.9 * pass_freq / nyq, pass_freq / nyq],
+                      btype='bandpass',
+                      analog=False)
     except ValueError:
-        print(fs, pass_freq, nyq, 0.9*pass_freq/nyq, pass_freq/nyq)
+        print(fs, pass_freq, nyq, 0.9 * pass_freq / nyq, pass_freq / nyq)
         raise ValueError("Error in filtering")
     y = lfilter(b, a, data, zi=None)
     return y

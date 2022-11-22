@@ -166,8 +166,9 @@ class ResultHolder(GenericHolder):
         self.Ry.append(result.Ry[0])
         self.Rz.append(result.Rz[0])
         self.L2convergence_dm.append(result.L2convergence_dm[0])
-        self.Rxx_vsd.merge_vsd(result.Rxx_vsd, axis=0)
-        self.Rxy_vsd.merge_vsd(result.Rxy_vsd, axis=0)
+        if self.Rxx_vsd is not None:
+            self.Rxx_vsd.merge_vsd(result.Rxx_vsd, axis=0)
+            self.Rxy_vsd.merge_vsd(result.Rxy_vsd, axis=0)
         self.update_count += result.update_count
 
     def to_csv(self, filename) -> None:
@@ -182,8 +183,8 @@ class ResultHolder(GenericHolder):
         try:
             dynamics = pd.DataFrame.from_dict({
                 "mx": self.m_avg[:, 0],
-                "my": self.m_avg[:, 0],
-                "mz": self.m_avg[:, 0],
+                "my": self.m_avg[:, 1],
+                "mz": self.m_avg[:, 2],
                 "Rx": self.Rx,
                 "Ry": self.Ry,
                 "Rz": self.Rz,

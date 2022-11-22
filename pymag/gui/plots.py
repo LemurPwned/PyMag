@@ -2,13 +2,15 @@ from typing import List
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QAction, QActionGroup, QSpinBox, QWidget
+from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtWidgets import QWidget
 from pyqtgraph.Qt import QtCore, QtGui
 
 from pymag.engine.data_holders import VoltageSpinDiodeData
 
 
 class MultiplePlot(QWidget):
+
     def __init__(self, left, number_of_plots, y_unit='\u03A9'):
         QWidget.__init__(self, None)
         self.number_of_plots = number_of_plots
@@ -64,6 +66,7 @@ class MultiplePlot(QWidget):
 
 
 class SpectrogramPlot():
+
     def __init__(self, spectrum_enabled=False):
         self.plot_view = pg.GraphicsLayoutWidget()
         self.plot_view.setGeometry(QtCore.QRect(0, 0, 600, 300))
@@ -144,14 +147,16 @@ class SpectrogramPlot():
             harmonic_group = QActionGroup(submenu)
             harmonic_group.setExclusive(True)
 
-            for n, ac in zip(["DC", "1st harmonic", "2nd harmonic",
-                              "1st harmonic phase",
-                              "2nd harmonic phase"],
-                             ["DC", "FHarmonic", "SHarmonic",
-                             "FHarmonic_phase", "SHarmonic_phase"]):
+            for n, ac in zip([
+                    "DC", "1st harmonic", "2nd harmonic", "1st harmonic phase",
+                    "2nd harmonic phase"
+            ], [
+                    "DC", "FHarmonic", "SHarmonic", "FHarmonic_phase",
+                    "SHarmonic_phase"
+            ]):
 
-                a = harmonic_group.addAction(QAction(
-                    n, submenu, checkable=True))
+                a = harmonic_group.addAction(
+                    QAction(n, submenu, checkable=True))
                 a.triggered.connect(self.action_menu_generator(ac))
                 submenu.addAction(a)
             harmonic_group.actions()[0].setChecked(True)
@@ -161,8 +166,8 @@ class SpectrogramPlot():
             resistance_group.setExclusive(True)
             for n, ac in zip(["Rxx", "Rxy"],
                              [self.on_Rxx_selected, self.on_Rxy_selected]):
-                a = resistance_group.addAction(QAction(
-                    n, submenu_rxx_rxy, checkable=True))
+                a = resistance_group.addAction(
+                    QAction(n, submenu_rxx_rxy, checkable=True))
                 a.triggered.connect(ac)
                 submenu_rxx_rxy.addAction(a)
                 resistance_group.actions()[0].setChecked(True)
@@ -186,28 +191,25 @@ class SpectrogramPlot():
         self.current_action = action
 
     def action_menu_generator(self, property):
+
         def menu_action():
             holder = getattr(self, self.resistance_mode + "_holder")
             if holder:
-                vals = self.detrend_f_axis(
-                    getattr(holder, property)
-                )
-                self.image_spectrum.setImage(
-                    vals, autoLevels=False
-                )
+                vals = self.detrend_f_axis(getattr(holder, property))
+                self.image_spectrum.setImage(vals, autoLevels=False)
                 # mean, std = self.compute_histogram_fadeout(vals)
                 # self.image.getHistogramWidget().setLevels(
                 #     mean-0.6*std, mean+0.6*std)
                 self.image.updateImage()
                 self.update_roi()
                 self.update_action(property)
+
         return menu_action
 
     def update_axis(self, left_caption, left_units, bottom_caption,
                     bottom_units):
         self.plot_image.setLabel('left', left_caption, units=left_units)
-        self.plot_image.setLabel(
-            'bottom', bottom_caption, units=bottom_units)
+        self.plot_image.setLabel('bottom', bottom_caption, units=bottom_units)
 
     def update_roi(self):
         if not (self.xrange is None):
@@ -235,9 +237,11 @@ class SpectrogramPlot():
         self.deltaf = deltaf
 
         self.image_spectrum.resetTransform()
-        self.image_spectrum.translate(min(xrange), min(yrange))
-        self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
-                                  (max(yrange) - min(yrange)) / len(yrange))
+        tr = QtGui.QTransform()
+        tr.translate(min(xrange), min(yrange))
+        tr.scale((max(xrange) - min(xrange)) / len(xrange),
+                 (max(yrange) - min(yrange)) / len(yrange))
+        self.image_spectrum.setTransform(tr)
         self.image_spectrum.setImage(values, autoLevels=False)
         # _, std = self.compute_histogram_fadeout(values)
         # self.image.getHistogramWidget().setLevels(
@@ -263,9 +267,11 @@ class SpectrogramPlot():
         self.yrange = yrange
         self.deltaf = deltaf
         self.image_spectrum.resetTransform()
-        self.image_spectrum.translate(min(xrange), min(yrange))
-        self.image_spectrum.scale((max(xrange) - min(xrange)) / len(xrange),
-                                  (max(yrange) - min(yrange)) / len(yrange))
+        tr = QtGui.QTransform()
+        tr.translate(min(xrange), min(yrange))
+        tr.scale((max(xrange) - min(xrange)) / len(xrange),
+                 (max(yrange) - min(yrange)) / len(yrange))
+        self.image_spectrum.setTransform(tr)
         self.action_menu_generator(self.current_action)()
         self.image.updateImage()
 

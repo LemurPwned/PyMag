@@ -1,7 +1,7 @@
 from multiprocessing import Queue
 from typing import List, Set, Union
 
-from PyQt5 import QtCore
+from PyQt6 import QtCore
 
 from pymag.engine.backend import SolverTask
 from pymag.engine.data_holders import (ExperimentData, GenericHolder,
@@ -12,6 +12,7 @@ DEFAULT_SIM_NAME = "Sim"
 
 
 class Simulation(GenericHolder):
+
     def __init__(self,
                  simulation_input: SimulationInput,
                  simulation_result: ResultHolder = None,
@@ -43,6 +44,7 @@ class Simulation(GenericHolder):
 
 
 class GeneralManager():
+
     def __init__(self) -> None:
         self.selected_indices: Set[int] = set()
         self.items: Union[List[Simulation], List[ExperimentData]] = []
@@ -92,6 +94,7 @@ class GeneralManager():
         Remove the simulations that were active
         """
         for indx in sorted(self.selected_indices, reverse=True):
+            self.items[indx] = None
             del self.items[indx]
             # also remove the selection :)
             if indx in self.selected_indices:
@@ -102,6 +105,7 @@ class GeneralManager():
 
 
 class ExperimentManager(GeneralManager):
+
     def __init__(self) -> None:
         super().__init__()
         self.items: List[ExperimentData] = []
@@ -117,6 +121,7 @@ class ExperimentManager(GeneralManager):
 
 
 class SimulationManager(GeneralManager):
+
     def __init__(self, queue: Queue, progress_bar, kill_btn) -> None:
         super().__init__()
         self.backend = Backend(queue, progress_bar, kill_btn=kill_btn)

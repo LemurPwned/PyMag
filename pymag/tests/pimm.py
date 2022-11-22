@@ -6,10 +6,11 @@ import time as tm
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.fft import fft
+
 from pymag.engine.data_holders import Layer
 from pymag.engine.solver import Solver
 from pymag.engine.utils import get_stimulus
-from scipy.fft import fft
 
 l1 = Layer(0,
            alpha=0.01,

@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from pymag.engine.utils import *
 from pymag.gui.exporter import Exporter
@@ -25,7 +25,8 @@ class SimulationParameters():
         self.table_layer_params = pg.TableWidget(editable=True, sortable=False)
         header = self.table_layer_params.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.add_btn = QtWidgets.QPushButton()
         self.remove_button = QtWidgets.QPushButton()
         self.add_simulation = QtWidgets.QPushButton()
@@ -57,7 +58,8 @@ class SimulationParameters():
         self.central_layout.addLayout(self.btn_layout)
 
     def get_all_data(self):
-        return self.stimulus_GUI.get_stimulus_object(), self.get_table_data(self.table_layer_params)
+        return self.stimulus_GUI.get_stimulus_object(), self.get_table_data(
+            self.table_layer_params)
 
     def get_table_data(self, table: pg.TableWidget):
         number_of_rows = table.rowCount()
@@ -77,18 +79,19 @@ class SimulationParameters():
     def add_layer(self):
         layer_no = self.table_layer_params.rowCount() + 1
         # copy the last layer
-        if (layer_no-1):  # if there are layers to copy at all
+        if (layer_no - 1):  # if there are layers to copy at all
             # 1, column count because we should skip the first
             self.table_layer_params.addRow([
-                layer_no, *
-                [self.table_layer_params.item(layer_no-2, i).text()
-                 for i in range(1, self.table_layer_params.columnCount())]
+                layer_no, *[
+                    self.table_layer_params.item(layer_no - 2, i).text()
+                    for i in range(1, self.table_layer_params.columnCount())
+                ]
             ])
         else:  # there's no layer so just add a default one
             self.table_layer_params.addRow([
-                layer_no, 1.6, 3000, [1, 0, 0],
-                1e-5, 1e-6, 0.01, [0, 1, 0], 1e-9, 0.02, 0.01,
-                0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0, [0, 0, 0]
+                layer_no, 1.6, 3000, [1, 0, 0], 1e-5, 1e-6, 0.01, [0, 1, 0],
+                1e-9, 0.02, 0.01, 0.01, 100, 120, 1, 1, [0, 0, 0], 0, 0, 0,
+                [0, 0, 0]
             ])
 
     def remove_layer(self):
@@ -98,8 +101,10 @@ class SimulationParameters():
         sim_input = simulation.get_simulation_input()
         layer_params = [layer.to_gui() for layer in sim_input.layers]
         stimulus_params = sim_input.stimulus.to_gui()
-        self.table_layer_params.setData([{str(key): str(
-            value) for key, value in layer_params[i].items()} for i in range(len(layer_params))])
+        self.table_layer_params.setData(
+            [{str(key): str(value)
+              for key, value in layer_params[i].items()}
+             for i in range(len(layer_params))])
         self.stimulus_GUI.set_stimulus(stimulus_params)
 
 
@@ -125,7 +130,7 @@ class ResultsTable():
             self.results_table.setHorizontalHeaderLabels(["Name", "Status"])
         header = self.results_table.horizontalHeader()
         # also QtWidgets.QHeaderView.Stretch is good
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.remove_btn = QtWidgets.QPushButton()
         self.remove_btn.setText("Remove selected")
         self.remove_btn.clicked.connect(self.remove_selected)
@@ -181,7 +186,7 @@ class ResultsTable():
         itm = self.manager.get_item(row)
         if status_item:
             status_item.setText(itm.status)
-        if item.checkState() == QtCore.Qt.Checked:
+        if item.checkState() == QtCore.Qt.CheckState.Checked:
             self.manager.add_to_selected(row)
         else:
             self.manager.remove_from_selected(row)
@@ -204,9 +209,9 @@ class ResultsTable():
             sim_name = sim.name
             chbx_itm = QtWidgets.QTableWidgetItem(sim_name)
             if i in active:
-                chbx_itm.setCheckState(QtCore.Qt.Checked)
+                chbx_itm.setCheckState(QtCore.Qt.CheckState.Checked)
             else:
-                chbx_itm.setCheckState(QtCore.Qt.Unchecked)
+                chbx_itm.setCheckState(QtCore.Qt.CheckState.Unchecked)
             # for some reason there's an attrubute error
             # we don't want to trigger on first add
             chbx_itm.itemChanged = lambda: ...
@@ -218,8 +223,8 @@ class ResultsTable():
                 status_itm = QtWidgets.QTableWidgetItem(sim.status)
                 status_itm.itemChanged = lambda: ...
                 status_itm.setFlags(status_itm.flags()
-                                    & ~QtCore.Qt.ItemIsEditable
-                                    & ~QtCore.Qt.ItemIsSelectable)
+                                    & ~QtCore.Qt.ItemFlag.ItemIsEditable
+                                    & ~QtCore.Qt.ItemFlag.ItemIsSelectable)
                 self.results_table.setItem(i, 1, status_itm)
 
             chbx_itm.itemChanged = partial(self.item_checked, chbx_itm,
@@ -228,6 +233,7 @@ class ResultsTable():
 
 
 class AddMenuBar():
+
     def __init__(self, parent: 'UIMainWindow', docks):
         """
         still to do: remove parent
@@ -238,10 +244,10 @@ class AddMenuBar():
         self.window_about = About()
         self.file_menu = self.menubar.addMenu("File")
         self.window_menu = self.menubar.addMenu("Window")
-        self.window_menu.addAction(
-            "Save dock State").triggered.connect(self.save_dock_state)
-        self.window_menu.addAction(
-            "Load dock State").triggered.connect(self.load_dock_state)
+        self.window_menu.addAction("Save dock State").triggered.connect(
+            self.save_dock_state)
+        self.window_menu.addAction("Load dock State").triggered.connect(
+            self.load_dock_state)
         self.help_menu = self.menubar.addMenu("Help")
         self.help_menu.addAction("About").triggered.connect(self.about)
 
@@ -267,10 +273,10 @@ class AddMenuBar():
         self.central_layout.addLayout(self.btn_layout)
         self.central_layout.addStretch()
 
-        self.preset_dir = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'presets'))
-        self.preset_file = os.path.join(
-            self.preset_dir, "dock_area_state.json")
+        self.preset_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'presets'))
+        self.preset_file = os.path.join(self.preset_dir,
+                                        "dock_area_state.json")
 
     def save_dock_state(self):
         docks_state = self.docks.saveState()
@@ -327,6 +333,7 @@ class AddMenuBar():
 
 
 class About(QtWidgets.QDialog):
+
     def __init__(self):
         super(About, self).__init__()
         self.setWindowTitle("About pyMag")

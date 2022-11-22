@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QLabel,
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QLabel,
                              QSpinBox)
 
 unicode_subs = {
@@ -18,6 +18,7 @@ inverse_subs = {v: k for k, v in unicode_subs.items()}
 
 
 class Labelled():
+
     def __init__(self,
                  var_name,
                  label="Label",
@@ -68,10 +69,7 @@ class Labelled():
         self.Label.hide()
 
     def to_json(self) -> Dict[str, Any]:
-        ret = {
-            "label": self.Label.text(),
-            "mode": self.mode
-        }
+        ret = {"label": self.Label.text(), "mode": self.mode}
         if self.mode == 'Double' or self.mode == 'Integer':
             add = {
                 "maximum": self.Value.maximum(),
@@ -79,13 +77,12 @@ class Labelled():
                 "value": self.Value.value(),
             }
         elif self.mode == "Binary":
-            add = {
-                "value": self.Value.checkState()
-            }
+            add = {"value": self.Value.checkState()}
         else:
             add = {
-                "item_list": [self.Value.itemText(i) for i in range(self.Value.count())],
-                "value": self.Value.currentIndex()
+                "item_list":
+                [self.Value.itemText(i) for i in range(self.Value.count())],
+                "value":
+                self.Value.currentIndex()
             }
-        return {"name": self.var_name,
-                "params": {**ret, **add}}
+        return {"name": self.var_name, "params": {**ret, **add}}

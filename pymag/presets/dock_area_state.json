@@ -1,116 +1,62 @@
 {
-    "float": [],
-    "main": [
-        "vertical",
+  "float": [],
+  "main": [
+    "vertical",
+    [
+      ["dock", "Simulation parameters", {}],
+      [
+        "horizontal",
         [
+          [
+            "tab",
             [
-                "dock",
-                "Simulation parameters",
-                {}
+              ["dock", "Resistance", {}],
+              ["dock", "Magnetization", {}],
+              ["dock", "Trajectories", {}],
+              ["dock", "Convergence", {}],
+              ["dock", "Components", {}]
             ],
+            {
+              "index": 1
+            }
+          ],
+          [
+            "tab",
             [
-                "horizontal",
+              ["dock", "SD-FMR", {}],
+              ["dock", "PIMM-FMR", {}]
+            ],
+            {
+              "index": 1
+            }
+          ],
+          [
+            "vertical",
+            [
+              ["dock", "Control panel", {}],
+              [
+                "tab",
                 [
-                    [
-                        "tab",
-                        [
-                            [
-                                "dock",
-                                "Resistance",
-                                {}
-                            ],
-                            [
-                                "dock",
-                                "Magnetization",
-                                {}
-                            ],
-                            [
-                                "dock",
-                                "Trajectories",
-                                {}
-                            ],
-                            [
-                                "dock",
-                                "Convergence",
-                                {}
-                            ],
-                            [
-                                "dock",
-                                "Components",
-                                {}
-                            ]
-                        ],
-                        {
-                            "index": 1
-                        }
-                    ],
-                    [
-                        "tab",
-                        [
-                            [
-                                "dock",
-                                "SD-FMR",
-                                {}
-                            ],
-                            [
-                                "dock",
-                                "PIMM-FMR",
-                                {}
-                            ]
-                        ],
-                        {
-                            "index": 1
-                        }
-                    ],
-                    [
-                        "vertical",
-                        [
-                            [
-                                "dock",
-                                "Control panel",
-                                {}
-                            ],
-                            [
-                                "tab",
-                                [
-                                    [
-                                        "dock",
-                                        "Simulation manager",
-                                        {}
-                                    ],
-                                    [
-                                        "dock",
-                                        "Measurement manager",
-                                        {}
-                                    ]
-                                ],
-                                {
-                                    "index": 0
-                                }
-                            ]
-                        ],
-                        {
-                            "sizes": [
-                                92,
-                                461
-                            ]
-                        }
-                    ]
+                  ["dock", "Simulation manager", {}],
+                  ["dock", "Measurement manager", {}]
                 ],
                 {
-                    "sizes": [
-                        473,
-                        473,
-                        480
-                    ]
+                  "index": 0
                 }
-            ]
+              ]
+            ],
+            {
+              "sizes": [92, 461]
+            }
+          ]
         ],
         {
-            "sizes": [
-                280,
-                560
-            ]
+          "sizes": [473, 473, 480]
         }
-    ]
+      ]
+    ],
+    {
+      "sizes": [280, 560]
+    }
+  ]
 }
