@@ -10,7 +10,7 @@ techniques for your expeirments.
 
 ## Requirements
 
-- Python 3.6 or higher
+- Python 3.8 or higher
 - PyQt6 (`pip install pyqt6`) -- installing `PyMag` should automatically install `PyQt6` as well
 - `cmtj` -- installing `PyMag` should automatically install `cmtj` as well
 
