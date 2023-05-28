@@ -51,6 +51,7 @@ git clone https://github.com/LemurPwned/PyMag
 cd PyMag
 python3 -m pip venv .pymag 
 source .pymag/bin/activate
+pip3 install --upgrade pip
 pip3 install .
 ```
 
