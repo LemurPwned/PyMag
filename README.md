@@ -14,15 +14,43 @@ techniques for your expeirments.
 - PyQt6 (`pip install pyqt6`) -- installing `PyMag` should automatically install `PyQt6` as well
 - `cmtj` -- installing `PyMag` should automatically install `cmtj` as well
 
+--- 
+### Recommended installation of PyQT6
+**Mac OS**
+```
+brew install pyqt6
+```
+or 
+```
+brew install pyqt@6
+```
+For M1/M2 architecures it sometimes works better to install:
+```
+python -m pip install pyqt6
+```
+
+**Linux/Ubuntu**
+```
+sudo apt install python3-pyqt6
+```
+and it sometimes requires additional manual installation (or some combination of the below):
+```
+sudo apt install pkg-config libgl1-mesa-dev libxcb*-dev libfontconfig1-dev libxkbcommon-x11-dev libgtk-3-dev
+```
+
 ## Quickstart
 
 For quick installation you only need to install the package first:
+
+**It is highly recommended to install PyMag inside a python environment**
 
 - From Github repository
 
 ```bash
 git clone https://github.com/LemurPwned/PyMag
 cd PyMag
+python3 -m pip venv .pymag 
+source .pymag/bin/activate
 pip3 install .
 ```
 
